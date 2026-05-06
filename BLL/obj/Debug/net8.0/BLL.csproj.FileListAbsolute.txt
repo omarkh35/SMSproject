@@ -1,0 +1,17 @@
+C:\Users\USER\Desktop\SMS Project\BLL\bin\Debug\net8.0\BLL.deps.json
+C:\Users\USER\Desktop\SMS Project\BLL\bin\Debug\net8.0\BLL.runtimeconfig.json
+C:\Users\USER\Desktop\SMS Project\BLL\bin\Debug\net8.0\BLL.dll
+C:\Users\USER\Desktop\SMS Project\BLL\bin\Debug\net8.0\BLL.pdb
+C:\Users\USER\Desktop\SMS Project\BLL\bin\Debug\net8.0\DAL.dll
+C:\Users\USER\Desktop\SMS Project\BLL\bin\Debug\net8.0\DAL.pdb
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.csproj.AssemblyReference.cache
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.AssemblyInfoInputs.cache
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.AssemblyInfo.cs
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.csproj.CoreCompileInputs.cache
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.csproj.Up2Date
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.dll
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\refint\BLL.dll
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.pdb
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.genruntimeconfig.cache
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\ref\BLL.dll
