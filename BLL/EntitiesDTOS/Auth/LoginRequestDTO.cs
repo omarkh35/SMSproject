@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace BLL.EntitiesDTOS.Auth
 {
-    public class TokenResponse
+    public class LoginRequestDTO
     {
-        public string AccessToken { get; set; }
-        public string RefreshToken { get; set; }
+        public string AccountNumber { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+
     }
 }

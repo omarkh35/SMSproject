@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SMS.Entities;
+namespace DAL.Entities;
 
 public partial class UserRefreshToken
 {
     public int RefreshTokenId { get; set; }
-
-    public int UserId { get; set; }
 
     public string TokenValue { get; set; } = null!;
 
@@ -22,6 +20,8 @@ public partial class UserRefreshToken
     public bool IsActive => !IsRevoked && !IsExpired;
 
     public string? ReplacedByToken { get; set; }
+
+    public int UserId { get; set; }
 
     public virtual User User { get; set; } = null!;
 }

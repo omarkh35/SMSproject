@@ -15,3 +15,4 @@ C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\refint\BLL.dll
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.pdb
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.genruntimeconfig.cache
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\ref\BLL.dll
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.sourcelink.json

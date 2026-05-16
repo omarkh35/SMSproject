@@ -1,8 +1,36 @@
+using BLL;
+using BLL.Interfaces;
+using BLL.Services;
+using DAL.Context;
+using DAL.Interfaces;
+using DAL.Repositries;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+// Example using Scoped lifetime
+builder.Services.AddScoped<BLL.Interfaces.IAuthService, BLL.Services.AuthService>();
+builder.Services.AddScoped(typeof(IBaseRepositories<>), typeof(BaseRepositry<>));
+// Add this line with your other Scoped registrations
+builder.Services.AddScoped<BLL.Interfaces.IJwtService, BLL.Services.JwtService>();
+
+
+//builder.Services.AddBusinessLayer();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -26,11 +54,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 
             // The expected issuer value (must match the issuer used when creating the JWT).
-            ValidIssuer = "StudentApi",
+            ValidIssuer = "SchoolApi",
 
 
             // The expected audience value (must match the audience used when creating the JWT).
-            ValidAudience = "StudentApiUsers",
+            ValidAudience = "SchoolApiUsers",
 
 
             // The secret key used to validate the JWT signature.
@@ -52,10 +80,6 @@ builder.Services.AddAuthorization();
 
 // Add services to the container.
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 

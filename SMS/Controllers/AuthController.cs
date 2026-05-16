@@ -1,176 +1,74 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using System.Security.Claims;
+﻿using BLL.EntitiesDTOS.Auth;
+using BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Text;
-using BLL.EntitiesDTOS.Auth;
+using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace SMS.Controllers
 {
-    
+
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        
+        private readonly IAuthService _authService;
+
+        public AuthController(IAuthService authService)
+        {
+            _authService = authService;
+        }
+
+
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
         {
-            //جيب رقم الزلمة 
-            var user = StudentDataSimulation.StudentsList
-                .FirstOrDefault(s => s.Email == request.Email);
+            var result = await _authService.LoginAsync(request);
 
+            if (result == null)
+                return Unauthorized("Invalid credentials or user is banned.");
 
-            //اذا مو موجود
-            if (user == null)
-                return Unauthorized("Invalid credentials");
-
-
-            //تاكد اذا Hash الباسوود صح 
-            bool isValidPassword =
-                BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
-
-
-           
-            if (!isValidPassword)
-                return Unauthorized("Invalid credentials");
-
-
-            // Step 3: Create claims that represent the authenticated user's identity.
-            // These claims will be embedded inside the JWT.
-            var claims = new[]
-            {
-                
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-
-
-               
-                new Claim(ClaimTypes.MobilePhone, user.PhoneNumber),
-
-
-                
-                new Claim(ClaimTypes.Role, user.Role)
-            };
-
-
-            
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes("THIS_IS_A_VERY_SECRET_KEY_123456"));
-
-
-            
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-
-            
-            var token = new JwtSecurityToken(
-                issuer: "SchoolApi",
-                audience: "SchoolApiUsers",
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
-                signingCredentials: creds
-            );
-
-            var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
-
-           
-            var refreshToken = GenerateRefreshToken();
-
-            
-            user.RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(refreshToken);
-            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
-            user.RefreshTokenRevokedAt = null;
-
-            
-            return Ok(new
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
-            });
+            return Ok(result);
         }
 
 
 
-        private static string GenerateRefreshToken()
-        {
-            var bytes = new byte[64];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(bytes);
-            return Convert.ToBase64String(bytes);
-        }
+
 
         [HttpPost("refresh")]
-        public IActionResult Refresh([FromBody] RefreshRequest request)
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequestDto request)
         {
-            var user = StudentDataSimulation.StudentsList
-                .FirstOrDefault(s => s.Email == request.Email);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            if (user == null)
-                return Unauthorized("Invalid refresh request");
+            var result = await _authService.RefreshTokenAsync(request);
 
-            if (user.RefreshTokenRevokedAt != null)
-                return Unauthorized("Refresh token is revoked");
+            if (result == null)
+                return Unauthorized(new { message = "Invalid or expired refresh token." });
 
-            if (user.RefreshTokenExpiresAt == null || user.RefreshTokenExpiresAt <= DateTime.UtcNow)
-                return Unauthorized("Refresh token expired");
-
-            bool refreshValid = BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash);
-            if (!refreshValid)
-                return Unauthorized("Invalid refresh token");
-
-            // Issue NEW access token (same claims & signing settings as login)
-            var claims = new[]
-            {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.MobilePhone, user.PhoneNumber),
-        new Claim(ClaimTypes.Role, user.Role)
-    };
-
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes("THIS_IS_A_VERY_SECRET_KEY_123456"));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var jwt = new JwtSecurityToken(
-                issuer: "SchoolApi",
-                audience: "SchoolApiUsers",
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(30),
-                signingCredentials: creds
-            );
-
-            var newAccessToken = new JwtSecurityTokenHandler().WriteToken(jwt);
-
-            // Rotation: replace refresh token
-            var newRefreshToken = GenerateRefreshToken();
-            user.RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(newRefreshToken);
-            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
-            user.RefreshTokenRevokedAt = null;
-
-            return Ok(new TokenResponse
-            {
-                AccessToken = newAccessToken,
-                RefreshToken = newRefreshToken
-            });
+            return Ok(result);
         }
 
+        //منحطها بعد ما نحط ال Baerer
+        //[Authorize] 
         [HttpPost("logout")]
-        public IActionResult Logout([FromBody] LogoutRequest request)
+        public async Task<IActionResult> Logout([FromBody] LogoutRequestDto request)
         {
-            var user = StudentDataSimulation.StudentsList
-                .FirstOrDefault(s => s.Email == request.Email);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            if (user == null)
-                return Ok(); 
+            var result = await _authService.LogoutAsync(request);
 
-            bool refreshValid = BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash);
-            if (!refreshValid)
-                return Ok();
+            if (!result)
+            {
+                return BadRequest(new { message = "Invalid or already revoked refresh token." });
+            }
 
-            user.RefreshTokenRevokedAt = DateTime.UtcNow;
-            return Ok("Logged out successfully");
+            return Ok(new { message = "Logged out successfuly. Token has been revoked." });
         }
 
 

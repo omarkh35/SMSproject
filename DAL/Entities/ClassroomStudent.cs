@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SMS.Entities;
+namespace DAL.Entities;
 
 public partial class ClassroomStudent
 {
