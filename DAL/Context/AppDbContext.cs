@@ -33,6 +33,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<ClassroomTeacher> ClassroomTeachers { get; set; }
 
     public virtual DbSet<DepartmentManager> DepartmentManagers { get; set; }
+    
+    public virtual DbSet<DailyLesson> DailyLessons { get; set; }
 
     public virtual DbSet<ExamSchedule> ExamSchedules { get; set; }
 
@@ -77,6 +79,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<TeacherAttendance> TeacherAttendances { get; set; }
 
     public virtual DbSet<TeacherSupervisor> TeacherSupervisors { get; set; }
+
+    public virtual DbSet<ToDoTask> ToDoTasks { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -198,6 +202,37 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("FK_ClassroomStudent_Students");
         });
 
+        modelBuilder.Entity<ToDoTask>(entity =>
+        {
+            entity.ToTable("ToDoTasks");
+
+            entity.HasKey(e => e.TaskID)
+                .HasName("PK_ToDoTasks");
+
+            entity.Property(e => e.TaskDescription).IsRequired();
+
+            entity.Property(e => e.IsDone)
+                .HasDefaultValueSql("((0))");
+
+            entity.Property(e => e.PriorityLevel)
+                .HasDefaultValueSql("((1))");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.AssignedPerson)
+                .WithMany()
+                .HasForeignKey(d => d.AssignedPersonID)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ToDoTasks_People");
+
+            entity.HasOne(d => d.ClassRoom)
+                .WithMany()
+                .HasForeignKey(d => d.ClassRoomID)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ToDoTasks_ClassRooms");
+        });
+
         modelBuilder.Entity<ClassroomTeacher>(entity =>
         {
             entity.ToTable("ClassroomTeacher");
@@ -233,6 +268,45 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.PersonId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_DepartmentManagers_People");
+        });
+
+        modelBuilder.Entity<DailyLesson>(entity =>
+        {
+            entity.ToTable("DailyLessons");
+
+            entity.HasKey(e => e.DailyLessonID)
+                .HasName("PK_DailyLessons");
+
+            entity.HasIndex(e => new { e.ClassRoomID, e.SubjectID, e.LessonDate }, "UQ_ClassSubjectDate")
+                .IsUnique();
+
+            entity.Property(e => e.LessonDate)
+                .HasColumnType("date")
+                .HasDefaultValueSql("(cast(getdate() as date))");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())");
+
+            entity.Property(e => e.Description)
+                .IsRequired();
+
+            entity.HasOne(d => d.ClassRoom)
+                .WithMany() 
+                .HasForeignKey(d => d.ClassRoomID)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_DailyLessons_ClassRooms");
+
+            entity.HasOne(d => d.Subject)
+                .WithMany()
+                .HasForeignKey(d => d.SubjectID)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_DailyLessons_Subjects");
+
+            entity.HasOne(d => d.TeacherPerson)
+                .WithMany()
+                .HasForeignKey(d => d.TeacherPersonID)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_DailyLessons_TeacherPerson");
         });
 
         modelBuilder.Entity<ExamSchedule>(entity =>
