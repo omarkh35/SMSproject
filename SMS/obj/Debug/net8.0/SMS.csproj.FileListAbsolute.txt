@@ -140,3 +140,4 @@ C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\SMS.genruntimeconfig.cach
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\ref\SMS.dll
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\SMS.sourcelink.json
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\SMS.staticwebassets.runtime.json

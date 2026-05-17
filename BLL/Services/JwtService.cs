@@ -67,7 +67,7 @@ namespace BLL.Services
         {
             var claims = new[]
             {
-        new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+        new Claim(ClaimTypes.NameIdentifier, user.PersonId.ToString()),
         new Claim(ClaimTypes.MobilePhone, user.PhoneNumber ?? string.Empty),
         new Claim(ClaimTypes.Name, $"{user.Person?.FirstName} {user.Person?.LastName}"),
         new Claim(ClaimTypes.Role, user.UserRole?.RoleName ?? "User")

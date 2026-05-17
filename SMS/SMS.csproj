@@ -24,4 +24,10 @@
     <ProjectReference Include="..\BLL\BLL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\exams\" />
+    <Folder Include="wwwroot\uploads\profiles\" />
+    <Folder Include="wwwroot\uploads\schedules\" />
+  </ItemGroup>
+
 </Project>
