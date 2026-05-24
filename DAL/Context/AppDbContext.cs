@@ -441,7 +441,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Title).HasMaxLength(100);
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
         });
-
+        
         modelBuilder.Entity<SchoolSetting>(entity =>
         {
             entity.HasKey(e => e.SettingId);
@@ -658,6 +658,10 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.UserRoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Users_Roles");
+
+            entity.HasIndex(e => e.AccountNumber).IsUnique();
+
+
         });
 
         modelBuilder.Entity<UserRefreshToken>(entity =>

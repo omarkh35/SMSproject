@@ -1463,6 +1463,7 @@
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.0",
           "Microsoft.EntityFrameworkCore": "8.0.0",
           "Microsoft.EntityFrameworkCore.SqlServer": "8.0.0",
+          "Microsoft.Extensions.Logging": "8.0.0",
           "Microsoft.IdentityModel.Tokens": "8.15.0",
           "System.IdentityModel.Tokens.Jwt": "8.15.0"
         },
@@ -3833,6 +3834,7 @@
       "Microsoft.EntityFrameworkCore >= 8.0.0",
       "Microsoft.EntityFrameworkCore.SqlServer >= 8.0.0",
       "Microsoft.EntityFrameworkCore.Tools >= 8.0.0",
+      "Microsoft.Extensions.Logging >= 8.0.0",
       "Microsoft.IdentityModel.Tokens >= 8.15.0",
       "System.IdentityModel.Tokens.Jwt >= 8.15.0"
     ]
@@ -3910,6 +3912,10 @@
           "Microsoft.EntityFrameworkCore.Tools": {
             "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
             "suppressParent": "All",
+            "target": "Package",
+            "version": "[8.0.0, )"
+          },
+          "Microsoft.Extensions.Logging": {
             "target": "Package",
             "version": "[8.0.0, )"
           },

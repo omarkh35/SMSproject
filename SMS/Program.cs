@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,7 +49,9 @@ builder.Services.AddSwaggerGen(options =>
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .LogTo(Console.WriteLine, LogLevel.Information)
+           .EnableSensitiveDataLogging());
 
 
 // Example using Scoped lifetime
@@ -57,6 +60,7 @@ builder.Services.AddScoped(typeof(IBaseRepositories<>), typeof(BaseRepositry<>))
 builder.Services.AddScoped<BLL.Interfaces.IAuthService, BLL.Services.AuthService>();
 builder.Services.AddScoped<BLL.Interfaces.IJwtService, BLL.Services.JwtService>();
 builder.Services.AddScoped<IParentService, ParentService>();
+builder.Services.AddScoped<ITeacherService, TeacherService>();
 
 
 
@@ -123,6 +127,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
