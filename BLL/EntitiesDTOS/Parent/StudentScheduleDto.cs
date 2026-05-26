@@ -16,7 +16,5 @@ namespace BLL.EntitiesDTOS.Parent
         public string ScheduleTitle { get; set; } = null!;
         public string ImageUrl { get; set; } = null!;
 
-
-
     }
 }

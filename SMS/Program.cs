@@ -56,10 +56,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Example using Scoped lifetime
 builder.Services.AddScoped(typeof(IBaseRepositories<>), typeof(BaseRepositry<>));
-//«»Ê Õ„Ìœ ÂÊ‰ ﬂ· service » ⁄„·Ê ·«“„  ÕÿÊ ÂÊ‰ 
+//√á√à√¶ √ç√£√≠√è √•√¶√§ √ü√° service √à√ä√ö√£√°√¶ √°√á√í√£ √ä√ç√ò√¶ √•√¶√§ 
 builder.Services.AddScoped<BLL.Interfaces.IAuthService, BLL.Services.AuthService>();
 builder.Services.AddScoped<BLL.Interfaces.IJwtService, BLL.Services.JwtService>();
 builder.Services.AddScoped<IParentService, ParentService>();
+builder.Services.AddScoped<ISchoolAdminService, SchoolAdminService>();
+builder.Services.AddScoped<IDepartmentManagerService, DepartmentManagerService>();
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 
 
