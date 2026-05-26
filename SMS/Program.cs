@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,17 +49,20 @@ builder.Services.AddSwaggerGen(options =>
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .LogTo(Console.WriteLine, LogLevel.Information)
+           .EnableSensitiveDataLogging());
 
 
 // Example using Scoped lifetime
 builder.Services.AddScoped(typeof(IBaseRepositories<>), typeof(BaseRepositry<>));
-//«»Ê Õ„Ìœ ÂÊ‰ ﬂ· service » ⁄„·Ê ·«“„  ÕÿÊ ÂÊ‰ 
+//√á√à√¶ √ç√£√≠√è √•√¶√§ √ü√° service √à√ä√ö√£√°√¶ √°√á√í√£ √ä√ç√ò√¶ √•√¶√§ 
 builder.Services.AddScoped<BLL.Interfaces.IAuthService, BLL.Services.AuthService>();
 builder.Services.AddScoped<BLL.Interfaces.IJwtService, BLL.Services.JwtService>();
 builder.Services.AddScoped<IParentService, ParentService>();
 builder.Services.AddScoped<ISchoolAdminService, SchoolAdminService>();
 builder.Services.AddScoped<IDepartmentManagerService, DepartmentManagerService>();
+builder.Services.AddScoped<ITeacherService, TeacherService>();
 
 
 
@@ -125,6 +129,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

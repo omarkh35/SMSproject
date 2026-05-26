@@ -193,5 +193,152 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "AssignHomework",
+    "RelativePath": "api/Teacher/assign/homework",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BLL.EntitiesDTOS.Teacher.SaveHomeworkDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "SaveAttendance",
+    "RelativePath": "api/Teacher/attendance/save",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BLL.EntitiesDTOS.Teacher.SaveAttendanceBulkDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "GetMyClasses",
+    "RelativePath": "api/Teacher/classes",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "GetClassStudents",
+    "RelativePath": "api/Teacher/classes/{classRoomId}/students",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "classRoomId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "GetClassStudentsWithFilter",
+    "RelativePath": "api/Teacher/classes/{classRoomId}/students-search",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "classRoomId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "search",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "SaveGrades",
+    "RelativePath": "api/Teacher/grades/save",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BLL.EntitiesDTOS.Teacher.SaveGradesBulkDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "GetDashboard",
+    "RelativePath": "api/Teacher/HomeScreen",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "SaveNoteToParent",
+    "RelativePath": "api/Teacher/notes/save",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BLL.EntitiesDTOS.Teacher.SaveStudentNoteDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "GetDetailedProfile",
+    "RelativePath": "api/Teacher/profile",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "SaveDailyLesson",
+    "RelativePath": "api/Teacher/saveDailyLesson",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BLL.EntitiesDTOS.Teacher.SaveDailyLessonDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
   }
 ]
