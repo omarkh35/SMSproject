@@ -13,6 +13,5 @@ namespace BLL.EntitiesDTOS.Parent
         public double TotalAverage { get; set; } 
         public List<string> Subjects { get; set; } = new();
 
-
     }
 }

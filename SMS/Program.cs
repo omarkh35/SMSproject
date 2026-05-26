@@ -57,6 +57,8 @@ builder.Services.AddScoped(typeof(IBaseRepositories<>), typeof(BaseRepositry<>))
 builder.Services.AddScoped<BLL.Interfaces.IAuthService, BLL.Services.AuthService>();
 builder.Services.AddScoped<BLL.Interfaces.IJwtService, BLL.Services.JwtService>();
 builder.Services.AddScoped<IParentService, ParentService>();
+builder.Services.AddScoped<ISchoolAdminService, SchoolAdminService>();
+builder.Services.AddScoped<IDepartmentManagerService, DepartmentManagerService>();
 
 
 
