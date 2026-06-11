@@ -26,6 +26,10 @@ namespace DAL.Interfaces
      Expression<Func<T, bool>> filter,
      params Expression<Func<T, object>>[] includes);
 
+        Task<IDisposable> BeginTransactionAsync();
+        Task CommitTransactionAsync();
+        Task RollbackTransactionAsync();
+        Task<TResult> ExecuteRawSqlScalarAsync<TResult>(string sql, params object[] parameters);
 
     }
 }

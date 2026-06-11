@@ -1,12 +1,14 @@
-﻿using DAL.Interfaces;
+﻿using DAL.Context;
+using DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
-using System.Text;
 using System.Linq.Expressions;
+using System.Text;
 using System.Threading.Tasks;
-using DAL.Context;
 
 namespace DAL.Repositries
 {
@@ -82,6 +84,52 @@ namespace DAL.Repositries
                 query = query.Where(filter);
 
             return await query.ToListAsync();
+        }
+
+        public async Task<IDisposable> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            if (_context.Database.CurrentTransaction != null)
+            {
+                await _context.Database.CurrentTransaction.CommitAsync();
+            }
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            if (_context.Database.CurrentTransaction != null)
+            {
+                await _context.Database.CurrentTransaction.RollbackAsync();
+            }
+        }
+
+        public async Task<TResult> ExecuteRawSqlScalarAsync<TResult>(string sql, params object[] parameters)
+        {
+            using var command = _context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = sql;
+            command.CommandType = CommandType.Text;
+
+            if (_context.Database.CurrentTransaction != null)
+            {
+                command.Transaction = _context.Database.CurrentTransaction.GetDbTransaction();
+            }
+
+            if (parameters != null)
+            {
+                command.Parameters.AddRange(parameters);
+            }
+
+            if (command.Connection.State != ConnectionState.Open)
+            {
+                await command.Connection.OpenAsync();
+            }
+
+            var result = await command.ExecuteScalarAsync();
+            return (TResult)Convert.ChangeType(result, typeof(TResult));
         }
 
     }

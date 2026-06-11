@@ -12,6 +12,17 @@ using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowNgrok",
+        policy =>
+        {
+            policy.AllowAnyOrigin()   
+                  .AllowAnyMethod()   
+                  .AllowAnyHeader();  
+        });
+});
+
 builder.Services.AddControllers();
 
 
@@ -63,6 +74,7 @@ builder.Services.AddScoped<IParentService, ParentService>();
 builder.Services.AddScoped<ISchoolAdminService, SchoolAdminService>();
 builder.Services.AddScoped<IDepartmentManagerService, DepartmentManagerService>();
 builder.Services.AddScoped<ITeacherService, TeacherService>();
+builder.Services.AddScoped<ISupervisorService, SupervisorService>();
 
 
 
@@ -127,6 +139,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowNgrok");
 
 app.UseStaticFiles();
 

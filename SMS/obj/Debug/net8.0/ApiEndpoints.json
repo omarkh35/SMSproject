@@ -48,6 +48,270 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "AssignStudentToClass",
+    "RelativePath": "api/DepartmentManager/assign-student-to-class",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.StudentToClassDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "AssignSupervisorToTeacher",
+    "RelativePath": "api/DepartmentManager/assign-supervisor-to-teacher",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.TeacherSupervisorDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "AssignTeacherToClass",
+    "RelativePath": "api/DepartmentManager/assign-teacher-to-class",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.TeacherToClassDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "CreateClassRoom",
+    "RelativePath": "api/DepartmentManager/classroom",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.ClassRoomCreateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "GetClassRoomById",
+    "RelativePath": "api/DepartmentManager/classroom/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "UpdateClassRoom",
+    "RelativePath": "api/DepartmentManager/classroom/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.ClassRoomUpdateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "DeleteClassRoom",
+    "RelativePath": "api/DepartmentManager/classroom/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "GetAllClassRooms",
+    "RelativePath": "api/DepartmentManager/classrooms",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "RemoveStudentFromClass",
+    "RelativePath": "api/DepartmentManager/remove-student-from-class",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "classRoomId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "RemoveSupervisorFromTeacher",
+    "RelativePath": "api/DepartmentManager/remove-supervisor-from-teacher",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "supervisorId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "teacherId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "RemoveTeacherFromClass",
+    "RelativePath": "api/DepartmentManager/remove-teacher-from-class",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "teacherId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "classRoomId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "GetStudentDirectory",
+    "RelativePath": "api/DepartmentManager/students-directory",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "GetSupervisorsDashboard",
+    "RelativePath": "api/DepartmentManager/supervisors-dashboard",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "RegisterNewTeacher",
+    "RelativePath": "api/DepartmentManager/teachers",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.CreateTeacherDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "GetTeachersManagementDashboard",
+    "RelativePath": "api/DepartmentManager/teachers-management",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "UpdateTeacherAssignment",
+    "RelativePath": "api/DepartmentManager/update-teacher-assignment",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.TeacherToClassDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "SMS.Controllers.ParentController",
     "Method": "GetStudentBagDetails",
     "RelativePath": "api/Parent/children/{studentId}/bag",
@@ -195,6 +459,279 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "AddDepartmentManager",
+    "RelativePath": "api/SchoolAdmin/department-manager",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.SchoolAdmin.DepartmentManagerCreateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "UpdateDepartmentManager",
+    "RelativePath": "api/SchoolAdmin/department-manager/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.SchoolAdmin.StaffUpdateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "DeleteDepartmentManager",
+    "RelativePath": "api/SchoolAdmin/department-manager/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "GetAllDepartmentManagers",
+    "RelativePath": "api/SchoolAdmin/department-managers",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "CreateSubject",
+    "RelativePath": "api/SchoolAdmin/subject",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.SchoolAdmin.SubjectCreateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "UpdateSubject",
+    "RelativePath": "api/SchoolAdmin/subject/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.SchoolAdmin.SubjectUpdateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "DeleteSubject",
+    "RelativePath": "api/SchoolAdmin/subject/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "GetAllSubjects",
+    "RelativePath": "api/SchoolAdmin/subjects",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "AddSupervisor",
+    "RelativePath": "api/SchoolAdmin/supervisor",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.SchoolAdmin.SupervisorCreateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "UpdateSupervisor",
+    "RelativePath": "api/SchoolAdmin/supervisor/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.SchoolAdmin.StaffUpdateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "DeleteSupervisor",
+    "RelativePath": "api/SchoolAdmin/supervisor/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "GetAllSupervisors",
+    "RelativePath": "api/SchoolAdmin/supervisors",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SupervisorController",
+    "Method": "GetClassroomRollCall",
+    "RelativePath": "api/Supervisor/classroom/{classRoomId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "classRoomId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SupervisorController",
+    "Method": "GetDashboardCoreMetrics",
+    "RelativePath": "api/Supervisor/main-dashboard",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SupervisorController",
+    "Method": "GetTodayTasks",
+    "RelativePath": "api/Supervisor/tasks",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SupervisorController",
+    "Method": "AddTask",
+    "RelativePath": "api/Supervisor/tasks",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.Supervisor.CreateTaskDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SupervisorController",
+    "Method": "DeleteTask",
+    "RelativePath": "api/Supervisor/tasks/{taskId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "taskId",
+        "Type": "System.Int64",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SupervisorController",
+    "Method": "ToggleTask",
+    "RelativePath": "api/Supervisor/tasks/{taskId}/toggle",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "taskId",
+        "Type": "System.Int64",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "SMS.Controllers.TeacherController",
     "Method": "AssignHomework",
     "RelativePath": "api/Teacher/assign/homework",
@@ -275,6 +812,22 @@
   },
   {
     "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "SaveDailyLesson",
+    "RelativePath": "api/Teacher/DailyLesson",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BLL.EntitiesDTOS.Teacher.SaveDailyLessonDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
     "Method": "SaveGrades",
     "RelativePath": "api/Teacher/grades/save",
     "HttpMethod": "POST",
@@ -323,22 +876,6 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "SMS.Controllers.TeacherController",
-    "Method": "SaveDailyLesson",
-    "RelativePath": "api/Teacher/saveDailyLesson",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "request",
-        "Type": "BLL.EntitiesDTOS.Teacher.SaveDailyLessonDto",
-        "IsRequired": true
-      }
-    ],
     "ReturnTypes": []
   }
 ]

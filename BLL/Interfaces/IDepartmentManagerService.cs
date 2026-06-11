@@ -26,6 +26,17 @@ namespace BLL.Interfaces
 
         Task<bool> AssignSupervisorToTeacherAsync(TeacherSupervisorDto dto);
         Task<bool> RemoveSupervisorFromTeacherAsync(int supervisorId, int teacherId);
+
+        /////////////////////////////////////////////
+        ///
+        Task<SupervisorsDashboardDto> GetSupervisorsDashboardAsync(int managerPersonId);
+
+        Task<TeachersDashboardDto> GetTeachersManagementDashboardAsync(int managerPersonId,int page);
+
+        Task<bool> RegisterTeacherWorkflowAsync(CreateTeacherDto dto);
+
+        Task<StudentDirectoryDashboardDto> GetStudentDirectoryDashboardAsync(int managerPersonId, int page);
+
     }
 
 }

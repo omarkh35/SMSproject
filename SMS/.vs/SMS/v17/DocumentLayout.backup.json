@@ -3,20 +3,17 @@
   "WorkspaceRootPath": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|c:\\users\\user\\desktop\\sms project\\sms\\controllers\\teachercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|solutionrelative:controllers\\teachercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\interfaces\\isupervisorservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\services\\teacherservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\services\\supervisorservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\interfaces\\iteacherservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|c:\\users\\user\\desktop\\sms project\\sms\\controllers\\supervisorcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|solutionrelative:controllers\\supervisorcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\entitiesdtos\\teacher\\notes.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\services\\parentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\entitiesdtos\\supervisor\\supervisordto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,71 +23,58 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "Notes.cs",
-              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\EntitiesDTOS\\Teacher\\Notes.cs",
-              "RelativeDocumentMoniker": "..\\BLL\\EntitiesDTOS\\Teacher\\Notes.cs",
-              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\EntitiesDTOS\\Teacher\\Notes.cs",
-              "RelativeToolTip": "..\\BLL\\EntitiesDTOS\\Teacher\\Notes.cs",
-              "ViewState": "AgIAAA8AAAAAAAAAAAAxwB4AAAAFAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-24T18:35:20.717Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "TeacherController.cs",
-              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\Controllers\\TeacherController.cs",
-              "RelativeDocumentMoniker": "Controllers\\TeacherController.cs",
-              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\Controllers\\TeacherController.cs",
-              "RelativeToolTip": "Controllers\\TeacherController.cs",
-              "ViewState": "AgIAAMwAAAAAAAAAAAAowOAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-21T09:23:03.756Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "ParentService.cs",
-              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\ParentService.cs",
-              "RelativeDocumentMoniker": "..\\BLL\\Services\\ParentService.cs",
-              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\ParentService.cs",
-              "RelativeToolTip": "..\\BLL\\Services\\ParentService.cs",
-              "ViewState": "AgIAAKsAAAAAAAAAAAAgwLYAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-21T08:56:45.349Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "ITeacherService.cs",
-              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Interfaces\\ITeacherService.cs",
-              "RelativeDocumentMoniker": "..\\BLL\\Interfaces\\ITeacherService.cs",
-              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Interfaces\\ITeacherService.cs",
-              "RelativeToolTip": "..\\BLL\\Interfaces\\ITeacherService.cs",
-              "ViewState": "AgIAABIAAAAAAAAAAAAYwB8AAAAAAAAAAAAAAA==",
+              "Title": "SupervisorController.cs",
+              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\Controllers\\SupervisorController.cs",
+              "RelativeDocumentMoniker": "Controllers\\SupervisorController.cs",
+              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\Controllers\\SupervisorController.cs",
+              "RelativeToolTip": "Controllers\\SupervisorController.cs",
+              "ViewState": "AgIAADIAAAAAAAAAAAAAAEUAAABAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-21T08:56:37.602Z",
+              "WhenOpened": "2026-06-05T17:20:37.748Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "TeacherService.cs",
-              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\TeacherService.cs",
-              "RelativeDocumentMoniker": "..\\BLL\\Services\\TeacherService.cs",
-              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\TeacherService.cs",
-              "RelativeToolTip": "..\\BLL\\Services\\TeacherService.cs",
-              "ViewState": "AgIAALYBAAAAAAAAAAAiwDcAAAAAAAAAAAAAAA==",
+              "Title": "SupervisorService.cs",
+              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\SupervisorService.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\Services\\SupervisorService.cs",
+              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\SupervisorService.cs",
+              "RelativeToolTip": "..\\BLL\\Services\\SupervisorService.cs",
+              "ViewState": "AgIAAJIAAAAAAAAAAAAAwK4AAAA0AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-21T08:56:35.268Z",
+              "WhenOpened": "2026-06-05T17:19:57.089Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ISupervisorService.cs",
+              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Interfaces\\ISupervisorService.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\Interfaces\\ISupervisorService.cs",
+              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Interfaces\\ISupervisorService.cs",
+              "RelativeToolTip": "..\\BLL\\Interfaces\\ISupervisorService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-05T17:19:45.641Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "SupervisorDto.cs",
+              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\EntitiesDTOS\\Supervisor\\SupervisorDto.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\EntitiesDTOS\\Supervisor\\SupervisorDto.cs",
+              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\EntitiesDTOS\\Supervisor\\SupervisorDto.cs",
+              "RelativeToolTip": "..\\BLL\\EntitiesDTOS\\Supervisor\\SupervisorDto.cs",
+              "ViewState": "AgIAAC4AAAAAAAAAAAA+wDUAAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-05T17:19:17.572Z",
               "EditorCaption": ""
             }
           ]
