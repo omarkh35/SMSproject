@@ -71,20 +71,21 @@ namespace BLL.Services
         public async Task<StudentAcademicSummaryDto?> GetStudentAcademicSummaryAsync(int parentPersonId, int studentId)
         {
             var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
-                sp => sp.PersonId == parentPersonId && sp.StudentId == studentId,
+                sp => sp.Parent.PersonId == parentPersonId && sp.StudentId == studentId,
+    sp => sp.Parent,
                 sp => sp.Student,
                 sp => sp.Student.Person
             );
 
             var parentLink = parentLinks.FirstOrDefault();
-            if (parentLink == null) 
+            if (parentLink == null)
                 return null;
 
             var studentRecords = await _studentRecordRepo.GetAllWithIncludeAndFilterAsync(sr => sr.StudentId == studentId);
 
             var activeRecord = studentRecords.OrderByDescending(sr => sr.StudyYear).FirstOrDefault();
-            
-            if (activeRecord == null) 
+
+            if (activeRecord == null)
                 return null;
 
             var curriculumSubjects = await _gradeSubjectRepo.GetAllWithIncludeAndFilterAsync(
@@ -133,7 +134,7 @@ namespace BLL.Services
             }
             else
             {
-                summaryDto.TotalAverage = 0.0; 
+                summaryDto.TotalAverage = 0.0;
             }
 
             return summaryDto;
@@ -142,7 +143,8 @@ namespace BLL.Services
         public async Task<StudentExamScheduleDto?> GetStudentExamScheduleAsync(int parentPersonId, int studentId, string schemeAndHost)
         {
             var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
-                sp => sp.PersonId == parentPersonId && sp.StudentId == studentId,
+                sp => sp.Parent.PersonId == parentPersonId && sp.StudentId == studentId,
+    sp => sp.Parent,
                 sp => sp.Student,
                 sp => sp.Student.Person
             );
@@ -184,7 +186,8 @@ namespace BLL.Services
         public async Task<StudentScheduleDto?> GetStudentWeeklyScheduleAsync(int parentPersonId, int studentId, string schemeAndHost)
         {
             var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
-                sp => sp.PersonId == parentPersonId && sp.StudentId == studentId,
+                sp => sp.Parent.PersonId == parentPersonId && sp.StudentId == studentId,
+    sp => sp.Parent,
                 sp => sp.Student,
                 sp => sp.Student.Person
             );
@@ -231,7 +234,8 @@ namespace BLL.Services
         {
 
             var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
-                sp => sp.PersonId == parentPersonId,
+                sp => sp.Parent.PersonId == parentPersonId,
+    sp => sp.Parent,
                 sp => sp.Student,
                 sp => sp.Student.Person,
                 sp => sp.Student.StudentRecords
@@ -302,7 +306,10 @@ namespace BLL.Services
                 Body = a.AnnouncementBody
             }).ToList();
 
-            var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(sp => sp.PersonId == parentPersonId);
+            var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
+    sp => sp.Parent.PersonId == parentPersonId,
+    sp => sp.Parent
+);
             var childrenIds = parentLinks.Select(sp => sp.StudentId).ToList();
 
             var classroomLinks = await _classroomStudentRepo.GetAllWithIncludeAndFilterAsync(cs => childrenIds.Contains(cs.StudentId));
@@ -327,7 +334,8 @@ namespace BLL.Services
         {
             //منرجع مناكد انو الابن للاب
             var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
-                sp => sp.PersonId == parentPersonId && sp.StudentId == studentId
+                sp => sp.Parent.PersonId == parentPersonId && sp.StudentId == studentId,
+    sp => sp.Parent
             );
             if (!parentLinks.Any()) return null;
 
@@ -394,11 +402,13 @@ namespace BLL.Services
         public async Task<StudentProfileDto?> GetStudentProfileAsync(int parentPersonId, int studentId, string schemeAndHost)
         {
             var allAssociatedParents = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
-                sp => sp.StudentId == studentId,
-                sp => sp.Person
-            );
+     sp => sp.StudentId == studentId,
+     sp => sp.Parent,
+     sp => sp.Parent.Person
+ );
 
-            if (!allAssociatedParents.Any(sp => sp.PersonId == parentPersonId))
+
+            if (!allAssociatedParents.Any(sp => sp.Parent.PersonId == parentPersonId))
             {
                 return null;
             }
@@ -423,7 +433,7 @@ namespace BLL.Services
             if (primaryContactRelation != null)
             {
                 var relatedUsers = await _userRepo.GetAllWithIncludeAndFilterAsync(
-                    u => u.PersonId == primaryContactRelation.PersonId
+                    u => u.PersonId == primaryContactRelation.Parent.PersonId
                 );
                 var activeUser = relatedUsers.FirstOrDefault();
                 if (activeUser != null)
@@ -490,8 +500,11 @@ namespace BLL.Services
         public async Task<StudentAttendanceSummaryDto?> GetStudentAttendanceCalendarAsync(int parentPersonId, int studentId, int year, int month)
         {
             var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
-                sp => sp.PersonId == parentPersonId && sp.StudentId == studentId
-            );
+    // FIX: Route the PersonID filter through the Parent relation column
+    sp => sp.Parent.PersonId == parentPersonId && sp.StudentId == studentId,
+    sp => sp.Parent
+);
+
             if (!parentLinks.Any()) 
                 return null; 
 
@@ -532,7 +545,8 @@ namespace BLL.Services
         public async Task<SubjectDetailedReportDto?> GetSubjectDetailedReportAsync(int parentPersonId, int studentId, int subjectId)
         {
             var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
-                sp => sp.PersonId == parentPersonId && sp.StudentId == studentId,
+                sp => sp.Parent.PersonId == parentPersonId && sp.StudentId == studentId,
+                sp => sp.Parent,
                 sp => sp.Student,
                 sp => sp.Student.Person
             );

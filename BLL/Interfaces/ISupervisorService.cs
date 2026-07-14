@@ -26,6 +26,11 @@ namespace BLL.Interfaces
         Task<StudentDetailsPageDto?> GetStudentDetailedProfileAsync(int studentId, int month, int year);
         Task<IEnumerable<SupervisorTeacherSidebarDto>> GetSupervisedTeachersSidebarAsync(int supervisorPersonId, string searchTerm);
         Task<TeacherDetailsPaneDto?> GetTeacherPaneDetailsAsync(int teacherId, int month, int year);
+        Task<bool> SaveStudentAttendanceWorkflowAsync(int supervisorPersonId, SaveStudentAttendanceDto dto);
+        Task<bool> SaveTeacherAttendanceWorkflowAsync(int supervisorPersonId, SaveTeacherAttendanceDto dto);
+        Task<IEnumerable<ChatThreadDto>> GetSupervisorChatThreadsAsync(int supervisorPersonId);
+        Task<IEnumerable<ChatMessageDto>> GetChatHistoryAsync(int supervisorPersonId, int chatRoomId);
+        Task<bool> SendMessageAsync(int senderPersonId, SendMessageDto dto);
 
     }
 }

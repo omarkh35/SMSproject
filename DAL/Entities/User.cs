@@ -23,5 +23,7 @@ public partial class User
 
     public virtual ICollection<UserRefreshToken> UserRefreshTokens { get; set; } = new List<UserRefreshToken>();
 
+    public virtual ICollection<SalaryPayment> SalaryPayments { get; set; } = new List<SalaryPayment>();
+
     public virtual Role UserRole { get; set; } = null!;
 }

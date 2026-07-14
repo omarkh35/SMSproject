@@ -27,6 +27,8 @@ namespace BLL.Services
         IBaseRepositories<StudentRecord> _studentRecordRepo;
         IBaseRepositories<StudentParent> _studentParentRepo;
         IBaseRepositories<Teacher> _teacherRepo;
+        IBaseRepositories<ChatRoom> _chatRoomRepo;
+        IBaseRepositories<Message> _messageRepo;
 
         public SupervisorService(IBaseRepositories<ClassRoom> classRoomRepo, IBaseRepositories<Supervisor> supervisorRepo,
             IBaseRepositories<ClassroomStudent> classStudentRepo,
@@ -36,7 +38,8 @@ namespace BLL.Services
             IBaseRepositories<Mark> markRepo,IBaseRepositories<Schedule> scheduleRepo,
         IBaseRepositories<StudentRecord> studentRecordRepo,
         IBaseRepositories<ExamSchedule> examScheduleRepo, IBaseRepositories<StudentParent> studentParentRepo,
-        IBaseRepositories<Teacher> teacherRepo)
+        IBaseRepositories<Teacher> teacherRepo, IBaseRepositories<ChatRoom> chatRoomRepo,
+        IBaseRepositories<Message> messageRepo)
         {
             _classRoomRepo = classRoomRepo;
             _supervisorRepo = supervisorRepo;
@@ -53,20 +56,88 @@ namespace BLL.Services
             _scheduleRepo = scheduleRepo;
             _studentParentRepo = studentParentRepo;
             _teacherRepo = teacherRepo;
+            _chatRoomRepo = chatRoomRepo;
+            _messageRepo = messageRepo;
 
         }
+
+        //public async Task<SupervisorMainDashboardDto> GetMainDashboardAsync(int supervisorPersonId)
+        //{
+        //    var dashboard = new SupervisorMainDashboardDto();
+        //    var todayDate = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+
+        //    // 1. Get the current Supervisor's tracking primary key ID context
+        //    var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
+        //    var activeSupervisor = supervisors.FirstOrDefault();
+        //    if (activeSupervisor == null) return dashboard;
+
+        //    // 2. Load rooms assigned directly to this supervisor
+        //    var rooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
+        //    var supervisedRooms = rooms.Where(cr => cr.SupervisorId == activeSupervisor.SupervisorId).ToList();
+        //    var supervisedRoomIds = supervisedRooms.Select(cr => cr.ClassRoomId).ToList();
+
+        //    dashboard.ClassesCount = supervisedRooms.Count;
+
+        //    // Populate Dropdown collection mapping
+        //    foreach (var r in supervisedRooms)
+        //    {
+        //        dashboard.SupervisedClasses.Add(new SupervisorClassDropdownDto
+        //        {
+        //            ClassRoomID = r.ClassRoomId,
+        //            // Match the visual text casing strings in your screenshot layout ("SEVENTH - FIRST")
+        //            ClassDisplayName = $"Grade {r.Grade.GradeNumber} - Section {r.Section}"
+        //        });
+        //    }
+
+        //    // 3. Collect students operating inside those rooms
+        //    var classroomStudents = await _classStudentRepo.GetAllWithIncludeAsync(cs => cs.Student, cs => cs.Student.Person);
+        //    var managedStudents = classroomStudents.Where(cs => supervisedRoomIds.Contains(cs.ClassRoomId)).ToList();
+        //    var managedStudentIds = managedStudents.Select(cs => cs.StudentId).ToList();
+
+        //    dashboard.TotalStudentsCount = managedStudentIds.Distinct().Count();
+
+        //    // 4. Evaluate real-time Attendance logs for today
+        //    var todayAttendance = await _studentAttendanceRepo.GetAllWithIncludeAndFilterAsync(
+        //        sa => sa.AttendanceDate == todayDate && managedStudentIds.Contains(sa.StudentId)
+        //    );
+
+        //    dashboard.AbsentTodayCount = todayAttendance.Count(sa => sa.Status == 2); // 2 = Absent
+        //                                                                              // PresentCount calculation includes simple present metrics + late arrivals
+        //    dashboard.PresentTodayCount = todayAttendance.Count(sa => sa.Status == 1 || sa.Status == 3);
+
+        //    // 5. Hydrate the "Absent Today" Global Real-time Exception Grid List Feed View
+        //    var alertRecords = todayAttendance.Where(sa => sa.Status == 2 || sa.Status == 3).ToList();
+        //    foreach (var alert in alertRecords)
+        //    {
+        //        var studentInfo = managedStudents.FirstOrDefault(cs => cs.StudentId == alert.StudentId);
+        //        if (studentInfo == null) continue;
+
+        //        dashboard.ExceptionFeed.Add(new AbsentTodayGridItemDto
+        //        {
+        //            FullName = $"{studentInfo.Student.Person.FirstName} {studentInfo.Student.Person.LastName}",
+        //            ClassName = $"Grade {studentInfo.ClassRoom.Grade.GradeNumber}",
+        //            SectionName = $"Section {studentInfo.ClassRoom.Section}",
+        //            Status = alert.Status == 2 ? "ABSENT" : "LATE"
+        //        });
+        //    }
+
+        //    return dashboard;
+        //}
+
 
         public async Task<SupervisorMainDashboardDto> GetMainDashboardAsync(int supervisorPersonId)
         {
             var dashboard = new SupervisorMainDashboardDto();
-            var todayDate = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
-            // 1. Get the current Supervisor's tracking primary key ID context
+            // NOTE: Changed to DateTime.Today to align with local school timezone daily tracking logic safely
+            var todayDate = DateOnly.FromDateTime(DateTime.Today);
+
+            // 1. Get the current Supervisor's tracking context safely
             var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
             var activeSupervisor = supervisors.FirstOrDefault();
             if (activeSupervisor == null) return dashboard;
 
-            // 2. Load rooms assigned directly to this supervisor
+            // 2. Load rooms assigned directly to this supervisor (FIXED: Using activeSupervisor.Id primary key)
             var rooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             var supervisedRooms = rooms.Where(cr => cr.SupervisorId == activeSupervisor.SupervisorId).ToList();
             var supervisedRoomIds = supervisedRooms.Select(cr => cr.ClassRoomId).ToList();
@@ -79,13 +150,19 @@ namespace BLL.Services
                 dashboard.SupervisedClasses.Add(new SupervisorClassDropdownDto
                 {
                     ClassRoomID = r.ClassRoomId,
-                    // Match the visual text casing strings in your screenshot layout ("SEVENTH - FIRST")
                     ClassDisplayName = $"Grade {r.Grade.GradeNumber} - Section {r.Section}"
                 });
             }
 
             // 3. Collect students operating inside those rooms
-            var classroomStudents = await _classStudentRepo.GetAllWithIncludeAsync(cs => cs.Student, cs => cs.Student.Person);
+            // FIX: Added explicit includes for ClassRoom and Grade to safely hydrate downstream grid builders
+            var classroomStudents = await _classStudentRepo.GetAllWithIncludeAsync(
+                cs => cs.Student,
+                cs => cs.Student.Person,
+                cs => cs.ClassRoom,
+                cs => cs.ClassRoom.Grade
+            );
+
             var managedStudents = classroomStudents.Where(cs => supervisedRoomIds.Contains(cs.ClassRoomId)).ToList();
             var managedStudentIds = managedStudents.Select(cs => cs.StudentId).ToList();
 
@@ -97,19 +174,21 @@ namespace BLL.Services
             );
 
             dashboard.AbsentTodayCount = todayAttendance.Count(sa => sa.Status == 2); // 2 = Absent
-                                                                                      // PresentCount calculation includes simple present metrics + late arrivals
-            dashboard.PresentTodayCount = todayAttendance.Count(sa => sa.Status == 1 || sa.Status == 3);
+            dashboard.PresentTodayCount = todayAttendance.Count(sa => sa.Status == 1 || sa.Status == 3); // 1 = Present, 3 = Late
 
             // 5. Hydrate the "Absent Today" Global Real-time Exception Grid List Feed View
             var alertRecords = todayAttendance.Where(sa => sa.Status == 2 || sa.Status == 3).ToList();
             foreach (var alert in alertRecords)
             {
                 var studentInfo = managedStudents.FirstOrDefault(cs => cs.StudentId == alert.StudentId);
-                if (studentInfo == null) continue;
+
+                // Defensive Check: Safeguard memory loop from un-hydrated or corrupt orphaned rows
+                if (studentInfo == null || studentInfo.ClassRoom == null || studentInfo.ClassRoom.Grade == null)
+                    continue;
 
                 dashboard.ExceptionFeed.Add(new AbsentTodayGridItemDto
                 {
-                    FullName = $"{studentInfo.Student.Person.FirstName} {studentInfo.Student.Person.LastName}",
+                    FullName = $"{studentInfo.Student.Person.FirstName} {studentInfo.Student.Person.LastName}".Replace("  ", " ").Trim(),
                     ClassName = $"Grade {studentInfo.ClassRoom.Grade.GradeNumber}",
                     SectionName = $"Section {studentInfo.ClassRoom.Section}",
                     Status = alert.Status == 2 ? "ABSENT" : "LATE"
@@ -118,6 +197,7 @@ namespace BLL.Services
 
             return dashboard;
         }
+
 
         public async Task<ClassRollCallDto?> GetClassroomRollCallAsync(int supervisorPersonId, int classRoomId)
         {
@@ -193,7 +273,7 @@ namespace BLL.Services
             var todayDate = DateTime.UtcNow.Date;
 
             var allTasks = await _taskRepo.GetAllWithIncludeAndFilterAsync(
-                t => t.AssignedPersonID == supervisorPersonId && t.CreatedAt.Date == todayDate
+                t => t.AssignedPersonID == supervisorPersonId && !t.IsDone
             );
 
             return allTasks.Select(t => new SupervisorTaskDto
@@ -693,6 +773,114 @@ namespace BLL.Services
             return studentList;
         }
 
+        // === STUDENT ATTENDANCE WORKFLOW ===
+        public async Task<bool> SaveStudentAttendanceWorkflowAsync(int supervisorPersonId, SaveStudentAttendanceDto dto)
+        {
+            var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
+            var activeSupervisor = supervisors.FirstOrDefault();
+
+            // Safety check: Fix applied to use activeSupervisor.Id instead of SupervisorId trap
+            if (activeSupervisor == null || await VerifyOversightAsync(activeSupervisor.SupervisorId, dto.ClassRoomID) == false)
+                return false;
+
+            var todayDate = DateOnly.FromDateTime(DateTime.Today);
+            var transaction = await _classRoomRepo.BeginTransactionAsync();
+
+            try
+            {
+                var existingStudentLogs = await _studentAttendanceRepo.GetAllWithIncludeAndFilterAsync(
+                    sa => sa.ClassRoomId == dto.ClassRoomID && sa.AttendanceDate == todayDate
+                );
+
+                foreach (var sDto in dto.StudentRecords)
+                {
+                    var matchedLog = existingStudentLogs.FirstOrDefault(sa => sa.StudentId == sDto.StudentID);
+                    if (matchedLog != null)
+                    {
+                        matchedLog.Status = sDto.Status;
+                        matchedLog.Notes = sDto.Note;
+                        matchedLog.UpdatedAt = DateTime.UtcNow;
+                        _studentAttendanceRepo.UpdateAsync(matchedLog);
+                    }
+                    else
+                    {
+                        var newLog = new StudentAttendance
+                        {
+                            StudentId = sDto.StudentID,
+                            ClassRoomId = dto.ClassRoomID,
+                            AttendanceDate = todayDate,
+                            Status = sDto.Status,
+                            Notes = sDto.Note,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        await _studentAttendanceRepo.AddAsync(newLog);
+                    }
+                }
+                await _studentAttendanceRepo.SaveChangesAsync();
+                await _classRoomRepo.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _classRoomRepo.RollbackTransactionAsync();
+                return false;
+            }
+        }
+
+        // === TEACHER ATTENDANCE WORKFLOW ===
+        public async Task<bool> SaveTeacherAttendanceWorkflowAsync(int supervisorPersonId, SaveTeacherAttendanceDto dto)
+        {
+            var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
+            var activeSupervisor = supervisors.FirstOrDefault();
+            if (activeSupervisor == null) return false;
+
+            var todayDate = DateOnly.FromDateTime(DateTime.Today); // DateTime format for Teacher table
+            var transaction = await _classRoomRepo.BeginTransactionAsync();
+
+            try
+            {
+                var teacherIds = dto.TeacherRecords.Select(t => t.TeacherID).ToList();
+                var existingTeacherLogs = await _teacherAttendanceRepo.GetAllWithIncludeAndFilterAsync(
+                    ta => ta.AttendanceDate == todayDate && teacherIds.Contains(ta.TeacherId)
+                );
+
+                foreach (var tDto in dto.TeacherRecords)
+                {
+                    var matchedLog = existingTeacherLogs.FirstOrDefault(ta => ta.TeacherId == tDto.TeacherID);
+
+                    // Business Rule: Force MissedPeriods to null if teacher is marked Present safely
+                    var missedPeriods = tDto.IsPresent ? null : tDto.MissedPeriodsCount;
+
+                    if (matchedLog != null)
+                    {
+                        matchedLog.IsPresent = tDto.IsPresent;
+                        matchedLog.MissedPeriodsCount = missedPeriods;
+                        matchedLog.UpdatedAt = DateTime.UtcNow;
+                        _teacherAttendanceRepo.UpdateAsync(matchedLog);
+                    }
+                    else
+                    {
+                        var newLog = new TeacherAttendance
+                        {
+                            TeacherId = tDto.TeacherID,
+                            AttendanceDate = todayDate,
+                            IsPresent = tDto.IsPresent,
+                            MissedPeriodsCount = missedPeriods,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        await _teacherAttendanceRepo.AddAsync(newLog);
+                    }
+                }
+                await _teacherAttendanceRepo.SaveChangesAsync();
+                await _classRoomRepo.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _classRoomRepo.RollbackTransactionAsync();
+                return false;
+            }
+        }
 
 
         public async Task<StudentDetailsPageDto?> GetStudentDetailedProfileAsync(int studentId, int month, int year)
@@ -712,10 +900,18 @@ namespace BLL.Services
                 ? $"{activeLink.ClassRoom.Grade.GradeNumber}th / {GetSectionNameWord(activeLink.ClassRoom.Section)}"
                 : "Unassigned";
 
-            // 3. Populate Parent Phone String Link details
-            var parents = await _studentParentRepo.GetAllWithIncludeAsync(sp => sp.Person, sp => sp.Person.Users);
-            var primaryParent = parents.FirstOrDefault(sp => sp.StudentId == studentId);
-            var parentUser = primaryParent?.Person?.Users?.FirstOrDefault();
+            var parents = await _studentParentRepo.GetAllWithIncludeAsync(
+    sp => sp.Parent,
+    sp => sp.Parent.Person,
+    sp => sp.Parent.Person.Users
+);
+
+            // Find the link matching this student id
+            var primaryParentLink = parents.FirstOrDefault(sp => sp.StudentId == studentId);
+
+            // Access the phone safely through: StudentParent -> Parent -> Person -> Users
+            var parentUser = primaryParentLink?.Parent?.Person?.Users?.FirstOrDefault();
+
             pageData.ParentPhoneNumber = parentUser?.PhoneNumber ?? "No Registered Contact Number";
 
             // 4. Hydrate Approved Marks List Feed
@@ -908,5 +1104,121 @@ namespace BLL.Services
         private string GetSectionWord(byte section) => section switch { 1 => "FIRST", 2 => "SECOND", 3 => "THIRD", _ => $"SEC {section}" };
 
 
+        // === RIGHT PANEL: CHAT THREADS LIST USING CHATROOMS ===
+        public async Task<IEnumerable<ChatThreadDto>> GetSupervisorChatThreadsAsync(int supervisorPersonId)
+        {
+            // 1. Fetch all active rooms assigned to this supervisor
+            var activeRooms = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
+                cr => cr.SupervisorPersonId == supervisorPersonId && cr.IsActive,
+                cr => cr.StudentFocus,       // Assuming navigation property to Student Entity
+                cr => cr.StudentFocus.Person,
+                cr => cr.ParentPerson        // Assuming navigation property to Person Entity for Parent
+            );
+
+            var threadsList = new List<ChatThreadDto>();
+
+            // 2. Map directly from the tracked chatroom metadata columns
+            foreach (var room in activeRooms)
+            {
+                threadsList.Add(new ChatThreadDto
+                {
+                    ChatRoomID = room.ChatRoomId,
+                    ParentPersonID = room.ParentPersonId,
+                    ParentName = $"{room.ParentPerson.FirstName} {room.ParentPerson.LastName}".Trim(),
+                    StudentName = $"{room.StudentFocus.Person.FirstName} {room.StudentFocus.Person.LastName}".Trim(),
+                    LastMessage = room.LastMessageContent ?? "No messages exchanged yet...",
+                    LastMessageTime = room.LastMessageAt
+                });
+            }
+
+            // Order threads by the last active message timeline update
+            return threadsList.OrderByDescending(t => t.LastMessageTime ?? DateTime.MinValue);
+        }
+
+        // === LEFT PANEL: FETCH CONVERSATION BY ROOM ID ===
+        public async Task<IEnumerable<ChatMessageDto>> GetChatHistoryAsync(int supervisorPersonId, int chatRoomId)
+        {
+            // Query messages table directly by ChatRoomID instead of doing an open-ended person search
+            var rawMessages = await _messageRepo.GetAllWithIncludeAndFilterAsync(
+                m => m.ChatRoomId == chatRoomId
+            );
+
+            var unreadMessages = rawMessages.Where(m => m.SenderPersonId != supervisorPersonId && m.ReadAt == null).ToList();
+            if (unreadMessages.Any())
+            {
+                foreach (var msg in unreadMessages)
+                {
+                    msg.ReadAt = DateTime.UtcNow;
+                    _messageRepo.UpdateAsync(msg);
+                }
+                await _messageRepo.SaveChangesAsync();
+            }
+
+            return rawMessages
+                .OrderBy(m => m.SentAt) // Ensure chronological order for screen scroll
+                .Select(m => new ChatMessageDto
+                {
+                    MessageID = m.MessageId,
+                    SenderPersonID = m.SenderPersonId,
+                    MessageContent = m.MessageContent,
+                    SentAt = m.SentAt,
+                    ReadAt = m.ReadAt,
+                    IsMe = m.SenderPersonId == supervisorPersonId
+                });
+        }
+
+        public async Task<bool> SendMessageAsync(int senderPersonId, SendMessageDto dto)
+        {
+            // 1. Verify the chatroom exists and is currently active
+            var room = await _chatRoomRepo.GetByIdAsync(dto.ChatRoomID);
+            if (room == null || !room.IsActive) return false;
+
+            // Optional Security: Verify sender is authorized to post to this chatroom block
+            if (room.SupervisorPersonId != senderPersonId && room.ParentPersonId != senderPersonId)
+                return false;
+
+            // 2. Open transaction engine to wrap mass data updates securely
+            var transaction = await _chatRoomRepo.BeginTransactionAsync();
+            try
+            {
+                var timestamp = DateTime.UtcNow;
+
+                // 3. Construct and insert the new message record
+                var newMessage = new Message
+                {
+                    ChatRoomId = dto.ChatRoomID,
+                    SenderPersonId = senderPersonId,
+                    MessageContent = dto.MessageContent,
+                    SentAt = timestamp,
+                    ReadAt = null // Initially unread until opened by receiver
+                };
+                await _messageRepo.AddAsync(newMessage);
+                await _messageRepo.SaveChangesAsync(); // Generates the MessageID
+
+                // 4. Update parent ChatRoom tracking columns to reflect the exchange
+                // Enforcing length constraint safeties up to 255 characters
+                room.LastMessageContent = dto.MessageContent.Length > 255
+                    ? dto.MessageContent.Substring(0, 252) + "..."
+                    : dto.MessageContent;
+
+                room.LastMessageAt = timestamp;
+                _chatRoomRepo.UpdateAsync(room);
+                await _chatRoomRepo.SaveChangesAsync();
+
+                await _chatRoomRepo.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _classRoomRepo.RollbackTransactionAsync();
+                return false;
+            }
+        }
+
+
+
     }
+
+
+
 }

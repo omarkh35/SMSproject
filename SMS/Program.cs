@@ -67,7 +67,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Example using Scoped lifetime
 builder.Services.AddScoped(typeof(IBaseRepositories<>), typeof(BaseRepositry<>));
-//ÇÈæ ÍãíÏ åæä ßá service ÈÊÚãáæ áÇÒã ÊÍØæ åæä 
 builder.Services.AddScoped<BLL.Interfaces.IAuthService, BLL.Services.AuthService>();
 builder.Services.AddScoped<BLL.Interfaces.IJwtService, BLL.Services.JwtService>();
 builder.Services.AddScoped<IParentService, ParentService>();

@@ -125,8 +125,8 @@ namespace BLL.EntitiesDTOS.Supervisor
     {
         public string Title { get; set; }
         public string Content { get; set; }
-        public bool IsGeneral { get; set; } // True if "All classes" selected
-        public List<int> TargetClassRoomIDs { get; set; } = new(); // Populated if IsGeneral is false
+        public bool IsGeneral { get; set; } 
+        public List<int> TargetClassRoomIDs { get; set; } = new(); 
     }
 
 
@@ -202,5 +202,58 @@ namespace BLL.EntitiesDTOS.Supervisor
         // Attendance Heatmap Feeder Matrix
         public List<CalendarAttendanceDayDto> AttendanceCalendar { get; set; } = new();
     }
+
+    public class SaveStudentAttendanceDto
+    {
+        public int ClassRoomID { get; set; }
+        public List<StudentAttendanceItemDto> StudentRecords { get; set; } = new();
+    }
+
+    public class StudentAttendanceItemDto
+    {
+        public int StudentID { get; set; }
+        public byte Status { get; set; } // 1=Present, 2=Absent, etc.
+        public string? Note { get; set; }
+    }
+
+    public class SaveTeacherAttendanceDto
+    {
+        public List<TeacherAttendanceItemDto> TeacherRecords { get; set; } = new();
+    }
+
+    public class TeacherAttendanceItemDto
+    {
+        public int TeacherID { get; set; }
+        public bool IsPresent { get; set; } // Matches your database boolean flag
+        public int? MissedPeriodsCount { get; set; } // Your brand new nullable database column
+    }
+
+    public class ChatThreadDto
+    {
+        public int ChatRoomID { get; set; }
+        public int ParentPersonID { get; set; }
+        public string ParentName { get; set; } = string.Empty;
+        public string StudentName { get; set; } = string.Empty;
+        public string LastMessage { get; set; } = string.Empty;
+        public DateTime? LastMessageTime { get; set; }
+    }
+
+    public class ChatMessageDto
+    {
+        public long MessageID { get; set; } // Matches your bigint column type
+        public int SenderPersonID { get; set; }
+        public string MessageContent { get; set; } = string.Empty;
+        public DateTime? SentAt { get; set; }
+        public DateTime? ReadAt { get; set; } // Matches your nullable datetime2 column
+        public bool IsMe { get; set; }
+    }
+
+    public class SendMessageDto
+    {
+        public int ChatRoomID { get; set; }
+        public string MessageContent { get; set; } = string.Empty;
+    }
+
+
 
 }

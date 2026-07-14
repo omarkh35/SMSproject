@@ -42,8 +42,12 @@ public partial class Person
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
 
     public virtual ICollection<Supervisor> Supervisors { get; set; } = new List<Supervisor>();
+    public virtual Parent? Parent { get; set; }
 
     public virtual ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();
 
     public virtual ICollection<User> Users { get; set; } = new List<User>();
+
+    public virtual ICollection<ToDoTask> ToDoTasks { get; set; } = new List<ToDoTask>();
+
 }

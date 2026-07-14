@@ -17,5 +17,9 @@ public partial class TeacherAttendance
 
     public DateTime UpdatedAt { get; set; }
 
+    public bool IsPresent { get; set; } 
+
+    public int? MissedPeriodsCount { get; set; }
+
     public virtual Teacher Teacher { get; set; } = null!;
 }

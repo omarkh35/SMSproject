@@ -19,7 +19,6 @@ namespace DAL.Entities
         public byte PriorityLevel { get; set; }
         public bool IsDone { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime? CompletedAt { get; set; }
 
 
         public virtual Person AssignedPerson { get; set; } = null!;

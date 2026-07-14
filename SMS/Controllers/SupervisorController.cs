@@ -7,6 +7,7 @@ namespace SMS.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Supervisor")]
     public class SupervisorController : Controller
     {
 
@@ -22,7 +23,6 @@ namespace SMS.Controllers
         [HttpGet("main-dashboard")]
         public async Task<IActionResult> GetDashboardCoreMetrics()
         {
-            // Extract supervisor's secure identity PersonID claim from JWT token context
             var supervisorPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
 
             var result = await _supervisorService.GetMainDashboardAsync(supervisorPersonId);
@@ -36,7 +36,7 @@ namespace SMS.Controllers
             var supervisorPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
 
             var result = await _supervisorService.GetClassroomRollCallAsync(supervisorPersonId, classRoomId);
-            if (result == null) return Forbid("You do not have administrative oversight over this classroom.");
+            if (result == null) return StatusCode(StatusCodes.Status403Forbidden, new { message = "You do not have administrative oversight over this classroom." });
 
             return Ok(result);
         }
@@ -80,19 +80,39 @@ namespace SMS.Controllers
             var personId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
 
             var result = await _supervisorService.LoadAttendanceSheetAsync(personId, classRoomId);
-            if (result == null) return Forbid("You do not manage this classroom.");
+            if (result == null) return StatusCode(StatusCodes.Status403Forbidden, new { message = "You do not have administrative oversight over this classroom." });
 
             return Ok(result);
         }
 
-        [HttpPost("save-attendance-sheet")]
-        public async Task<IActionResult> SaveDailyAttendanceSheet([FromBody] SaveAttendanceSheetDto dto)
+        //[HttpPost("save-attendance-sheet")]
+        //public async Task<IActionResult> SaveDailyAttendanceSheet([FromBody] SaveAttendanceSheetDto dto)
+        //{
+        //    var personId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+
+        //    var success = await _supervisorService.SaveAttendanceSheetWorkflowAsync(personId, dto);
+        //    return success ? Ok(new { message = "Attendance sheet synchronized successfully." })
+        //                   : BadRequest("Failed to process attendance grid save.");
+        //}
+
+        [HttpPost("save-students-attendance")]
+        public async Task<IActionResult> SaveStudentsAttendance([FromBody] SaveStudentAttendanceDto dto)
         {
             var personId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
 
-            var success = await _supervisorService.SaveAttendanceSheetWorkflowAsync(personId, dto);
-            return success ? Ok(new { message = "Attendance sheet synchronized successfully." })
-                           : BadRequest("Failed to process attendance grid save.");
+            var success = await _supervisorService.SaveStudentAttendanceWorkflowAsync(personId, dto);
+            return success ? Ok(new { message = "Student attendance grid saved successfully." })
+                           : StatusCode(StatusCodes.Status403Forbidden, new { message = "Failed to process student save or you lack classroom oversight." });
+        }
+
+        [HttpPost("save-teachers-attendance")]
+        public async Task<IActionResult> SaveTeachersAttendance([FromBody] SaveTeacherAttendanceDto dto)
+        {
+            var personId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+
+            var success = await _supervisorService.SaveTeacherAttendanceWorkflowAsync(personId, dto);
+            return success ? Ok(new { message = "Teacher attendance log synchronized successfully." })
+                           : BadRequest("Failed to process teacher attendance save.");
         }
 
         [HttpGet("announcements-panel")]
@@ -118,6 +138,8 @@ namespace SMS.Controllers
         [HttpDelete("announcements/{id}")]
         public async Task<IActionResult> DeleteAnnouncement(int id)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
             var personId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
 
             var success = await _supervisorService.DeleteAnnouncementAsync(personId, id);
@@ -178,6 +200,36 @@ namespace SMS.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("chats")]
+        public async Task<IActionResult> GetChatThreads()
+        {
+            var personId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+            var threads = await _supervisorService.GetSupervisorChatThreadsAsync(personId);
+            return Ok(threads);
+        }
+
+        [HttpGet("chat-history/{chatRoomId}")]
+        public async Task<IActionResult> GetChatHistory(int chatRoomId)
+        {
+            var personId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+            var history = await _supervisorService.GetChatHistoryAsync(personId, chatRoomId);
+            return Ok(history);
+        }
+
+        [HttpPost("send-message")]
+        public async Task<IActionResult> SendMessage([FromBody] SendMessageDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.MessageContent))
+                return BadRequest("Message content cannot be empty.");
+
+            var personId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+
+            var success = await _supervisorService.SendMessageAsync(personId, dto);
+            return success ? Ok(new { message = "Message dispatched and thread updated successfully." })
+                           : BadRequest("Failed to process message transmission.");
+        }
+
 
     }
 }

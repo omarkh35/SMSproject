@@ -187,14 +187,14 @@ namespace BLL.Services
 
         public async Task<bool> UpdateTeacherAssignmentAsync(TeacherToClassDto dto)
         {
-           
+
             var assignment = await _classTeacherRepo.GetByIdAsync(dto.ClassroomTeacherId);
 
             if (assignment == null) return false;
 
-            assignment.ClassRoomId = dto.ClassRoomId; 
-            assignment.SubjectId = dto.SubjectId;     
-            assignment.TeacherId = dto.TeacherId;    
+            assignment.ClassRoomId = dto.ClassRoomId;
+            assignment.SubjectId = dto.SubjectId;
+            assignment.TeacherId = dto.TeacherId;
 
             _classTeacherRepo.UpdateAsync(assignment);
             await _classTeacherRepo.SaveChangesAsync();
@@ -240,7 +240,7 @@ namespace BLL.Services
             var allSupervisors = await _supervisorRepo.GetAllWithIncludeAsync(
                 s => s.Person,
                 s => s.DepartmentManager,
-                s => s.Person.Users 
+                s => s.Person.Users
             );
 
             var activeSupervisorsForManager = allSupervisors
@@ -259,7 +259,7 @@ namespace BLL.Services
                 var assignedClasses = allClassRooms
                     .Where(cr => cr.SupervisorId == sup.SupervisorId)
                     .Select(cr => $"Grade {cr.Grade.GradeNumber} (Sec {cr.Section})")
-                    .Distinct() 
+                    .Distinct()
                     .ToList();
 
                 var associatedUserAccount = sup.Person.Users.FirstOrDefault();
@@ -270,7 +270,7 @@ namespace BLL.Services
                     SupervisorID = sup.SupervisorId,
                     FullName = $"{sup.Person.FirstName} {sup.Person.LastName}",
                     ProfessionalTitle = "Academic Supervisor",
-                    PhoneNumber = extractedPhoneNumber, 
+                    PhoneNumber = extractedPhoneNumber,
                     Status = sup.Person.IsActive ? "Active" : "Inactive",
                     AssignedClasses = assignedClasses
                 });
@@ -284,7 +284,7 @@ namespace BLL.Services
         public async Task<TeachersDashboardDto> GetTeachersManagementDashboardAsync(int managerPersonId, int page)
         {
             var dashboard = new TeachersDashboardDto();
-            const int pageSize = 8; 
+            const int pageSize = 8;
 
             var allTeachers = await _teacherRepo.GetAllWithIncludeAsync(
                 t => t.Person,
@@ -301,7 +301,7 @@ namespace BLL.Services
             dashboard.TotalPages = (int)Math.Ceiling((double)dashboard.TotalTeachersCount / pageSize);
 
             var paginatedTeachers = relevantTeachers
-                .OrderBy(t => t.Person.FirstName) 
+                .OrderBy(t => t.Person.FirstName)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
@@ -338,13 +338,13 @@ namespace BLL.Services
                     SecondName = dto.SecondName,
                     LastName = dto.LastName,
                     DateOfBirth = dto.DateOfBirth,
-                    Gender= dto.Gender, 
+                    Gender = dto.Gender,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
 
                 await _personRepo.AddAsync(newPerson);
-                await _personRepo.SaveChangesAsync(); 
+                await _personRepo.SaveChangesAsync();
 
                 string? hashedPassword = null;
                 if (!string.IsNullOrEmpty(dto.ClearTextPassword))
@@ -354,12 +354,12 @@ namespace BLL.Services
 
                 var newUser = new User
                 {
-                    PersonId = newPerson.PersonId, 
-                    UserRoleId = 2, 
+                    PersonId = newPerson.PersonId,
+                    UserRoleId = 2,
                     PhoneNumber = dto.PhoneNumber,
                     Email = dto.Email,
                     HashPassword = hashedPassword,
-                    AccountNumber = generatedAccountNumber 
+                    AccountNumber = generatedAccountNumber
                 };
 
                 await _userRepo.AddAsync(newUser);
@@ -368,8 +368,8 @@ namespace BLL.Services
                 var newTeacher = new Teacher
                 {
                     PersonId = newPerson.PersonId,
-                    WeeklyClasses = dto.WeeklyClasses,   
-                    SalaryPerClass = dto.SalaryPerClass  
+                    WeeklyClasses = dto.WeeklyClasses,
+                    SalaryPerClass = dto.SalaryPerClass
                 };
 
                 await _teacherRepo.AddAsync(newTeacher);
@@ -445,7 +445,7 @@ namespace BLL.Services
                 .Take(pageSize)
                 .ToList();
 
-            var allStudentParents = await _studentParentRepo.GetAllWithIncludeAsync(sp => sp.Person, sp => sp.Person.Users);
+            var allStudentParents = await _studentParentRepo.GetAllWithIncludeAsync(sp => sp.Parent, sp => sp.Parent.Person, sp => sp.Parent.Person.Users);
 
             foreach (var record in paginatedRecords)
             {
@@ -462,7 +462,7 @@ namespace BLL.Services
                 }
 
                 var parentLink = allStudentParents.FirstOrDefault(sp => sp.StudentId == record.StudentId);
-                var parentUserAccount = parentLink?.Person?.Users?.FirstOrDefault();
+                var parentUserAccount = parentLink?.Parent?.Person?.Users?.FirstOrDefault();
                 string parentPhone = parentUserAccount?.PhoneNumber ?? "No Parent Link";
 
                 string cleanFullName = $"{record.Student.Person.FirstName} {record.Student.Person.SecondName} {record.Student.Person.LastName}".Replace("  ", " ").Trim();

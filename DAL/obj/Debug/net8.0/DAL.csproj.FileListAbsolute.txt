@@ -7,9 +7,9 @@ C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.GeneratedMSBuildEdito
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.AssemblyInfoInputs.cache
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.AssemblyInfo.cs
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.csproj.CoreCompileInputs.cache
+C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.sourcelink.json
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.dll
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\refint\DAL.dll
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.pdb
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.genruntimeconfig.cache
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\ref\DAL.dll
-C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.sourcelink.json

@@ -9,10 +9,10 @@ C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.GeneratedMSBuildEdito
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.AssemblyInfoInputs.cache
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.AssemblyInfo.cs
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.csproj.CoreCompileInputs.cache
+C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.sourcelink.json
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.csproj.Up2Date
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.dll
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\refint\BLL.dll
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.pdb
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.genruntimeconfig.cache
 C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\ref\BLL.dll
-C:\Users\USER\Desktop\SMS Project\BLL\obj\Debug\net8.0\BLL.sourcelink.json

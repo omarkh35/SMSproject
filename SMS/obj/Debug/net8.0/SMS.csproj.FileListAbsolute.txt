@@ -1,5 +1,6 @@
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\appsettings.json
+C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\SMS.staticwebassets.runtime.json
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\SMS.staticwebassets.endpoints.json
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\SMS.exe
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\SMS.deps.json
@@ -10,6 +11,7 @@ C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\Azure.Core.dll
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\Azure.Identity.dll
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\BCrypt.Net-Next.dll
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\Humanizer.dll
+C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\Microsoft.CodeAnalysis.dll
 C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\Microsoft.CodeAnalysis.CSharp.dll
@@ -126,6 +128,7 @@ C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\SMS.AssemblyInfo.cs
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\SMS.csproj.CoreCompileInputs.cache
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\SMS.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\SMS.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\SMS.sourcelink.json
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\scopedcss\bundle\SMS.styles.css
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\staticwebassets.build.json.cache
@@ -138,6 +141,3 @@ C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\refint\SMS.dll
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\SMS.pdb
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\SMS.genruntimeconfig.cache
 C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\ref\SMS.dll
-C:\Users\USER\Desktop\SMS Project\SMS\obj\Debug\net8.0\SMS.sourcelink.json
-C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
-C:\Users\USER\Desktop\SMS Project\SMS\bin\Debug\net8.0\SMS.staticwebassets.runtime.json

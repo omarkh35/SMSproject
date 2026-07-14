@@ -21,9 +21,13 @@ public partial class ClassRoom
 
     public virtual ICollection<ClassroomTeacher> ClassroomTeachers { get; set; } = new List<ClassroomTeacher>();
 
+    public virtual ICollection<DailyLesson> DailyLessons { get; set; } = new List<DailyLesson>();
+
     public virtual Grade Grade { get; set; } = null!;
 
     public virtual ICollection<Homework> Homeworks { get; set; } = new List<Homework>();
+
+    public virtual ICollection<ToDoTask> ToDoTasks { get; set; } = new List<ToDoTask>();
 
     public virtual ICollection<StudentAttendance> StudentAttendances { get; set; } = new List<StudentAttendance>();
 }
