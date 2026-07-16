@@ -1,5 +1,168 @@
 [
   {
+    "ContainingType": "SMS.Controllers.AccountantController",
+    "Method": "GetInstallmentTracking",
+    "RelativePath": "api/Accountant/installment-tracking",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "status",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "searchName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "classRoomId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.AccountantController",
+    "Method": "GetParentAccounts",
+    "RelativePath": "api/Accountant/parent-accounts",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "searchQuery",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.AccountantController",
+    "Method": "RegisterStudent",
+    "RelativePath": "api/Accountant/register-student",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.Accountant.StudentRegistrationDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.AccountantController",
+    "Method": "GetStudentDetails",
+    "RelativePath": "api/Accountant/student-details/{studentId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.AccountantController",
+    "Method": "UpdateStudentDetails",
+    "RelativePath": "api/Accountant/student-details/{studentId}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.Accountant.StudentRegistrationDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.AccountantController",
+    "Method": "GetStudentPaymentDetails",
+    "RelativePath": "api/Accountant/student-payments/{studentId}/details",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.AccountantController",
+    "Method": "DeleteStudent",
+    "RelativePath": "api/Accountant/student-record/{studentId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.AccountantController",
+    "Method": "GetStudentsDashboard",
+    "RelativePath": "api/Accountant/students-dashboard",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "searchName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "classRoomId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "SMS.Controllers.AuthController",
     "Method": "Login",
     "RelativePath": "api/Auth/login",

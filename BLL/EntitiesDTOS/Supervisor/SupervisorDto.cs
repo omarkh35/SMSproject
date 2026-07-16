@@ -49,16 +49,6 @@ namespace BLL.EntitiesDTOS.Supervisor
         public string CurrentStatus { get; set; } // "Present", "Absent", "Late", or "Not Set"
     }
 
-    public class SupervisorTaskDto
-    {
-        public long TaskID { get; set; }
-        public string TaskDescription { get; set; }
-        public bool IsDone { get; set; }
-        public DateTime DueDate { get; set; }
-        public int? ClassRoomID { get; set; }
-        public byte PriorityLevel { get; set; }
-    }
-
     public class CreateTaskDto
     {
         public string TaskDescription { get; set; }
@@ -254,6 +244,15 @@ namespace BLL.EntitiesDTOS.Supervisor
         public string MessageContent { get; set; } = string.Empty;
     }
 
-
+    public class SupervisorTaskDto
+    {
+        public long TaskID { get; set; }
+        public string TaskDescription { get; set; } = string.Empty;
+        public bool IsDone { get; set; }
+        public DateTime DueDate { get; set; }
+        public int? ClassRoomID { get; set; }
+        public string ClassRoomName { get; set; } = "General Task"; // Formatted as "Class/Section"
+        public byte PriorityLevel { get; set; }
+    }
 
 }

@@ -5,6 +5,260 @@
     "version": "1.0"
   },
   "paths": {
+    "/api/Accountant/students-dashboard": {
+      "get": {
+        "tags": [
+          "Accountant"
+        ],
+        "parameters": [
+          {
+            "name": "searchName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "classRoomId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Accountant/register-student": {
+      "post": {
+        "tags": [
+          "Accountant"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRegistrationDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRegistrationDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRegistrationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Accountant/student-details/{studentId}": {
+      "get": {
+        "tags": [
+          "Accountant"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Accountant"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRegistrationDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRegistrationDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRegistrationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Accountant/student-record/{studentId}": {
+      "delete": {
+        "tags": [
+          "Accountant"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Accountant/parent-accounts": {
+      "get": {
+        "tags": [
+          "Accountant"
+        ],
+        "parameters": [
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Accountant/installment-tracking": {
+      "get": {
+        "tags": [
+          "Accountant"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "All"
+            }
+          },
+          {
+            "name": "searchName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "classRoomId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Accountant/student-payments/{studentId}/details": {
+      "get": {
+        "tags": [
+          "Accountant"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Auth/login": {
       "post": {
         "tags": [
@@ -2199,6 +2453,71 @@
           "notes": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentRegistrationDto": {
+        "required": [
+          "academicYear",
+          "dateOfBirth",
+          "familyName",
+          "fatherName",
+          "firstName",
+          "gender",
+          "gradeID",
+          "homeAddress",
+          "motherName",
+          "yearlyPayment"
+        ],
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "fatherName": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "familyName": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "motherName": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "boolean"
+          },
+          "studentPhotoPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "familyNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "homeAddress": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "gradeID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "academicYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "yearlyPayment": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

@@ -16,6 +16,12 @@ namespace BLL.Interfaces
         Task<StudentDetailsFormDto?> GetStudentDetailsForFormAsync(int studentId);
         Task<bool> UpdateStudentRegistrationAsync(int studentId, StudentRegistrationDto dto);
         Task<bool> DeleteStudentRecordWorkflowAsync(int studentId);
+        Task<ParentAccountsDashboardDto> GetParentAccountsGridAsync(string? searchQuery, int page);
+
+        Task<InstallmentTrackingDashboardDto> GetInstallmentTrackingGridAsync(string? filterStatus, string? searchName, int? classRoomId, int page);
+        Task<StudentPaymentDetailsDto?> GetStudentPaymentDetailsAsync(int studentId);
+        Task<StaffSalaryDashboardDto> GetEducationalStaffSalariesAsync();
+
 
     }
 }

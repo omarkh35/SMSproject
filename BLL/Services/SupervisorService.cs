@@ -270,10 +270,11 @@ namespace BLL.Services
 
         public async Task<IEnumerable<SupervisorTaskDto>> GetTodayTasksAsync(int supervisorPersonId)
         {
-            var todayDate = DateTime.UtcNow.Date;
-
+            // Fetch pending tasks with eager loading chain links included
             var allTasks = await _taskRepo.GetAllWithIncludeAndFilterAsync(
-                t => t.AssignedPersonID == supervisorPersonId && !t.IsDone
+                t => t.AssignedPersonID == supervisorPersonId && !t.IsDone,
+                t => t.ClassRoom,
+                t => t.ClassRoom.Grade
             );
 
             return allTasks.Select(t => new SupervisorTaskDto
@@ -283,8 +284,46 @@ namespace BLL.Services
                 IsDone = t.IsDone,
                 DueDate = t.DueDate,
                 ClassRoomID = t.ClassRoomID,
-                PriorityLevel = t.PriorityLevel
+                PriorityLevel = t.PriorityLevel,
+
+                // Dynamically build the "Class/Section" textual format safely
+                ClassRoomName = t.ClassRoom != null && t.ClassRoom.Grade != null
+                    ? $"{GetGradeOrdinalWord(t.ClassRoom.Grade.GradeNumber)}/{GetSectionOrdinalWord(t.ClassRoom.Section)}"
+                    : "General Task"
             });
+        }
+
+        private static string GetGradeOrdinalWord(int gradeNumber)
+        {
+            return gradeNumber switch
+            {
+                1 => "First",
+                2 => "Second",
+                3 => "Third",
+                4 => "Fourth",
+                5 => "Fifth",
+                6 => "Sixth",
+                7 => "Seventh",
+                8 => "Eighth",
+                9 => "Ninth",
+                10 => "Tenth",
+                11 => "Eleventh",
+                12 => "Twelfth",
+                _ => $"Grade {gradeNumber}"
+            };
+        }
+
+        // Helper method to convert Section byte numbers to text strings safely
+        private static string GetSectionOrdinalWord(byte sectionNumber)
+        {
+            return sectionNumber switch
+            {
+                1 => "First",
+                2 => "Second",
+                3 => "Third",
+                4 => "Fourth",
+                _ => $"Section {sectionNumber}"
+            };
         }
 
         public async Task<bool> CreateTaskAsync(int supervisorPersonId, CreateTaskDto dto)
