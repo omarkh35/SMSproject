@@ -3,17 +3,17 @@
   "WorkspaceRootPath": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|c:\\users\\user\\desktop\\sms project\\sms\\controllers\\accountantcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|solutionrelative:controllers\\accountantcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|c:\\users\\user\\desktop\\sms project\\sms\\controllers\\departmentmanagercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|solutionrelative:controllers\\departmentmanagercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\services\\accountantservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\services\\departmentmanagerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\interfaces\\iaccountantservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\entitiesdtos\\departmentmanager\\departmentmanagerdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\entitiesdtos\\accountant\\accountantdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\interfaces\\idepartmentmanagerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -23,58 +23,58 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "IAccountantService.cs",
-              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Interfaces\\IAccountantService.cs",
-              "RelativeDocumentMoniker": "..\\BLL\\Interfaces\\IAccountantService.cs",
-              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Interfaces\\IAccountantService.cs",
-              "RelativeToolTip": "..\\BLL\\Interfaces\\IAccountantService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-16T18:02:07.553Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "AccountantDTO.cs",
-              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\EntitiesDTOS\\Accountant\\AccountantDTO.cs",
-              "RelativeDocumentMoniker": "..\\BLL\\EntitiesDTOS\\Accountant\\AccountantDTO.cs",
-              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\EntitiesDTOS\\Accountant\\AccountantDTO.cs",
-              "RelativeToolTip": "..\\BLL\\EntitiesDTOS\\Accountant\\AccountantDTO.cs",
-              "ViewState": "AgIAAHcAAAAAAAAAAAAqwJQAAAAFAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-16T18:02:03.594Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "AccountantController.cs",
-              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\Controllers\\AccountantController.cs",
-              "RelativeDocumentMoniker": "Controllers\\AccountantController.cs",
-              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\Controllers\\AccountantController.cs",
-              "RelativeToolTip": "Controllers\\AccountantController.cs",
-              "ViewState": "AgIAAFMAAAAAAAAAAAA+wG4AAAAxAAAAAAAAAA==",
+              "Title": "DepartmentManagerController.cs",
+              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\Controllers\\DepartmentManagerController.cs",
+              "RelativeDocumentMoniker": "Controllers\\DepartmentManagerController.cs",
+              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\Controllers\\DepartmentManagerController.cs",
+              "RelativeToolTip": "Controllers\\DepartmentManagerController.cs",
+              "ViewState": "AgIAAHAAAAAAAAAAAAAswIQAAAAgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-16T17:56:03.045Z",
+              "WhenOpened": "2026-07-16T18:15:48.298Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "AccountantService.cs",
-              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\AccountantService.cs",
-              "RelativeDocumentMoniker": "..\\BLL\\Services\\AccountantService.cs",
-              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\AccountantService.cs",
-              "RelativeToolTip": "..\\BLL\\Services\\AccountantService.cs",
-              "ViewState": "AgIAAFcCAAAAAAAAAAAAAF8CAABkAAAAAAAAAA==",
+              "Title": "DepartmentManagerService.cs",
+              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\DepartmentManagerService.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\Services\\DepartmentManagerService.cs",
+              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\DepartmentManagerService.cs",
+              "RelativeToolTip": "..\\BLL\\Services\\DepartmentManagerService.cs",
+              "ViewState": "AgIAAJQBAAAAAAAAAADwv6IBAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-16T17:54:24.13Z",
+              "WhenOpened": "2026-07-16T18:15:41.632Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "IDepartmentManagerService.cs",
+              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Interfaces\\IDepartmentManagerService.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\Interfaces\\IDepartmentManagerService.cs",
+              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Interfaces\\IDepartmentManagerService.cs",
+              "RelativeToolTip": "..\\BLL\\Interfaces\\IDepartmentManagerService.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAQwCgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-16T18:15:36.768Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "DepartmentManagerDtos.cs",
+              "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\EntitiesDTOS\\DepartmentManager\\DepartmentManagerDtos.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\EntitiesDTOS\\DepartmentManager\\DepartmentManagerDtos.cs",
+              "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\EntitiesDTOS\\DepartmentManager\\DepartmentManagerDtos.cs",
+              "RelativeToolTip": "..\\BLL\\EntitiesDTOS\\DepartmentManager\\DepartmentManagerDtos.cs",
+              "ViewState": "AgIAAGQAAAAAAAAAAIA3wGwAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-16T18:15:32.565Z",
               "EditorCaption": ""
             }
           ]

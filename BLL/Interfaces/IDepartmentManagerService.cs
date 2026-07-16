@@ -29,13 +29,16 @@ namespace BLL.Interfaces
 
         /////////////////////////////////////////////
         ///
-        Task<SupervisorsDashboardDto> GetSupervisorsDashboardAsync(int managerPersonId);
+    
 
-        Task<TeachersDashboardDto> GetTeachersManagementDashboardAsync(int managerPersonId,int page);
+        //////////////////////////////////////////
+        ///
+        Task<StudentDirectoryDashboardDto> GetStudentDirectoryDashboardAsync(int managerPersonId, string? searchName, int page);
 
-        Task<bool> RegisterTeacherWorkflowAsync(CreateTeacherDto dto);
 
-        Task<StudentDirectoryDashboardDto> GetStudentDirectoryDashboardAsync(int managerPersonId, int page);
+        Task<SupervisorsDashboardDto> GetSupervisorsManagementDashboardAsync(int managerPersonId);
+        Task<TeachersDashboardDto> GetTeachersManagementDashboardAsync();
+
 
     }
 

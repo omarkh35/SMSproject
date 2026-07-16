@@ -231,198 +231,54 @@ namespace BLL.Services
 
 
         ////////////////////////////////////////////
-        public async Task<SupervisorsDashboardDto> GetSupervisorsDashboardAsync(int managerPersonId)
-        {
-            var dashboard = new SupervisorsDashboardDto();
+        
 
-            var allClassRooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
-
-            var allSupervisors = await _supervisorRepo.GetAllWithIncludeAsync(
-                s => s.Person,
-                s => s.DepartmentManager,
-                s => s.Person.Users
-            );
-
-            var activeSupervisorsForManager = allSupervisors
-                .Where(s => s.DepartmentManager.PersonId == managerPersonId)
-                .ToList();
-
-            dashboard.TotalActiveSupervisors = activeSupervisorsForManager.Count(s => s.Person.IsActive);
-
-            dashboard.AssignedSectionsCount = allClassRooms
-                .Count(cr => cr.SupervisorId != null && activeSupervisorsForManager.Any(s => s.SupervisorId == cr.SupervisorId));
-
-            dashboard.UnassignedClassesCount = allClassRooms.Count(cr => cr.SupervisorId == null);
-
-            foreach (var sup in activeSupervisorsForManager)
-            {
-                var assignedClasses = allClassRooms
-                    .Where(cr => cr.SupervisorId == sup.SupervisorId)
-                    .Select(cr => $"Grade {cr.Grade.GradeNumber} (Sec {cr.Section})")
-                    .Distinct()
-                    .ToList();
-
-                var associatedUserAccount = sup.Person.Users.FirstOrDefault();
-                var extractedPhoneNumber = associatedUserAccount?.PhoneNumber ?? "No Active Number";
-
-                dashboard.Supervisors.Add(new SupervisorGridItemDto
-                {
-                    SupervisorID = sup.SupervisorId,
-                    FullName = $"{sup.Person.FirstName} {sup.Person.LastName}",
-                    ProfessionalTitle = "Academic Supervisor",
-                    PhoneNumber = extractedPhoneNumber,
-                    Status = sup.Person.IsActive ? "Active" : "Inactive",
-                    AssignedClasses = assignedClasses
-                });
-            }
-
-            dashboard.TotalCount = dashboard.Supervisors.Count;
-
-            return dashboard;
-        }
-
-        public async Task<TeachersDashboardDto> GetTeachersManagementDashboardAsync(int managerPersonId, int page)
-        {
-            var dashboard = new TeachersDashboardDto();
-            const int pageSize = 8;
-
-            var allTeachers = await _teacherRepo.GetAllWithIncludeAsync(
-                t => t.Person,
-                t => t.Person.Users
-            );
-
-            var relevantTeachers = allTeachers.Where(t => t.Person.IsActive == true).ToList();
-
-            dashboard.TotalTeachersCount = relevantTeachers.Count;
-
-            double averageClasses = relevantTeachers.Any() ? relevantTeachers.Average(t => t.WeeklyClasses ?? 0) : 0;
-            dashboard.AvgWorkingHours = $"{(int)Math.Round(averageClasses * 0.75)}h/week";
-
-            dashboard.TotalPages = (int)Math.Ceiling((double)dashboard.TotalTeachersCount / pageSize);
-
-            var paginatedTeachers = relevantTeachers
-                .OrderBy(t => t.Person.FirstName)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            foreach (var teacher in paginatedTeachers)
-            {
-                var associatedUser = teacher.Person.Users.FirstOrDefault();
-                string cleanFullName = $"{teacher.Person.FirstName} {teacher.Person.SecondName} {teacher.Person.LastName}".Replace("  ", " ").Trim();
-
-                dashboard.Teachers.Add(new TeacherGridItemDto
-                {
-                    TeacherID = teacher.TeacherId,
-                    FullName = cleanFullName,
-                    PhoneNumber = associatedUser?.PhoneNumber ?? "No Number",
-                    WorkingHours = $"{(teacher.WeeklyClasses ?? 0) * 0.75}h / Week"
-                });
-            }
-
-            return dashboard;
-        }
-
-        public async Task<bool> RegisterTeacherWorkflowAsync(CreateTeacherDto dto)
-        {
-            var transaction = await _classRoomRepo.BeginTransactionAsync();
-
-            try
-            {
-                string sqlCommand = "SELECT CAST(NEXT VALUE FOR [dbo].[Seq_UserAccountNumber] AS NVARCHAR(8))";
-                string generatedAccountNumber = await _classRoomRepo.ExecuteRawSqlScalarAsync<string>(sqlCommand);
-
-                var newPerson = new Person
-                {
-                    FirstName = dto.FirstName,
-                    SecondName = dto.SecondName,
-                    LastName = dto.LastName,
-                    DateOfBirth = dto.DateOfBirth,
-                    Gender = dto.Gender,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                await _personRepo.AddAsync(newPerson);
-                await _personRepo.SaveChangesAsync();
-
-                string? hashedPassword = null;
-                if (!string.IsNullOrEmpty(dto.ClearTextPassword))
-                {
-                    hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.ClearTextPassword);
-                }
-
-                var newUser = new User
-                {
-                    PersonId = newPerson.PersonId,
-                    UserRoleId = 2,
-                    PhoneNumber = dto.PhoneNumber,
-                    Email = dto.Email,
-                    HashPassword = hashedPassword,
-                    AccountNumber = generatedAccountNumber
-                };
-
-                await _userRepo.AddAsync(newUser);
-                await _userRepo.SaveChangesAsync();
-
-                var newTeacher = new Teacher
-                {
-                    PersonId = newPerson.PersonId,
-                    WeeklyClasses = dto.WeeklyClasses,
-                    SalaryPerClass = dto.SalaryPerClass
-                };
-
-                await _teacherRepo.AddAsync(newTeacher);
-                await _teacherRepo.SaveChangesAsync();
-
-                await _classRoomRepo.CommitTransactionAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                await _classRoomRepo.RollbackTransactionAsync();
-                throw new Exception($"Database Workflow Crash: {ex.Message} -> Inner: {ex.InnerException?.Message}");
-
-                //return false;
-            }
-            finally
-            {
-                transaction.Dispose();
-            }
-        }
-
-        public async Task<StudentDirectoryDashboardDto> GetStudentDirectoryDashboardAsync(int managerPersonId, int page)
+        public async Task<StudentDirectoryDashboardDto> GetStudentDirectoryDashboardAsync(int managerPersonId, string? searchName, int page)
         {
             var dashboard = new StudentDirectoryDashboardDto();
             const int pageSize = 8;
 
+            // 1. جلب الموجهين المرتبطين بمدير القسم الحالي عبر PersonID بالحروف الكبيرة
             var allSupervisors = await _supervisorRepo.GetAllWithIncludeAsync(s => s.DepartmentManager);
             var activeSupervisorIds = allSupervisors
                 .Where(s => s.DepartmentManager.PersonId == managerPersonId)
                 .Select(s => s.SupervisorId)
                 .ToList();
 
+            // 2. جلب الصفوف الخاضعة لإشراف هؤلاء الموجهين
             var allClassRooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             var managedClassRooms = allClassRooms
                 .Where(cr => cr.SupervisorId != null && activeSupervisorIds.Contains(cr.SupervisorId.Value))
                 .ToList();
             var managedClassRoomIds = managedClassRooms.Select(cr => cr.ClassRoomId).ToList();
 
+            // 3. تحديد الطلاب الفعليين داخل هذه الغرف الصفية
             var allClassroomStudents = await _classStudentRepo.GetAllWithIncludeAsync(cs => cs.ClassRoom);
-            var managedStudentIds = allClassroomStudents
+            var managedClassroomStudents = allClassroomStudents
                 .Where(cs => managedClassRoomIds.Contains(cs.ClassRoomId))
-                .Select(cs => cs.StudentId)
-                .Distinct()
                 .ToList();
+            var managedStudentIds = managedClassroomStudents.Select(cs => cs.StudentId).Distinct().ToList();
 
+            // 4. سحب سجلات الطلاب وتطبيق شرط البحث بالاسم (FirstName, SecondName, LastName)
             var allStudentRecords = await _studentRecordRepo.GetAllWithIncludeAsync(sr => sr.Student, sr => sr.Student.Person);
-            var relevantStudentRecords = allStudentRecords
-                .Where(sr => managedStudentIds.Contains(sr.StudentId))
-                .ToList();
+            var filteredStudentRecords = allStudentRecords.Where(sr => managedStudentIds.Contains(sr.StudentId));
+
+            if (!string.IsNullOrWhiteSpace(searchName))
+            {
+                string cleanSearch = searchName.Trim().ToLower();
+                filteredStudentRecords = filteredStudentRecords.Where(sr =>
+                    sr.Student.Person.FirstName.ToLower().Contains(cleanSearch) ||
+                    sr.Student.Person.SecondName.ToLower().Contains(cleanSearch) ||
+                    sr.Student.Person.LastName.ToLower().Contains(cleanSearch)
+                );
+            }
+
+            var relevantStudentRecords = filteredStudentRecords.ToList();
 
             dashboard.TotalStudentsCount = relevantStudentRecords.Count;
             dashboard.TotalPages = (int)Math.Ceiling((double)dashboard.TotalStudentsCount / pageSize);
 
+            // 5. حساب نسبة النجاح الأكاديمية (Success Rate) للفصل الأول
             var allMarks = await _markRepo.GetAllWithIncludeAsync(m => m.ExamType);
             var sem1Exams = allMarks
                 .Where(m => m.IsApproved && m.ExamType.Semester == 1 && managedStudentIds.Contains(m.StudentRecordId))
@@ -432,13 +288,14 @@ namespace BLL.Services
             {
                 int passingMarks = sem1Exams.Count(m => m.MarkValue >= (m.FullMark / 2));
                 double percentage = ((double)passingMarks / sem1Exams.Count) * 100;
-                dashboard.PassRate = $"{percentage:F1}%";
+                dashboard.PassRate = $"{percentage:F0}%";
             }
             else
             {
                 dashboard.PassRate = "N/A";
             }
 
+            // 6. تطبيق منطق الصفحات للجدول
             var paginatedRecords = relevantStudentRecords
                 .OrderBy(sr => sr.Student.Person.FirstName)
                 .Skip((page - 1) * pageSize)
@@ -447,32 +304,122 @@ namespace BLL.Services
 
             var allStudentParents = await _studentParentRepo.GetAllWithIncludeAsync(sp => sp.Parent, sp => sp.Parent.Person, sp => sp.Parent.Person.Users);
 
+            // 7. صياغة المخرجات النهائية وضمان بقاء الـ Section رقماً
             foreach (var record in paginatedRecords)
             {
-                var assignedClassLink = allClassroomStudents.FirstOrDefault(cs => cs.StudentId == record.StudentId);
-                string classDisplay = "Not Assigned";
+                string gradeDisplay = "-";
+                int sectionDisplay = 0; // القيمة الافتراضية كرقم لقاعدة البيانات
 
+                var assignedClassLink = managedClassroomStudents.FirstOrDefault(cs => cs.StudentId == record.StudentId);
                 if (assignedClassLink != null)
                 {
                     var matchedRoom = managedClassRooms.FirstOrDefault(cr => cr.ClassRoomId == assignedClassLink.ClassRoomId);
                     if (matchedRoom != null)
                     {
-                        classDisplay = $"Grade {matchedRoom.Grade.GradeNumber} - Section {matchedRoom.Section}";
+                        gradeDisplay = $"{matchedRoom.Grade.GradeNumber}th";
+                        sectionDisplay = matchedRoom.Section; // إرجاع القيمة الرقمية المباشرة (1, 2, 3...) دون أي تغيير
                     }
                 }
 
                 var parentLink = allStudentParents.FirstOrDefault(sp => sp.StudentId == record.StudentId);
                 var parentUserAccount = parentLink?.Parent?.Person?.Users?.FirstOrDefault();
-                string parentPhone = parentUserAccount?.PhoneNumber ?? "No Parent Link";
+                string parentPhone = parentUserAccount?.PhoneNumber ?? "No Number";
 
-                string cleanFullName = $"{record.Student.Person.FirstName} {record.Student.Person.SecondName} {record.Student.Person.LastName}".Replace("  ", " ").Trim();
+                string cleanFullName = $"{record.Student.Person.FirstName} {record.Student.Person.LastName}".Replace("  ", " ").Trim();
 
                 dashboard.Students.Add(new StudentGridItemDto
                 {
                     StudentID = record.StudentId,
-                    FullName = cleanFullName,
-                    ClassAndSection = classDisplay,
-                    ParentPhoneNumber = parentPhone
+                    StudentName = cleanFullName,
+                    Grade = gradeDisplay,
+                    Section = sectionDisplay, // رقم نقي تماماً
+                    Phone = parentPhone
+                });
+            }
+
+            return dashboard;
+        }
+
+        public async Task<SupervisorsDashboardDto> GetSupervisorsManagementDashboardAsync(int managerPersonId)
+        {
+            var dashboard = new SupervisorsDashboardDto();
+
+            // 1. Fetch all classrooms globally to calculate cross-sectional card summaries
+            var allClassRooms = await _classRoomRepo.GetAllWithIncludeAsync();
+
+            // Open Sections rule: Count classrooms that have no supervisor assigned
+            dashboard.OpenSections = allClassRooms.Count(cr => cr.SupervisorId == null);
+
+            // 2. Fetch all supervisors under this specific Department Manager's oversight line
+            var baseSupervisors = await _supervisorRepo.GetAllWithIncludeAsync(
+                s => s.Person,
+                s => s.DepartmentManager
+            );
+
+            var managedSupervisors = baseSupervisors
+                .Where(s => s.DepartmentManager.PersonId == managerPersonId)
+                .ToList();
+
+            dashboard.TotalSupervisors = managedSupervisors.Count;
+
+            // 3. Gather user security contact channels to resolve direct telephone links
+            var allUsers = await _userRepo.GetAllWithIncludeAsync();
+
+            // 4. Hydrate row array metrics
+            foreach (var sup in managedSupervisors)
+            {
+                // Sections rule: Calculate count of active classrooms assigned to this distinct supervisor ID
+                int supervisedCount = allClassRooms.Count(cr => cr.SupervisorId == sup.SupervisorId);
+
+                var relatedUser = allUsers.FirstOrDefault(u => u.PersonId == sup.PersonId);
+                string phoneContact = relatedUser?.PhoneNumber ?? "No Number";
+
+                string calculatedStatus = sup.Person.IsActive ? "Active" : "Inactive";
+                string combinedFullName = $"{sup.Person.FirstName} {sup.Person.LastName}".Replace("  ", " ").Trim();
+
+                dashboard.Supervisors.Add(new SupervisorGridItemDto
+                {
+                    SupervisorID = sup.SupervisorId,
+                    FullName = combinedFullName,
+                    Phone = phoneContact,
+                    Status = calculatedStatus,
+                    SectionsCount = supervisedCount // Outputs flat integer amount directly
+                });
+            }
+
+            // Assigned Sections card metric: Accumulate sum of all sections handled by active supervisors combined
+            dashboard.AssignedSections = dashboard.Supervisors.Sum(s => s.SectionsCount);
+
+            return dashboard;
+        }
+
+        public async Task<TeachersDashboardDto> GetTeachersManagementDashboardAsync()
+        {
+            var dashboard = new TeachersDashboardDto();
+
+            // 1. جلب جميع المعلمين النشطين في النظام مع معلوماتهم الشخصية
+            var allTeachers = await _teacherRepo.GetAllWithIncludeAsync(t => t.Person);
+            var activeTeachers = allTeachers.Where(t => t.Person.IsActive).ToList();
+
+            dashboard.TotalTeachers = activeTeachers.Count;
+
+            // 2. جلب حسابات المستخدمين لاستخراج أرقام الهواتف
+            var allUsers = await _userRepo.GetAllWithIncludeAsync();
+
+            // 3. بناء الأسطر لجدول المعلمين
+            foreach (var teacher in activeTeachers)
+            {
+                var relatedUser = allUsers.FirstOrDefault(u => u.PersonId == teacher.PersonId);
+                string phoneContact = relatedUser?.PhoneNumber ?? "No Number";
+
+                string combinedFullName = $"{teacher.Person.FirstName} {teacher.Person.LastName}".Replace("  ", " ").Trim();
+
+                dashboard.Teachers.Add(new TeacherGridItemDto
+                {
+                    TeacherID = teacher.TeacherId,
+                    FullName = combinedFullName,
+                    Phone = phoneContact,
+                    Lessons = teacher.WeeklyClasses ?? 0 // عرض الحصص الأسبوعية مباشرة كرقم
                 });
             }
 

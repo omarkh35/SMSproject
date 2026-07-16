@@ -1,5 +1,6 @@
 ﻿using BLL.EntitiesDTOS.DepartmentManager;
 using BLL.Interfaces;
+using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SMS.Controllers
@@ -114,48 +115,35 @@ namespace SMS.Controllers
 
 
         ////////////////////////////////////////////////////////
-        [HttpGet("supervisors-dashboard")]
-        public async Task<IActionResult> GetSupervisorsDashboard()
-        {
-            var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+       
 
-            var result = await _deptService.GetSupervisorsDashboardAsync(managerPersonId);
-            return Ok(result);
-        }
-
-        [HttpGet("teachers-management")]
-        public async Task<IActionResult> GetTeachersManagementDashboard([FromQuery] int page = 1)
-        {
-            if (page < 1) 
-                page = 1;
-
-            var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-
-            var result = await _deptService.GetTeachersManagementDashboardAsync(managerPersonId, page);
-            return Ok(result);
-        }
-
-        [HttpPost("teachers")]
-        public async Task<IActionResult> RegisterNewTeacher([FromBody] CreateTeacherDto dto)
-        {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var success = await _deptService.RegisterTeacherWorkflowAsync(dto);
-
-            return success ? Ok(new { message = "Teacher registered successfully with generated account number." })
-                           : BadRequest("Failed to register teacher. Phone number or Email might already exist.");
-        }
-
-        [HttpGet("students-directory")]
-        public async Task<IActionResult> GetStudentDirectory([FromQuery] int page = 1)
+        [HttpGet("students")]
+        public async Task<IActionResult> GetStudentDirectoryGrid([FromQuery] string? searchName, [FromQuery] int page = 1)
         {
             if (page < 1) page = 1;
 
+           
             var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
 
-            var result = await _deptService.GetStudentDirectoryDashboardAsync(managerPersonId, page);
+            var result = await _deptService.GetStudentDirectoryDashboardAsync(managerPersonId, searchName, page);
             return Ok(result);
         }
 
+
+        [HttpGet("supervisors")]
+        public async Task<IActionResult> GetSupervisorsDashboardSummary()
+        {
+            var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+
+            var result = await _deptService.GetSupervisorsManagementDashboardAsync(managerPersonId);
+            return Ok(result);
+        }
+
+        [HttpGet("teachers")]
+        public async Task<IActionResult> GetTeachersManagementGrid()
+        {
+            var result = await _deptService.GetTeachersManagementDashboardAsync();
+            return Ok(result);
+        }
     }
 }

@@ -51,40 +51,6 @@ namespace BLL.EntitiesDTOS.DepartmentManager
         public int TeacherId { get; set; }
     }
 
-    public class SupervisorsDashboardDto
-    {
-        public int TotalActiveSupervisors { get; set; }
-        public int AssignedSectionsCount { get; set; }
-        public int UnassignedClassesCount { get; set; }
-        public List<SupervisorGridItemDto> Supervisors { get; set; } = new();
-        public int TotalCount { get; set; } // For pagination calculation
-    }
-
-    public class SupervisorGridItemDto
-    {
-        public int SupervisorID { get; set; }
-        public string FullName { get; set; } = string.Empty;
-        public string ProfessionalTitle { get; set; } = string.Empty;
-        public string PhoneNumber { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public List<string> AssignedClasses { get; set; } = new();
-    }
-
-    public class TeachersDashboardDto
-    {
-        public int TotalTeachersCount { get; set; }
-        public string AvgWorkingHours { get; set; } = string.Empty;
-        public int TotalPages { get; set; }
-        public List<TeacherGridItemDto> Teachers { get; set; } = new();
-    }
-
-    public class TeacherGridItemDto
-    {
-        public int TeacherID { get; set; }
-        public string FullName { get; set; } = string.Empty;
-        public string PhoneNumber { get; set; } = string.Empty;
-        public string WorkingHours { get; set; } = string.Empty;
-    }
 
     public class CreateTeacherDto
     {
@@ -100,21 +66,59 @@ namespace BLL.EntitiesDTOS.DepartmentManager
         public byte? WeeklyClasses { get; set; }          
         public decimal? SalaryPerClass { get; set; }      
     }
+    
     public class StudentDirectoryDashboardDto
     {
         public int TotalStudentsCount { get; set; }
-        public string PassRate { get; set; } 
-        public List<StudentGridItemDto> Students { get; set; } = new();
+        public string PassRate { get; set; } = "N/A"; // نسبة النجاح (Success Rate)
         public int TotalPages { get; set; }
+        public List<StudentGridItemDto> Students { get; set; } = new();
     }
 
     public class StudentGridItemDto
     {
         public int StudentID { get; set; }
-        public string FullName { get; set; } 
-        public string ClassAndSection { get; set; } 
-        public string ParentPhoneNumber { get; set; }
+        public string StudentName { get; set; } = string.Empty; // STUDENT NAME
+        public string Grade { get; set; } = string.Empty;       // GRADE
+        public int Section { get; set; }                        // SECTION (رقم نقي تماماً بناءً على طلبك)
+        public string Phone { get; set; } = string.Empty;       // PHONE
     }
 
+
+    public class SupervisorsDashboardDto
+    {
+        // Top Card Summary Metrics
+        public int TotalSupervisors { get; set; }
+        public int AssignedSections { get; set; }
+        public int OpenSections { get; set; } // Classrooms where SupervisorID is null
+
+        public List<SupervisorGridItemDto> Supervisors { get; set; } = new();
+    }
+
+    public class SupervisorGridItemDto
+    {
+        public int SupervisorID { get; set; }
+        public string FullName { get; set; } = string.Empty; // FULL NAME
+        public string Phone { get; set; } = string.Empty;      // PHONE
+        public string Status { get; set; } = string.Empty;     // STATUS ("Active" or "Inactive")
+        public int SectionsCount { get; set; }                  // SECTIONS (Count of rooms supervised)
+    }
+
+
+    public class TeachersDashboardDto
+    {
+        // البطاقة العلوية
+        public int TotalTeachers { get; set; }
+
+        public List<TeacherGridItemDto> Teachers { get; set; } = new();
+    }
+
+    public class TeacherGridItemDto
+    {
+        public int TeacherID { get; set; }
+        public string FullName { get; set; } = string.Empty; // FULL NAME
+        public string Phone { get; set; } = string.Empty;     // PHONE
+        public int Lessons { get; set; }                      // LESSONS (عدد الحصص الأسبوعية)
+    }
 
 }
