@@ -404,7 +404,7 @@ namespace BLL.Services
             if (dto == null || string.IsNullOrWhiteSpace(dto.Explanation))
                 return false;
 
-            var targetDate = dto.LessonDate.Date;
+            var targetDate = dto.LessonDate;
 
             var existingLessons = await _dailyLessonRepo.GetAllWithIncludeAndFilterAsync(
                 dl => dl.ClassRoomID == dto.ClassRoomID &&

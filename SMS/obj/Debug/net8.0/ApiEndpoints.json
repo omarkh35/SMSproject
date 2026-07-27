@@ -1,6 +1,16 @@
 [
   {
     "ContainingType": "SMS.Controllers.AccountantController",
+    "Method": "GetEducationalStaffSalaries",
+    "RelativePath": "api/Accountant/educational-staff-salaries",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.AccountantController",
     "Method": "GetInstallmentTracking",
     "RelativePath": "api/Accountant/installment-tracking",
     "HttpMethod": "GET",
@@ -402,12 +412,17 @@
   },
   {
     "ContainingType": "SMS.Controllers.DepartmentManagerController",
-    "Method": "GetStudentDirectory",
-    "RelativePath": "api/DepartmentManager/students-directory",
+    "Method": "GetStudentDirectoryGrid",
+    "RelativePath": "api/DepartmentManager/students",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
+      {
+        "Name": "searchName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
       {
         "Name": "page",
         "Type": "System.Int32",
@@ -418,8 +433,8 @@
   },
   {
     "ContainingType": "SMS.Controllers.DepartmentManagerController",
-    "Method": "GetSupervisorsDashboard",
-    "RelativePath": "api/DepartmentManager/supervisors-dashboard",
+    "Method": "GetSupervisorsDashboardSummary",
+    "RelativePath": "api/DepartmentManager/supervisors",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -428,34 +443,12 @@
   },
   {
     "ContainingType": "SMS.Controllers.DepartmentManagerController",
-    "Method": "RegisterNewTeacher",
+    "Method": "GetTeachersManagementGrid",
     "RelativePath": "api/DepartmentManager/teachers",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "dto",
-        "Type": "BLL.EntitiesDTOS.DepartmentManager.CreateTeacherDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "SMS.Controllers.DepartmentManagerController",
-    "Method": "GetTeachersManagementDashboard",
-    "RelativePath": "api/DepartmentManager/teachers-management",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "page",
-        "Type": "System.Int32",
-        "IsRequired": false
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": []
   },
   {

@@ -9,11 +9,11 @@ public partial class StudentParent
 
     public int StudentId { get; set; }
 
-    public int ParentID { get; set; }
-
     public string? RelationshipType { get; set; }
 
-    public virtual Parent Parent { get; set; } = null!;
+    public int? ParentID { get; set; }
+
+    public virtual Parent? Parent { get; set; }
 
     public virtual Student Student { get; set; } = null!;
 }

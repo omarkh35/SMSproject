@@ -58,6 +58,7 @@ namespace BLL.Services
             _teacherRepo = teacherRepo;
             _chatRoomRepo = chatRoomRepo;
             _messageRepo = messageRepo;
+            _studentRecordRepo = studentRecordRepo;
 
         }
 
@@ -888,11 +889,11 @@ namespace BLL.Services
                     var matchedLog = existingTeacherLogs.FirstOrDefault(ta => ta.TeacherId == tDto.TeacherID);
 
                     // Business Rule: Force MissedPeriods to null if teacher is marked Present safely
-                    var missedPeriods = tDto.IsPresent ? null : tDto.MissedPeriodsCount;
+                    var missedPeriods = tDto.Status == 1 ? null : tDto.MissedPeriodsCount;
 
                     if (matchedLog != null)
                     {
-                        matchedLog.IsPresent = tDto.IsPresent;
+                        matchedLog.Status = tDto.Status;
                         matchedLog.MissedPeriodsCount = missedPeriods;
                         matchedLog.UpdatedAt = DateTime.UtcNow;
                         _teacherAttendanceRepo.UpdateAsync(matchedLog);
@@ -903,7 +904,7 @@ namespace BLL.Services
                         {
                             TeacherId = tDto.TeacherID,
                             AttendanceDate = todayDate,
-                            IsPresent = tDto.IsPresent,
+                            Status = tDto.Status,
                             MissedPeriodsCount = missedPeriods,
                             UpdatedAt = DateTime.UtcNow
                         };
@@ -925,8 +926,14 @@ namespace BLL.Services
         public async Task<StudentDetailsPageDto?> GetStudentDetailedProfileAsync(int studentId, int month, int year)
         {
             // 1. Fetch Student Records info with full model hierarchy tracking
-            var allStudentRecords = await _studentRecordRepo.GetAllWithIncludeAsync(sr => sr.Student, sr => sr.Student.Person);
-            var targetRecord = allStudentRecords.FirstOrDefault(sr => sr.StudentId == studentId);
+            var studentRecords = await _studentRecordRepo.GetAllWithIncludeAndFilterAsync(
+             sr => sr.StudentId == studentId,
+             sr => sr.Student,
+             sr => sr.Student.Person
+                );
+
+            
+            var targetRecord = studentRecords.FirstOrDefault();
             if (targetRecord == null) return null;
 
             var pageData = new StudentDetailsPageDto { StudentID = studentId };

@@ -11,6 +11,8 @@ public partial class Subject
 
     public virtual ICollection<ClassroomTeacher> ClassroomTeachers { get; set; } = new List<ClassroomTeacher>();
 
+    public virtual ICollection<DailyLesson> DailyLessons { get; set; } = new List<DailyLesson>();
+
     public virtual ICollection<GradeSubject> GradeSubjects { get; set; } = new List<GradeSubject>();
 
     public virtual ICollection<Homework> Homeworks { get; set; } = new List<Homework>();

@@ -315,7 +315,7 @@ namespace BLL.Services
             var classroomLinks = await _classroomStudentRepo.GetAllWithIncludeAndFilterAsync(cs => childrenIds.Contains(cs.StudentId));
             var activeClassroomIds = classroomLinks.Select(cs => cs.ClassRoomId).Distinct().ToList();
 
-            var today = DateTime.UtcNow.Date;
+            var today = DateOnly.FromDateTime(DateTime.UtcNow.Date); 
             var lessonsToday = await _dailyLessonRepo.GetAllWithIncludeAndFilterAsync(
                 l => activeClassroomIds.Contains(l.ClassRoomID) && l.LessonDate == today,
                 l => l.Subject

@@ -29,25 +29,25 @@ public partial class Person
 
     public virtual ICollection<ChatRoom> ChatRoomSupervisorPeople { get; set; } = new List<ChatRoom>();
 
+    public virtual ICollection<DailyLesson> DailyLessons { get; set; } = new List<DailyLesson>();
+
     public virtual ICollection<DepartmentManager> DepartmentManagers { get; set; } = new List<DepartmentManager>();
 
     public virtual ICollection<Homework> Homeworks { get; set; } = new List<Homework>();
 
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 
-    public virtual ICollection<StudentNote> StudentNotes { get; set; } = new List<StudentNote>();
+    public virtual Parent? Parent { get; set; }
 
-    public virtual ICollection<StudentParent> StudentParents { get; set; } = new List<StudentParent>();
+    public virtual ICollection<StudentNote> StudentNotes { get; set; } = new List<StudentNote>();
 
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
 
     public virtual ICollection<Supervisor> Supervisors { get; set; } = new List<Supervisor>();
-    public virtual Parent? Parent { get; set; }
 
     public virtual ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();
 
-    public virtual ICollection<User> Users { get; set; } = new List<User>();
-
     public virtual ICollection<ToDoTask> ToDoTasks { get; set; } = new List<ToDoTask>();
 
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

@@ -259,6 +259,18 @@
         }
       }
     },
+    "/api/Accountant/educational-staff-salaries": {
+      "get": {
+        "tags": [
+          "Accountant"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Auth/login": {
       "post": {
         "tags": [
@@ -693,24 +705,19 @@
         }
       }
     },
-    "/api/DepartmentManager/supervisors-dashboard": {
-      "get": {
-        "tags": [
-          "DepartmentManager"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/DepartmentManager/teachers-management": {
+    "/api/DepartmentManager/students": {
       "get": {
         "tags": [
           "DepartmentManager"
         ],
         "parameters": [
+          {
+            "name": "searchName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "page",
             "in": "query",
@@ -720,6 +727,18 @@
               "default": 1
             }
           }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DepartmentManager/supervisors": {
+      "get": {
+        "tags": [
+          "DepartmentManager"
         ],
         "responses": {
           "200": {
@@ -729,51 +748,9 @@
       }
     },
     "/api/DepartmentManager/teachers": {
-      "post": {
-        "tags": [
-          "DepartmentManager"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTeacherDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTeacherDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTeacherDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/DepartmentManager/students-directory": {
       "get": {
         "tags": [
           "DepartmentManager"
-        ],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 1
-            }
-          }
         ],
         "responses": {
           "200": {
@@ -2123,62 +2100,6 @@
         },
         "additionalProperties": false
       },
-      "CreateTeacherDto": {
-        "required": [
-          "dateOfBirth",
-          "firstName",
-          "gender",
-          "lastName",
-          "phoneNumber",
-          "secondName"
-        ],
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "secondName": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "lastName": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "dateOfBirth": {
-            "type": "string",
-            "format": "date"
-          },
-          "gender": {
-            "type": "boolean"
-          },
-          "phoneNumber": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "nullable": true
-          },
-          "clearTextPassword": {
-            "type": "string",
-            "nullable": true
-          },
-          "weeklyClasses": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "salaryPerClass": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "DepartmentManagerCreateDto": {
         "type": "object",
         "properties": {
@@ -2265,7 +2186,7 @@
           },
           "lessonDate": {
             "type": "string",
-            "format": "date-time"
+            "format": "date"
           },
           "explanation": {
             "type": "string",
@@ -2462,11 +2383,11 @@
           "academicYear",
           "dateOfBirth",
           "familyName",
+          "familyNumber",
           "fatherName",
           "firstName",
           "gender",
           "gradeID",
-          "homeAddress",
           "motherName",
           "yearlyPayment"
         ],
@@ -2499,11 +2420,11 @@
             "type": "string",
             "nullable": true
           },
-          "familyNumber": {
+          "homeAddress": {
             "type": "string",
             "nullable": true
           },
-          "homeAddress": {
+          "familyNumber": {
             "minLength": 1,
             "type": "string"
           },
@@ -2581,8 +2502,9 @@
             "type": "integer",
             "format": "int32"
           },
-          "isPresent": {
-            "type": "boolean"
+          "status": {
+            "type": "integer",
+            "format": "int32"
           },
           "missedPeriodsCount": {
             "type": "integer",

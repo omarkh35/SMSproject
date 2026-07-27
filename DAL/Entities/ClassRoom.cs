@@ -27,7 +27,7 @@ public partial class ClassRoom
 
     public virtual ICollection<Homework> Homeworks { get; set; } = new List<Homework>();
 
-    public virtual ICollection<ToDoTask> ToDoTasks { get; set; } = new List<ToDoTask>();
-
     public virtual ICollection<StudentAttendance> StudentAttendances { get; set; } = new List<StudentAttendance>();
+
+    public virtual ICollection<ToDoTask> ToDoTasks { get; set; } = new List<ToDoTask>();
 }

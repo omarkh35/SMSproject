@@ -77,7 +77,7 @@ namespace BLL.EntitiesDTOS.DepartmentManager
 
     public class StudentGridItemDto
     {
-        public int StudentID { get; set; }
+        public int StudentId { get; set; }
         public string StudentName { get; set; } = string.Empty; // STUDENT NAME
         public string Grade { get; set; } = string.Empty;       // GRADE
         public int Section { get; set; }                        // SECTION (رقم نقي تماماً بناءً على طلبك)

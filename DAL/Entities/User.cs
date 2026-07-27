@@ -21,9 +21,9 @@ public partial class User
 
     public virtual Person Person { get; set; } = null!;
 
-    public virtual ICollection<UserRefreshToken> UserRefreshTokens { get; set; } = new List<UserRefreshToken>();
-
     public virtual ICollection<SalaryPayment> SalaryPayments { get; set; } = new List<SalaryPayment>();
+
+    public virtual ICollection<UserRefreshToken> UserRefreshTokens { get; set; } = new List<UserRefreshToken>();
 
     public virtual Role UserRole { get; set; } = null!;
 }

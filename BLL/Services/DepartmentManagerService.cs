@@ -100,7 +100,8 @@ namespace BLL.Services
                 Id = newClass.ClassRoomId,
                 GradeId = newClass.GradeId,
                 Section = newClass.Section,
-                StartYear = newClass.StartYear
+                StartYear = newClass.StartYear,
+                SupervisorId = newClass.SupervisorId
             };
         }
 
@@ -231,21 +232,135 @@ namespace BLL.Services
 
 
         ////////////////////////////////////////////
-        
+
+
+        //public async Task<StudentDirectoryDashboardDto> GetStudentDirectoryDashboardAsync(int managerPersonId, string? searchName, int page)
+        //{
+        //    var dashboard = new StudentDirectoryDashboardDto();
+        //    const int pageSize = 8;
+
+        //    // 1. جلب الموجهين المرتبطين بمدير القسم الحالي عبر PersonID بالحروف الكبيرة
+        //    var allSupervisors = await _supervisorRepo.GetAllWithIncludeAsync(s => s.DepartmentManager);
+        //    var activeSupervisorIds = allSupervisors
+        //        .Where(s => s.DepartmentManager.PersonId == managerPersonId)
+        //        .Select(s => s.SupervisorId)
+        //        .ToList();
+
+        //    // 2. جلب الصفوف الخاضعة لإشراف هؤلاء الموجهين
+        //    var allClassRooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
+        //    var managedClassRooms = allClassRooms
+        //        .Where(cr => cr.SupervisorId != null && activeSupervisorIds.Contains(cr.SupervisorId.Value))
+        //        .ToList();
+        //    var managedClassRoomIds = managedClassRooms.Select(cr => cr.ClassRoomId).ToList();
+
+        //    // 3. تحديد الطلاب الفعليين داخل هذه الغرف الصفية
+        //    var allClassroomStudents = await _classStudentRepo.GetAllWithIncludeAsync(cs => cs.ClassRoom);
+        //    var managedClassroomStudents = allClassroomStudents
+        //        .Where(cs => managedClassRoomIds.Contains(cs.ClassRoomId))
+        //        .ToList();
+        //    var managedStudentIds = managedClassroomStudents.Select(cs => cs.StudentId).Distinct().ToList();
+
+        //    // 4. سحب سجلات الطلاب وتطبيق شرط البحث بالاسم (FirstName, SecondName, LastName)
+        //    var allStudentRecords = await _studentRecordRepo.GetAllWithIncludeAsync(sr => sr.Student, sr => sr.Student.Person);
+        //    var filteredStudentRecords = allStudentRecords.Where(sr => managedStudentIds.Contains(sr.StudentId));
+
+        //    if (!string.IsNullOrWhiteSpace(searchName))
+        //    {
+        //        string cleanSearch = searchName.Trim().ToLower();
+        //        filteredStudentRecords = filteredStudentRecords.Where(sr =>
+        //            sr.Student.Person.FirstName.ToLower().Contains(cleanSearch) ||
+        //            sr.Student.Person.SecondName.ToLower().Contains(cleanSearch) ||
+        //            sr.Student.Person.LastName.ToLower().Contains(cleanSearch)
+        //        );
+        //    }
+
+        //    var relevantStudentRecords = filteredStudentRecords.ToList();
+
+        //    dashboard.TotalStudentsCount = relevantStudentRecords.Count;
+        //    dashboard.TotalPages = (int)Math.Ceiling((double)dashboard.TotalStudentsCount / pageSize);
+
+        //    // 5. حساب نسبة النجاح الأكاديمية (Success Rate) للفصل الأول
+        //    var allMarks = await _markRepo.GetAllWithIncludeAsync(m => m.ExamType);
+        //    var sem1Exams = allMarks
+        //        .Where(m => m.IsApproved && m.ExamType.Semester == 1 && managedStudentIds.Contains(m.StudentRecordId))
+        //        .ToList();
+
+        //    if (sem1Exams.Any())
+        //    {
+        //        int passingMarks = sem1Exams.Count(m => m.MarkValue >= (m.FullMark / 2));
+        //        double percentage = ((double)passingMarks / sem1Exams.Count) * 100;
+        //        dashboard.PassRate = $"{percentage:F0}%";
+        //    }
+        //    else
+        //    {
+        //        dashboard.PassRate = "N/A";
+        //    }
+
+        //    // 6. تطبيق منطق الصفحات للجدول
+        //    var paginatedRecords = relevantStudentRecords
+        //        .OrderBy(sr => sr.Student.Person.FirstName)
+        //        .Skip((page - 1) * pageSize)
+        //        .Take(pageSize)
+        //        .ToList();
+
+        //    var allStudentParents = await _studentParentRepo.GetAllWithIncludeAsync(sp => sp.Parent, sp => sp.Parent.Person, sp => sp.Parent.Person.Users);
+
+        //    // 7. صياغة المخرجات النهائية وضمان بقاء الـ Section رقماً
+        //    foreach (var record in paginatedRecords)
+        //    {
+        //        string gradeDisplay = "-";
+        //        int sectionDisplay = 0; // القيمة الافتراضية كرقم لقاعدة البيانات
+
+        //        var assignedClassLink = managedClassroomStudents.FirstOrDefault(cs => cs.StudentId == record.StudentId);
+        //        if (assignedClassLink != null)
+        //        {
+        //            var matchedRoom = managedClassRooms.FirstOrDefault(cr => cr.ClassRoomId == assignedClassLink.ClassRoomId);
+        //            if (matchedRoom != null)
+        //            {
+        //                gradeDisplay = $"{matchedRoom.Grade.GradeNumber}th";
+        //                sectionDisplay = matchedRoom.Section; // إرجاع القيمة الرقمية المباشرة (1, 2, 3...) دون أي تغيير
+        //            }
+        //        }
+
+        //        var parentLink = allStudentParents.FirstOrDefault(sp => sp.StudentId == record.StudentId);
+        //        var parentUserAccount = parentLink?.Parent?.Person?.Users?.FirstOrDefault();
+        //        string parentPhone = parentUserAccount?.PhoneNumber ?? "No Number";
+
+        //        string cleanFullName = $"{record.Student.Person.FirstName} {record.Student.Person.LastName}".Replace("  ", " ").Trim();
+
+        //        dashboard.Students.Add(new StudentGridItemDto
+        //        {
+        //            StudentID = record.StudentId,
+        //            StudentName = cleanFullName,
+        //            Grade = gradeDisplay,
+        //            Section = sectionDisplay, // رقم نقي تماماً
+        //            Phone = parentPhone
+        //        });
+        //    }
+
+        //    return dashboard;
+        //}
+
+
 
         public async Task<StudentDirectoryDashboardDto> GetStudentDirectoryDashboardAsync(int managerPersonId, string? searchName, int page)
         {
             var dashboard = new StudentDirectoryDashboardDto();
             const int pageSize = 8;
 
-            // 1. جلب الموجهين المرتبطين بمدير القسم الحالي عبر PersonID بالحروف الكبيرة
-            var allSupervisors = await _supervisorRepo.GetAllWithIncludeAsync(s => s.DepartmentManager);
+            // 1. جلب الموجهين مع تضمين مدير القسم والشخص الخاص بمدير القسم لمنع الـ Shadow Properties تماماً
+            var allSupervisors = await _supervisorRepo.GetAllWithIncludeAsync(
+                s => s.DepartmentManager,
+                s => s.DepartmentManager.Person
+            );
+
+            // تصحيح المطابقة باستخدام PersonID الصواب للسكريبت
             var activeSupervisorIds = allSupervisors
                 .Where(s => s.DepartmentManager.PersonId == managerPersonId)
                 .Select(s => s.SupervisorId)
                 .ToList();
 
-            // 2. جلب الصفوف الخاضعة لإشراف هؤلاء الموجهين
+            // 2. جلب الصفوف الخاضعة لإشراف هؤلاء الموجهين (تصحيح المسميات لـ ClassRoomID و SupervisorID)
             var allClassRooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             var managedClassRooms = allClassRooms
                 .Where(cr => cr.SupervisorId != null && activeSupervisorIds.Contains(cr.SupervisorId.Value))
@@ -259,7 +374,7 @@ namespace BLL.Services
                 .ToList();
             var managedStudentIds = managedClassroomStudents.Select(cs => cs.StudentId).Distinct().ToList();
 
-            // 4. سحب سجلات الطلاب وتطبيق شرط البحث بالاسم (FirstName, SecondName, LastName)
+            // 4. سحب سجلات الطلاب وتطبيق شرط البحث بالاسم (مع تصحيح StudentID)
             var allStudentRecords = await _studentRecordRepo.GetAllWithIncludeAsync(sr => sr.Student, sr => sr.Student.Person);
             var filteredStudentRecords = allStudentRecords.Where(sr => managedStudentIds.Contains(sr.StudentId));
 
@@ -278,7 +393,7 @@ namespace BLL.Services
             dashboard.TotalStudentsCount = relevantStudentRecords.Count;
             dashboard.TotalPages = (int)Math.Ceiling((double)dashboard.TotalStudentsCount / pageSize);
 
-            // 5. حساب نسبة النجاح الأكاديمية (Success Rate) للفصل الأول
+            // 5. حساب نسبة النجاح الأكاديمية للفصل الأول (تصحيح السجل ليكون StudentRecordID المطابق للسكريبت)
             var allMarks = await _markRepo.GetAllWithIncludeAsync(m => m.ExamType);
             var sem1Exams = allMarks
                 .Where(m => m.IsApproved && m.ExamType.Semester == 1 && managedStudentIds.Contains(m.StudentRecordId))
@@ -295,20 +410,26 @@ namespace BLL.Services
                 dashboard.PassRate = "N/A";
             }
 
-            // 6. تطبيق منطق الصفحات للجدول
             var paginatedRecords = relevantStudentRecords
-                .OrderBy(sr => sr.Student.Person.FirstName)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+        .OrderBy(sr => sr.Student.Person.FirstName)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToList();
 
-            var allStudentParents = await _studentParentRepo.GetAllWithIncludeAsync(sp => sp.Parent, sp => sp.Parent.Person, sp => sp.Parent.Person.Users);
+            // 7. الحل الجذري: جلب علاقات الأهل بشكل مسطح دون الدخول في تفرعات المستخدمين العكسية المعقدة
+            var allStudentParents = await _studentParentRepo.GetAllWithIncludeAsync(
+                sp => sp.Parent,
+                sp => sp.Parent.Person
+            );
 
-            // 7. صياغة المخرجات النهائية وضمان بقاء الـ Section رقماً
+            // جلب جدول المستخدمين (Users) بشكل منفصل في سطر واحد سريع لربط الهواتف عبر الذاكرة مباشرة
+            var allUsers = await _userRepo.GetAllAsync();
+
+            // 8. صياغة المخرجات النهائية بأمان تام
             foreach (var record in paginatedRecords)
             {
                 string gradeDisplay = "-";
-                int sectionDisplay = 0; // القيمة الافتراضية كرقم لقاعدة البيانات
+                int sectionDisplay = 0;
 
                 var assignedClassLink = managedClassroomStudents.FirstOrDefault(cs => cs.StudentId == record.StudentId);
                 if (assignedClassLink != null)
@@ -317,28 +438,41 @@ namespace BLL.Services
                     if (matchedRoom != null)
                     {
                         gradeDisplay = $"{matchedRoom.Grade.GradeNumber}th";
-                        sectionDisplay = matchedRoom.Section; // إرجاع القيمة الرقمية المباشرة (1, 2, 3...) دون أي تغيير
+                        sectionDisplay = matchedRoom.Section;
                     }
                 }
 
+                // استخراج الهاتف بأمان عبر فحص متقاطع نقي في الذاكرة (In-Memory Lookup)
                 var parentLink = allStudentParents.FirstOrDefault(sp => sp.StudentId == record.StudentId);
-                var parentUserAccount = parentLink?.Parent?.Person?.Users?.FirstOrDefault();
-                string parentPhone = parentUserAccount?.PhoneNumber ?? "No Number";
+                string parentPhone = "No Number";
+
+                if (parentLink?.Parent?.Person != null)
+                {
+                    // نذهب لجدول المستخدمين مباشرة ونبحث باستخدام الـ PersonID الصحيح والمؤكد للمشروع
+                    var parentUserAccount = allUsers.FirstOrDefault(u => u.PersonId == parentLink.Parent.PersonId);
+                    if (parentUserAccount != null)
+                    {
+                        parentPhone = parentUserAccount.PhoneNumber;
+                    }
+                }
 
                 string cleanFullName = $"{record.Student.Person.FirstName} {record.Student.Person.LastName}".Replace("  ", " ").Trim();
 
                 dashboard.Students.Add(new StudentGridItemDto
                 {
-                    StudentID = record.StudentId,
+                    StudentId = record.StudentId,
                     StudentName = cleanFullName,
                     Grade = gradeDisplay,
-                    Section = sectionDisplay, // رقم نقي تماماً
+                    Section = sectionDisplay,
                     Phone = parentPhone
                 });
             }
 
             return dashboard;
         }
+
+
+
 
         public async Task<SupervisorsDashboardDto> GetSupervisorsManagementDashboardAsync(int managerPersonId)
         {
@@ -359,7 +493,7 @@ namespace BLL.Services
             var managedSupervisors = baseSupervisors
                 .Where(s => s.DepartmentManager.PersonId == managerPersonId)
                 .ToList();
-
+             
             dashboard.TotalSupervisors = managedSupervisors.Count;
 
             // 3. Gather user security contact channels to resolve direct telephone links

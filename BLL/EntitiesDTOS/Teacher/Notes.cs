@@ -17,7 +17,7 @@ namespace BLL.EntitiesDTOS.Teacher
     {
         public int ClassRoomID { get; set; }
         public int SubjectID { get; set; }
-        public DateTime LessonDate { get; set; }
+        public DateOnly LessonDate { get; set; }
         public string Explanation { get; set; } = string.Empty;
     }
 

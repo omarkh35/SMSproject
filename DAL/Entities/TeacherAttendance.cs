@@ -13,11 +13,11 @@ public partial class TeacherAttendance
 
     public byte Status { get; set; }
 
+    //public bool IsPresent { get; set; }
+
     public string? Notes { get; set; }
 
     public DateTime UpdatedAt { get; set; }
-
-    public bool IsPresent { get; set; } 
 
     public int? MissedPeriodsCount { get; set; }
 

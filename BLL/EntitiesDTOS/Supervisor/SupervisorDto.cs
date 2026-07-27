@@ -214,7 +214,9 @@ namespace BLL.EntitiesDTOS.Supervisor
     public class TeacherAttendanceItemDto
     {
         public int TeacherID { get; set; }
-        public bool IsPresent { get; set; } // Matches your database boolean flag
+        public byte Status { get; set; }
+
+        //public bool IsPresent { get; set; } // Matches your database boolean flag
         public int? MissedPeriodsCount { get; set; } // Your brand new nullable database column
     }
 
