@@ -324,34 +324,41 @@ namespace BLL.Services
         public async Task<ParentAccountsDashboardDto> GetParentAccountsGridAsync(string? searchQuery, int page)
         {
             var dashboard = new ParentAccountsDashboardDto();
-            const int pageSize = 4; // Renders exactly 4 parent card layout slots as depicted in your UI screenshot
+            const int pageSize = 4; // يعرض 4 كروت للأهل في الصفحة
 
-            // 1. Fetch deep parent entity profile graphs, traveling out to user security info blocks
-            var baseQueryParents = await _parentRepo.GetAllWithIncludeAsync(
-                p => p.Person,
-                p => p.Person.Users
-            );
+            // 1. جلب جدول الآباء مع بياناتهم الشخصية فقط (بدون تفرعات المستخدمين المعقدة)
+            var baseQueryParents = await _parentRepo.GetAllWithIncludeAsync(p => p.Person);
+
+            // 2. جلب جدول المستخدمين بالكامل بشكل مسطح ومنفصل لربط الحسابات بأمان
+            var allUsers = await _userRepo.GetAllAsync();
 
             var filteredParents = baseQueryParents.AsEnumerable();
 
-            // 2. Execute dual-criteria searching logic (Matches Full Name OR AccountNumber)
+            // 3. تنفيذ منطق البحث المزدوج بدقة (بالاسم أو برقم الحساب)
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 string cleanSearch = searchQuery.Trim().ToLower();
 
                 filteredParents = filteredParents.Where(p =>
-                    // Search by Name fields
-                    p.Person.FirstName.ToLower().Contains(cleanSearch) ||
-                    p.Person.SecondName.ToLower().Contains(cleanSearch) ||
-                    p.Person.LastName.ToLower().Contains(cleanSearch) ||
-                    // Dual Search criteria by System Account Number
-                    p.Person.Users.Any(u => u.AccountNumber != null && u.AccountNumber.ToLower().Contains(cleanSearch))
-                );
+                {
+                    // فحص الاسم
+                    bool nameMatch = p.Person.FirstName.ToLower().Contains(cleanSearch) ||
+                                     p.Person.SecondName.ToLower().Contains(cleanSearch) ||
+                                     p.Person.LastName.ToLower().Contains(cleanSearch);
+
+                    // فحص رقم الحساب عبر مطابقة الـ PersonId في الذاكرة مع جدول المستخدمين
+                    var matchedUser = allUsers.FirstOrDefault(u => u.PersonId == p.PersonId);
+                    bool accountMatch = matchedUser != null &&
+                                        matchedUser.AccountNumber != null &&
+                                        matchedUser.AccountNumber.ToLower().Contains(cleanSearch);
+
+                    return nameMatch || accountMatch;
+                });
             }
 
             var matchingList = filteredParents.ToList();
 
-            // 3. Populate framework layout pagination constraints
+            // 4. احتساب الصفوف والـ Pagination لبطاقات الأهل
             dashboard.TotalParentsCount = matchingList.Count;
             dashboard.TotalPages = (int)Math.Ceiling((double)dashboard.TotalParentsCount / pageSize);
 
@@ -361,11 +368,11 @@ namespace BLL.Services
                 .Take(pageSize)
                 .ToList();
 
-            // 4. Map tracked relational data trees straight into screen display models
+            // 5. بناء مخرجات الشبكة Display Models بأمان تام دون أي انهارات
             foreach (var parent in paginatedData)
             {
-                // Pull the registered user profile linked to this person
-                var userAccount = parent.Person.Users?.FirstOrDefault();
+                // ربط الحساب الشخصي من جدول المستخدمين المجلوب مسبقاً في الذاكرة
+                var userAccount = allUsers.FirstOrDefault(u => u.PersonId == parent.PersonId);
 
                 string parentCombinedName = $"{parent.Person.FirstName} {parent.Person.SecondName} {parent.Person.LastName}".Replace("  ", " ").Trim();
 
@@ -381,6 +388,7 @@ namespace BLL.Services
 
             return dashboard;
         }
+
 
         public async Task<InstallmentTrackingDashboardDto> GetInstallmentTrackingGridAsync(string? filterStatus, string? searchName, int? classRoomId, int page)
         {
