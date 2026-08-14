@@ -1,6 +1,7 @@
 ﻿using BLL.EntitiesDTOS.DepartmentManager;
 using BLL.Interfaces;
 using BLL.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SMS.Controllers
@@ -144,6 +145,59 @@ namespace SMS.Controllers
         {
             var result = await _deptService.GetTeachersManagementDashboardAsync();
             return Ok(result);
+        }
+
+        [HttpPost("register-supervisors")]
+        public async Task<IActionResult> RegisterNewSupervisor([FromBody] CreateSupervisorDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+
+            var generatedAccount = await _deptService.RegisterSupervisorWorkflowAsync(managerPersonId, dto);
+
+            if (generatedAccount != null)
+            {
+                return Ok(new
+                {
+                    message = "تم تسجيل الموجه بنجاح.",
+                    accountNumber = generatedAccount
+                });
+            }
+
+            return BadRequest("عذراً، فشلت عملية تسجيل الموجه. يرجى التأكد من صحة البيانات المرسلة.");
+        }
+
+        [HttpPost("register-teacher")]
+        public async Task<IActionResult> RegisterNewTeacher([FromBody] CreateTeacherDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var generatedAccount = await _deptService.RegisterTeacherWorkflowAsync(dto);
+
+            if (generatedAccount != null)
+            {
+                // نجاح العملية وإرجاع الـ Account Number مباشرة للواجهة
+                return Ok(new
+                {
+                    message = "تم تسجيل المعلم الجديد في النظام بنجاح.",
+                    accountNumber = generatedAccount
+                });
+            }
+
+            return BadRequest("عذراً، فشلت عملية تسجيل المعلم الجديد. يرجى مراجعة البيانات المدخلة.");
+        }
+
+        [HttpPost("create-new-section")]
+        public async Task<IActionResult> AutoCreateNextSection([FromBody] CreateAutomaticClassRoomDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var success = await _deptService.CreateNextSectionAutomatedAsync(dto);
+
+            return success
+                ? Ok(new { message = "تم إنشاء الشعبة التالية المتتابعة لهذا الصف بنجاح في النظام." })
+                : BadRequest("عذراً، فشلت عملية الإنشاء التلقائي للشعبة.");
         }
     }
 }

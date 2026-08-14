@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DAL.Entities;
 
@@ -30,7 +31,7 @@ public partial class Person
     public virtual ICollection<ChatRoom> ChatRoomSupervisorPeople { get; set; } = new List<ChatRoom>();
 
     public virtual ICollection<DailyLesson> DailyLessons { get; set; } = new List<DailyLesson>();
-
+    [InverseProperty("Person")]
     public virtual ICollection<DepartmentManager> DepartmentManagers { get; set; } = new List<DepartmentManager>();
 
     public virtual ICollection<Homework> Homeworks { get; set; } = new List<Homework>();
@@ -40,14 +41,14 @@ public partial class Person
     public virtual Parent? Parent { get; set; }
 
     public virtual ICollection<StudentNote> StudentNotes { get; set; } = new List<StudentNote>();
-
+    [InverseProperty("Person")]
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
-
+    [InverseProperty("Person")]
     public virtual ICollection<Supervisor> Supervisors { get; set; } = new List<Supervisor>();
-
+    [InverseProperty("Person")]
     public virtual ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();
 
     public virtual ICollection<ToDoTask> ToDoTasks { get; set; } = new List<ToDoTask>();
-
+    [InverseProperty("Person")]
     public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

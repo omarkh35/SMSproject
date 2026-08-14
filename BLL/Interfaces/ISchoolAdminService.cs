@@ -28,6 +28,23 @@ namespace BLL.Interfaces
 
         Task<GradeSubjectDto> AssignSubjectToGradeAsync(GradeSubjectDto dto);
         Task<bool> RemoveSubjectFromGradeAsync(int gradeId, int subjectId);
+        Task<AdminDashboardDto> GetMainDashboardMetricsAsync();
+
+        Task<AdminTeachersDashboardDto> GetTeachersManagementGridAsync(string? searchName, int page);
+
+        Task<AdminSupervisorsDashboardDto> GetSupervisorsManagementGridAsync(string? searchName, int page);
+
+        Task<AdminManagersDashboardDto> GetDepartmentManagersGridAsync(string? searchName, int page);
+
+        Task<AdminStudentsDashboardDto> GetStudentsManagementGridAsync(string? searchName, int? gradeId, int? sectionNumber, int page);
+
+        Task<GradeConfigViewDto> GetGradeConfigurationAsync(int gradeId);
+        Task<bool> SaveGradeSubjectsConfigurationAsync(SaveGradeSubjectsDto dto);
+
+        // 2. الـ API الثاني لحفظ جدول الامتحانات للصف
+        Task<bool> SaveExamScheduleAsync(SaveExamScheduleDto dto);
+
+
     }
 
 }

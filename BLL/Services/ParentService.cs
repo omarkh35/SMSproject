@@ -32,6 +32,7 @@ namespace BLL.Services
         private readonly IBaseRepositories<GradeSubject> _gradeSubjectRepo;
         private readonly IBaseRepositories<User> _userRepo;
         private readonly IBaseRepositories<Subject> _subjectRepo;
+        private readonly IBaseRepositories<Parent> _parentRepo;
 
 
         public ParentService(
@@ -46,7 +47,7 @@ namespace BLL.Services
             , IBaseRepositories<ExamSchedule> examScheduleRepo,
         IBaseRepositories<StudentRecord> studentRecordRepo, IBaseRepositories<Mark> markRepo,
         IBaseRepositories<GradeSubject> gradeSubjectRepo, IBaseRepositories<Student> studentRepo,
-        IBaseRepositories<User> userRepo, IBaseRepositories<Subject> subjectRepo)
+        IBaseRepositories<User> userRepo, IBaseRepositories<Subject> subjectRepo, IBaseRepositories<Parent> parentRepo  )
         {
             _studentParentRepo = studentParentRepo;
             _classroomStudentRepo = classroomStudentRepo;
@@ -65,6 +66,7 @@ namespace BLL.Services
             _studentRepo = studentRepo;
             _userRepo = userRepo;
             _subjectRepo = subjectRepo;
+            _parentRepo = parentRepo;
         }
 
 
@@ -292,6 +294,7 @@ namespace BLL.Services
         {
             var dashboard = new ParentDashboardDto();
 
+            var personList = await _personRepo.GetAllWithIncludeAndFilterAsync(p => p.PersonId == parentPersonId);
             var person = (await _personRepo.GetAllWithIncludeAndFilterAsync(p => p.PersonId == parentPersonId)).FirstOrDefault();
             if (person != null)
             {
@@ -306,14 +309,29 @@ namespace BLL.Services
                 Body = a.AnnouncementBody
             }).ToList();
 
-            var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
-    sp => sp.Parent.PersonId == parentPersonId,
-    sp => sp.Parent
-);
-            var childrenIds = parentLinks.Select(sp => sp.StudentId).ToList();
+            var parentsList = await _parentRepo.GetAllWithIncludeAndFilterAsync(p => p.PersonId == parentPersonId);
+            var currentParent = parentsList.FirstOrDefault();
 
-            var classroomLinks = await _classroomStudentRepo.GetAllWithIncludeAndFilterAsync(cs => childrenIds.Contains(cs.StudentId));
+            var childrenIds = new List<int>();
+
+            if (currentParent != null)
+            {
+                // ب. جلب جدول علاقات الطلاب والأهل بالكامل بشكل مسطح ونظيف (بدون استخدام Include معقدة للأهل)
+                var allStudentParents = await _studentParentRepo.GetAllAsync();
+
+                // ج. الفلترة الصافية الآمنة داخل الذاكرة باستخدام الـ ParentID (المفتاح الأساسي الصحيح والمطابق للداتابيز)
+                childrenIds = allStudentParents
+                    .Where(sp => sp.ParentID == currentParent.Id) // مطابقة الحروف الكبيرة الصواب لجدولك ParentID
+                    .Select(sp => sp.StudentId)
+                    .ToList();
+            }
+
+            // 4. جلب روابط الغرف الصفية للأبناء
+            var classroomLinks = await _classroomStudentRepo.GetAllWithIncludeAndFilterAsync(
+                cs => childrenIds.Contains(cs.StudentId)
+            );
             var activeClassroomIds = classroomLinks.Select(cs => cs.ClassRoomId).Distinct().ToList();
+
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow.Date); 
             var lessonsToday = await _dailyLessonRepo.GetAllWithIncludeAndFilterAsync(

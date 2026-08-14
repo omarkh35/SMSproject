@@ -104,5 +104,40 @@ namespace BLL.Services
         }
 
 
+        public TokenResponseDto GenerateToken(string username, string roleName)
+        {
+            // بناء الـ Claims للمدير المستقل مباشرة باستخدام النصوص الممررة
+            var claims = new[]
+            {
+        new Claim(ClaimTypes.NameIdentifier, "0"), // المدير حساب صلب مستقل ولا يملك PersonID لذا نضع 0
+        new Claim(ClaimTypes.MobilePhone, string.Empty),
+        new Claim(ClaimTypes.Name, username),
+        new Claim(ClaimTypes.Role, roleName) // سيتم تمرير "SuperAdmin"
+    };
+
+            // استخدام نفس المفتاح السري والإعدادات الخاصة بك تماماً لضمان التطابق
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("THIS_IS_A_VERY_SECRET_KEY_123456"));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                 issuer: "SchoolApi",
+                 audience: "SchoolApiUsers",
+                 claims: claims,
+                 expires: DateTime.UtcNow.AddMinutes(30),
+                 signingCredentials: creds
+             );
+
+            var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+            // استدعاء دالة توليد الريفرش توكن الموجودة لديك مسبقاً
+            var refreshToken = GenerateRefreshToken();
+
+            return new TokenResponseDto
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
+        }
+
     }
 }

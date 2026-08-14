@@ -173,6 +173,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "SMS.Controllers.AdminAuthController",
+    "Method": "AdminLogin",
+    "RelativePath": "api/AdminAuth/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BLL.EntitiesDTOS.Admin.AdminLoginRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "SMS.Controllers.AuthController",
     "Method": "Login",
     "RelativePath": "api/Auth/login",
@@ -345,6 +361,54 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "AutoCreateNextSection",
+    "RelativePath": "api/DepartmentManager/create-new-section",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.CreateAutomaticClassRoomDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "RegisterNewSupervisor",
+    "RelativePath": "api/DepartmentManager/register-supervisors",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.CreateSupervisorDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "RegisterNewTeacher",
+    "RelativePath": "api/DepartmentManager/register-teacher",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.CreateTeacherDto",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -670,11 +734,121 @@
   {
     "ContainingType": "SMS.Controllers.SchoolAdminController",
     "Method": "GetAllDepartmentManagers",
-    "RelativePath": "api/SchoolAdmin/department-managers",
+    "RelativePath": "api/SchoolAdmin/department-managers-detail",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "GetDepartmentManagersDirectoryGrid",
+    "RelativePath": "api/SchoolAdmin/departmentmanagers-general",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "searchName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "GetGradeConfiguration",
+    "RelativePath": "api/SchoolAdmin/grade-configuration/{gradeId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "gradeId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "GetAdminDashboardMetrics",
+    "RelativePath": "api/SchoolAdmin/main-dashboard",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "SaveExamSchedule",
+    "RelativePath": "api/SchoolAdmin/save-exam-schedule",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.SchoolAdmin.SaveExamScheduleDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "SaveGradeSubjects",
+    "RelativePath": "api/SchoolAdmin/save-grade-subjects",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.SchoolAdmin.SaveGradeSubjectsDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "GetAdminStudentsDirectory",
+    "RelativePath": "api/SchoolAdmin/students-directory-grid",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "searchName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "gradeId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "sectionNumber",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -796,11 +970,53 @@
   {
     "ContainingType": "SMS.Controllers.SchoolAdminController",
     "Method": "GetAllSupervisors",
-    "RelativePath": "api/SchoolAdmin/supervisors",
+    "RelativePath": "api/SchoolAdmin/supervisors-detail",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "GetSupervisorsDirectoryGrid",
+    "RelativePath": "api/SchoolAdmin/supervisors-general",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "searchName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.SchoolAdminController",
+    "Method": "GetTeachersDirectoryGrid",
+    "RelativePath": "api/SchoolAdmin/teachers-general",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "searchName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   },
   {

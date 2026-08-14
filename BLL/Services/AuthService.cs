@@ -46,19 +46,37 @@ namespace BLL.Services
             var user = users.FirstOrDefault();
 
 
-            if (user == null)
+            if (user == null || user.Person == null || !user.Person.IsActive)
                 return null;
 
             //var passCheck = _passwordHasher.VerifyHashedPassword(user, user.PassHash, loginDto.Password);
 
             //if (passCheck == PasswordVerificationResult.Failed)
             //    return null;
-            var passCheck = (loginDto.Password == user.HashPassword);
-            if (!passCheck)
-                return null;
+            //var passCheck = (loginDto.Password == user.HashPassword);
+            //if (!passCheck)
+            //    return null;
 
-                
-                var token = _jwtService.GenerateToken(user);
+            if (string.IsNullOrEmpty(user.HashPassword))
+            {
+                // أ. الحساب جديد تماماً؛ نأخذ كلمة المرور المدخلة ونشفرها فوراً لحماية السجلات
+                string encryptedPassword = BCrypt.Net.BCrypt.HashPassword(loginDto.Password);
+
+                // ب. تحديث الحقل في كائن المستخدم وحفظ التغيير في قاعدة البيانات بشكل دائم
+                user.HashPassword = encryptedPassword;
+                _userRepo.UpdateAsync(user);
+                await _userRepo.SaveChangesAsync();
+            }
+            else
+            {
+                // ج. الحساب مفعّل مسبقاً؛ نقوم بالفحص الأمني الصارم ومقارنة التشفير المعتمد عالمياً
+                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginDto.Password, user.HashPassword);
+                if (!isPasswordValid)
+                    return null; // كلمة المرور خاطئة
+            }
+
+
+            var token = _jwtService.GenerateToken(user);
 
           
             var refreshToken = new UserRefreshToken

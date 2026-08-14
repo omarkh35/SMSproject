@@ -38,6 +38,11 @@ namespace BLL.Interfaces
 
         Task<SupervisorsDashboardDto> GetSupervisorsManagementDashboardAsync(int managerPersonId);
         Task<TeachersDashboardDto> GetTeachersManagementDashboardAsync();
+        Task<string?> RegisterSupervisorWorkflowAsync(int managerPersonId, CreateSupervisorDto dto);
+
+        Task<string?> RegisterTeacherWorkflowAsync(CreateTeacherDto dto);
+
+        Task<bool> CreateNextSectionAutomatedAsync(CreateAutomaticClassRoomDto dto);
 
 
     }

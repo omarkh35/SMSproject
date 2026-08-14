@@ -25,6 +25,7 @@ namespace BLL.Services
         IBaseRepositories<StudentRecord> _studentRecordRepo;
         IBaseRepositories<StudentParent> _studentParentRepo;
         IBaseRepositories<Mark> _markRepo;
+        IBaseRepositories<DepartmentManager> _managerRepo;
 
         public DepartmentManagerService(
             IBaseRepositories<ClassRoom> classRoomRepo,
@@ -37,7 +38,9 @@ namespace BLL.Services
             IBaseRepositories<User> userRepo,
             IBaseRepositories<StudentRecord> studentRecordRepo,
             IBaseRepositories<Mark> markRepo,
-            IBaseRepositories<StudentParent> studentParentRepo
+            IBaseRepositories<StudentParent> studentParentRepo,
+        IBaseRepositories<DepartmentManager> managerRepo
+
         )
         {
             _classRoomRepo = classRoomRepo;
@@ -51,6 +54,7 @@ namespace BLL.Services
             _studentRecordRepo = studentRecordRepo;
             _markRepo = markRepo;
             _studentParentRepo = studentParentRepo;
+            _managerRepo = managerRepo;
         }
 
         public async Task<IEnumerable<ClassRoomDto>> GetAllClassRoomsAsync()
@@ -560,5 +564,168 @@ namespace BLL.Services
             return dashboard;
         }
 
+
+        public async Task<string?> RegisterSupervisorWorkflowAsync(int managerPersonId, CreateSupervisorDto dto)
+        {
+            // 1. جلب سجل مدير القسم الحالي لمعرفة الـ DepartmentManagerID لربط المشرف به
+            var managers = await _managerRepo.GetAllWithIncludeAsync();
+            var activeManager = managers.FirstOrDefault(m => m.PersonId == managerPersonId);
+            if (activeManager == null) return null;
+
+            // 2. فتح ترانزكشن لحماية البيانات عبر الجداول الثلاثة
+            var transaction = await _classRoomRepo.BeginTransactionAsync();
+
+            try
+            {
+                // أ. توليد رقم الحساب تلقائياً باستخدام السيكوينس الموثق لديك بالداتابيز
+                string sqlCommand = "SELECT CAST(NEXT VALUE FOR [dbo].[Seq_UserAccountNumber] AS NVARCHAR(8))";
+                string generatedAccountNumber = await _classRoomRepo.ExecuteRawSqlScalarAsync<string>(sqlCommand);
+
+                // ب. بناء وحفظ سجل الشخص (People)
+                var newPerson = new Person
+                {
+                    FirstName = dto.FirstName.Trim(),
+                    SecondName = dto.SecondName.Trim(),
+                    LastName = dto.LastName.Trim(),
+                    DateOfBirth = dto.DateOfBirth,
+                    Gender = dto.Gender,
+                    IsActive = true, // تفعيل الحساب تلقائياً عند الإنشاء
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _personRepo.AddAsync(newPerson);
+                await _personRepo.SaveChangesAsync(); // هنا يتولد الـ PersonID
+
+                
+                // د. بناء وحفظ سجل المستخدم (Users) مرتبطاً بالـ PersonID
+                var newUser = new User
+                {
+                    PersonId = newPerson.PersonId,
+                    UserRoleId = 4, // رقم الدور 4 وهو المخصص للموجه (Supervisor) في نظام الأدوار لديك
+                    PhoneNumber = dto.PhoneNumber.Trim(),
+                    Email = dto.Email?.Trim().ToLower(),
+                    HashPassword = null,
+                    AccountNumber = generatedAccountNumber
+                };
+                await _userRepo.AddAsync(newUser);
+                await _userRepo.SaveChangesAsync();
+
+                // هـ. بناء وحفظ سجل الموجه (Supervisors) مرتبطاً بمدير القسم والشخص
+                var newSupervisor = new Supervisor
+                {
+                    DepartmentManagerId = activeManager.DepartmentManagerId, // ربطه بمدير القسم الصانع للحساب
+                    PersonId = newPerson.PersonId,
+                    Salary = dto.Salary
+                };
+                await _supervisorRepo.AddAsync(newSupervisor);
+                await _supervisorRepo.SaveChangesAsync();
+
+                // 3. تأكيد وإغلاق المعاملة بنجاح
+                await _classRoomRepo.CommitTransactionAsync();
+                return generatedAccountNumber;
+            }
+            catch
+            {
+                // التراجع عن أي إدخال مجتزأ في حال حدوث أي خطأ تشغيلي لحماية سلامة البيانات
+                await _classRoomRepo.RollbackTransactionAsync();
+                return null;
+            }
+        }
+
+
+        public async Task<string?> RegisterTeacherWorkflowAsync(CreateTeacherDto dto)
+        {
+            // 1. فتح ترانزكشن لحماية تتابع الجداول الثلاثة
+            var transaction = await _classRoomRepo.BeginTransactionAsync();
+
+            try
+            {
+                // أ. توليد رقم الحساب تلقائياً باستخدام السيكوينس المعتمد في السكريبت
+                string sqlCommand = "SELECT CAST(NEXT VALUE FOR [dbo].[Seq_UserAccountNumber] AS NVARCHAR(8))";
+                string generatedAccountNumber = await _classRoomRepo.ExecuteRawSqlScalarAsync<string>(sqlCommand);
+
+                // ب. بناء وحفظ سجل الشخص (People) ومطابقة PersonID بالحروف الكبيرة
+                var newPerson = new Person
+                {
+                    FirstName = dto.FirstName.Trim(),
+                    SecondName = dto.SecondName.Trim(),
+                    LastName = dto.LastName.Trim(),
+                    DateOfBirth = dto.DateOfBirth,
+                    Gender = dto.Gender,
+                    IsActive = true, // تفعيل حساب المعلم فور إنشائه
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _personRepo.AddAsync(newPerson);
+                await _personRepo.SaveChangesAsync(); // توليد الـ PersonID
+
+                // ج. بناء وحفظ سجل المستخدم (Users) - معرّف دور المعلم هو 2 في نظامك
+                var newUser = new User
+                {
+                    PersonId = newPerson.PersonId,
+                    UserRoleId = 2, // دور المعلم (Teacher)
+                    PhoneNumber = dto.PhoneNumber.Trim(),
+                    Email = dto.Email?.Trim().ToLower(),
+                    HashPassword = null, // متروك فارغاً NULL ليتم تعيينه لاحقاً عند التفعيل
+                    AccountNumber = generatedAccountNumber
+                };
+                await _userRepo.AddAsync(newUser);
+                await _userRepo.SaveChangesAsync();
+
+                // د. بناء وحفظ سجل المعلم (Teachers) مرتبطاً بالـ PersonID
+                var newTeacher = new Teacher
+                {
+                    PersonId = newPerson.PersonId,
+                    WeeklyClasses = dto.WeeklyClasses,
+                    SalaryPerClass = dto.SalaryPerClass
+                };
+                await _teacherRepo.AddAsync(newTeacher);
+                await _teacherRepo.SaveChangesAsync();
+
+                // 2. تأكيد وإغلاق المعاملة بنجاح
+                await _classRoomRepo.CommitTransactionAsync();
+
+                // إرجاع رقم الحساب المتولد لعرضه في الواجهة
+                return generatedAccountNumber;
+            }
+            catch
+            {
+                // التراجع الشامل لحماية سلامة الجداول في حال حدوث أي خطأ
+                await _classRoomRepo.RollbackTransactionAsync();
+                return null;
+            }
+        }
+
+        public async Task<bool> CreateNextSectionAutomatedAsync(CreateAutomaticClassRoomDto dto)
+        {
+            // 1. جلب جميع الغرف الصفية المسجلة مسبقاً لهذا الصف (GradeID) المحدد
+            var existingClassRooms = await _classRoomRepo.GetAllWithIncludeAndFilterAsync(
+                cr => cr.GradeId == dto.GradeID
+            );
+
+            byte nextSectionNumber = 1; // القيمة الافتراضية إذا كان الصف جديداً كلياً ولا يملك أي شعبة
+
+            if (existingClassRooms.Any())
+            {
+                // 2. تطبيق الاستراتيجية الأفضل: البحث عن أعلى رقم شعبة موجود حالياً وزيادته بـ 1
+                var maxSection = existingClassRooms.Max(cr => cr.Section);
+                nextSectionNumber = (byte)(maxSection + 1);
+            }
+
+            // 3. تحديد السنة الدراسية الحالية تلقائياً (StartYear) بناءً على تاريخ السيرفر الحالي
+            short currentAcademicYear = (short)DateTime.Today.Year;
+
+            // 4. بناء كائن الشعبة الجديدة وحفظه في الداتابيز (SupervisorID يترك NULL حتى يتم فرزه لاحقاً)
+            var newClassRoom = new ClassRoom
+            {
+                GradeId = dto.GradeID,
+                Section = nextSectionNumber, // الرقم التلقائي الذكي (مثل 4)
+                SupervisorId = null,
+                StartYear = currentAcademicYear
+            };
+
+            await _classRoomRepo.AddAsync(newClassRoom);
+            await _classRoomRepo.SaveChangesAsync();
+
+            return true;
+        }
     }
 }

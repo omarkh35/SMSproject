@@ -75,6 +75,7 @@ builder.Services.AddScoped<IDepartmentManagerService, DepartmentManagerService>(
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<ISupervisorService, SupervisorService>();
 builder.Services.AddScoped<IAccountantService, AccountantService>();
+builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 
 
 //builder.Services.AddBusinessLayer();

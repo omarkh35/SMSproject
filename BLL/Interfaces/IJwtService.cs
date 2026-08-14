@@ -13,6 +13,7 @@ namespace BLL.Interfaces
     public interface IJwtService
     {
         TokenResponseDto GenerateToken(User user);
+        TokenResponseDto GenerateToken(string username, string roleName);
 
         // Task<TokenResponseModel> RefreshTokenAsync(string refreshToken)
     }
