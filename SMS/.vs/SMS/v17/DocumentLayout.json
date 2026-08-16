@@ -1,9 +1,72 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\USER\\Desktop\\SMS Project\\SMS\\",
+  "WorkspaceRootPath": "C:\\SMSproject\\SMS\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\users\\user\\desktop\\sms project\\bll\\services\\accountantservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\services\\otpservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|c:\\smsproject\\sms\\controllers\\otpcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|solutionrelative:controllers\\otpcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\interfaces\\iotpservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|c:\\smsproject\\sms\\sms.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}",
+      "RelativeMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|solutionrelative:sms.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\entitiesdtos\\auth\\loginrequestdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\entitiesdtos\\auth\\refreshrequestdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\interfaces\\iauthservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\entitiesdtos\\auth\\logoutrequestdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\entitiesdtos\\auth\\tokenresponsedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\services\\schooladminservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\interfaces\\ischooladminservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\entitiesdtos\\user\\userdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{923B17BD-6CCA-46AA-9537-20EC0BCAD711}|..\\BLL\\BLL.csproj|c:\\smsproject\\bll\\services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|c:\\smsproject\\sms\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|solutionrelative:controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|c:\\smsproject\\sms\\controllers\\supervisorcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|solutionrelative:controllers\\supervisorcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|c:\\smsproject\\sms\\baserepositry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|solutionrelative:baserepositry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7184EAAE-525E-4A3E-938C-11161CB21D4E}|..\\DAL\\DAL.csproj|c:\\smsproject\\dal\\repositries\\baserepositry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7184EAAE-525E-4A3E-938C-11161CB21D4E}|..\\DAL\\DAL.csproj|c:\\smsproject\\dal\\interfaces\\ibaserepositories.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|c:\\smsproject\\sms\\controllers\\accountantcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{48F56489-B8E1-4F5E-9EEB-79083A2E1577}|SMS.csproj|solutionrelative:controllers\\accountantcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\AccountantService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -13,20 +76,256 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "OtpController.cs",
+              "DocumentMoniker": "C:\\SMSproject\\SMS\\Controllers\\OtpController.cs",
+              "RelativeDocumentMoniker": "Controllers\\OtpController.cs",
+              "ToolTip": "C:\\SMSproject\\SMS\\Controllers\\OtpController.cs",
+              "RelativeToolTip": "Controllers\\OtpController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADAAAAATAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-16T15:32:23.079Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "SMS.http",
+              "DocumentMoniker": "C:\\SMSproject\\SMS\\SMS.http",
+              "RelativeDocumentMoniker": "SMS.http",
+              "ToolTip": "C:\\SMSproject\\SMS\\SMS.http",
+              "RelativeToolTip": "SMS.http",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003502|",
+              "WhenOpened": "2026-08-07T14:31:43.025Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "LoginRequestDTO.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\EntitiesDTOS\\Auth\\LoginRequestDTO.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\EntitiesDTOS\\Auth\\LoginRequestDTO.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\EntitiesDTOS\\Auth\\LoginRequestDTO.cs",
+              "RelativeToolTip": "..\\BLL\\EntitiesDTOS\\Auth\\LoginRequestDTO.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T15:33:48.027Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "OtpService.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\Services\\OtpService.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\Services\\OtpService.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\Services\\OtpService.cs",
+              "RelativeToolTip": "..\\BLL\\Services\\OtpService.cs",
+              "ViewState": "AgIAAEcAAAAAAAAAAAAswA8AAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T15:09:06.239Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "IOtpService.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\Interfaces\\IOtpService.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\Interfaces\\IOtpService.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\Interfaces\\IOtpService.cs",
+              "RelativeToolTip": "..\\BLL\\Interfaces\\IOtpService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwAoAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T14:56:10.334Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "RefreshRequestDto.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\EntitiesDTOS\\Auth\\RefreshRequestDto.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\EntitiesDTOS\\Auth\\RefreshRequestDto.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\EntitiesDTOS\\Auth\\RefreshRequestDto.cs",
+              "RelativeToolTip": "..\\BLL\\EntitiesDTOS\\Auth\\RefreshRequestDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAA5AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T16:00:39.585Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "IAuthService.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\Interfaces\\IAuthService.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\Interfaces\\IAuthService.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\Interfaces\\IAuthService.cs",
+              "RelativeToolTip": "..\\BLL\\Interfaces\\IAuthService.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAkAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T15:28:28.859Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "LogoutRequestDto.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\EntitiesDTOS\\Auth\\LogoutRequestDto.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\EntitiesDTOS\\Auth\\LogoutRequestDto.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\EntitiesDTOS\\Auth\\LogoutRequestDto.cs",
+              "RelativeToolTip": "..\\BLL\\EntitiesDTOS\\Auth\\LogoutRequestDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-16T15:16:20.259Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "TokenResponseDto.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\EntitiesDTOS\\Auth\\TokenResponseDto.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\EntitiesDTOS\\Auth\\TokenResponseDto.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\EntitiesDTOS\\Auth\\TokenResponseDto.cs",
+              "RelativeToolTip": "..\\BLL\\EntitiesDTOS\\Auth\\TokenResponseDto.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAA4AAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T15:49:29.091Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "SchoolAdminService.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\Services\\SchoolAdminService.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\Services\\SchoolAdminService.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\Services\\SchoolAdminService.cs",
+              "RelativeToolTip": "..\\BLL\\Services\\SchoolAdminService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAIQAAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T16:29:51.231Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "UserDto.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\EntitiesDTOS\\User\\UserDto.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\EntitiesDTOS\\User\\UserDto.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\EntitiesDTOS\\User\\UserDto.cs",
+              "RelativeToolTip": "..\\BLL\\EntitiesDTOS\\User\\UserDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAA6AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T15:55:48.778Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "ISchoolAdminService.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\Interfaces\\ISchoolAdminService.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\Interfaces\\ISchoolAdminService.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\Interfaces\\ISchoolAdminService.cs",
+              "RelativeToolTip": "..\\BLL\\Interfaces\\ISchoolAdminService.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAowA4AAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T16:29:28.777Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "AuthService.cs",
+              "DocumentMoniker": "C:\\SMSproject\\BLL\\Services\\AuthService.cs",
+              "RelativeDocumentMoniker": "..\\BLL\\Services\\AuthService.cs",
+              "ToolTip": "C:\\SMSproject\\BLL\\Services\\AuthService.cs",
+              "RelativeToolTip": "..\\BLL\\Services\\AuthService.cs",
+              "ViewState": "AgIAAEEAAAAAAAAAAAAnwE4AAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T15:36:33.83Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "C:\\SMSproject\\SMS\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "Controllers\\AuthController.cs",
+              "ToolTip": "C:\\SMSproject\\SMS\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "Controllers\\AuthController.cs",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAAB0AAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T15:12:17.431Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "SupervisorController.cs",
+              "DocumentMoniker": "C:\\SMSproject\\SMS\\Controllers\\SupervisorController.cs",
+              "RelativeDocumentMoniker": "Controllers\\SupervisorController.cs",
+              "ToolTip": "C:\\SMSproject\\SMS\\Controllers\\SupervisorController.cs",
+              "RelativeToolTip": "Controllers\\SupervisorController.cs",
+              "ViewState": "AgIAAOIAAAAAAAAAAAAAAGgAAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T15:13:16.345Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "BaseRepositry.cs",
+              "DocumentMoniker": "C:\\SMSproject\\SMS\\BaseRepositry.cs",
+              "RelativeDocumentMoniker": "BaseRepositry.cs",
+              "ToolTip": "C:\\SMSproject\\SMS\\BaseRepositry.cs",
+              "RelativeToolTip": "BaseRepositry.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAIBJwAoAAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-07T14:31:50.987Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "BaseRepositry.cs",
+              "DocumentMoniker": "C:\\SMSproject\\DAL\\Repositries\\BaseRepositry.cs",
+              "RelativeDocumentMoniker": "..\\DAL\\Repositries\\BaseRepositry.cs",
+              "ToolTip": "C:\\SMSproject\\DAL\\Repositries\\BaseRepositry.cs",
+              "RelativeToolTip": "..\\DAL\\Repositries\\BaseRepositry.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-07T14:18:25.511Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "IBaseRepositories.cs",
+              "DocumentMoniker": "C:\\SMSproject\\DAL\\Interfaces\\IBaseRepositories.cs",
+              "RelativeDocumentMoniker": "..\\DAL\\Interfaces\\IBaseRepositories.cs",
+              "ToolTip": "C:\\SMSproject\\DAL\\Interfaces\\IBaseRepositories.cs",
+              "RelativeToolTip": "..\\DAL\\Interfaces\\IBaseRepositories.cs",
+              "ViewState": "AgIAABIAAAAAAAAAAAAcwCMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-07T14:18:03.369Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "AccountantController.cs",
+              "DocumentMoniker": "C:\\SMSproject\\SMS\\Controllers\\AccountantController.cs",
+              "RelativeDocumentMoniker": "Controllers\\AccountantController.cs",
+              "ToolTip": "C:\\SMSproject\\SMS\\Controllers\\AccountantController.cs",
+              "RelativeToolTip": "Controllers\\AccountantController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-07T11:47:44.023Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
               "Title": "AccountantService.cs",
               "DocumentMoniker": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\AccountantService.cs",
-              "RelativeDocumentMoniker": "..\\BLL\\Services\\AccountantService.cs",
+              "RelativeDocumentMoniker": "..\\..\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\AccountantService.cs",
               "ToolTip": "C:\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\AccountantService.cs",
-              "RelativeToolTip": "..\\BLL\\Services\\AccountantService.cs",
-              "ViewState": "AgIAAFABAAAAAAAAAAAcwIIBAAANAAAAAAAAAA==",
+              "RelativeToolTip": "..\\..\\Users\\USER\\Desktop\\SMS Project\\BLL\\Services\\AccountantService.cs",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-28T16:12:59.324Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-28T16:12:59.324Z"
             }
           ]
         }

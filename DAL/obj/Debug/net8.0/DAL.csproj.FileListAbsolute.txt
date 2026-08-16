@@ -13,3 +13,18 @@ C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\refint\DAL.dll
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.pdb
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\DAL.genruntimeconfig.cache
 C:\Users\USER\Desktop\SMS Project\DAL\obj\Debug\net8.0\ref\DAL.dll
+C:\SMSproject\DAL\bin\Debug\net8.0\DAL.deps.json
+C:\SMSproject\DAL\bin\Debug\net8.0\DAL.runtimeconfig.json
+C:\SMSproject\DAL\bin\Debug\net8.0\DAL.dll
+C:\SMSproject\DAL\bin\Debug\net8.0\DAL.pdb
+C:\SMSproject\DAL\obj\Debug\net8.0\DAL.csproj.AssemblyReference.cache
+C:\SMSproject\DAL\obj\Debug\net8.0\DAL.GeneratedMSBuildEditorConfig.editorconfig
+C:\SMSproject\DAL\obj\Debug\net8.0\DAL.AssemblyInfoInputs.cache
+C:\SMSproject\DAL\obj\Debug\net8.0\DAL.AssemblyInfo.cs
+C:\SMSproject\DAL\obj\Debug\net8.0\DAL.csproj.CoreCompileInputs.cache
+C:\SMSproject\DAL\obj\Debug\net8.0\DAL.sourcelink.json
+C:\SMSproject\DAL\obj\Debug\net8.0\DAL.dll
+C:\SMSproject\DAL\obj\Debug\net8.0\refint\DAL.dll
+C:\SMSproject\DAL\obj\Debug\net8.0\DAL.pdb
+C:\SMSproject\DAL\obj\Debug\net8.0\DAL.genruntimeconfig.cache
+C:\SMSproject\DAL\obj\Debug\net8.0\ref\DAL.dll
