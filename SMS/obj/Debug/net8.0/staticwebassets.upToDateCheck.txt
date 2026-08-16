@@ -1,0 +1,2 @@
+wwwroot\uploads\profiles\zaid_profile.png
+wwwroot\uploads\schedules\grade3_section1.png
