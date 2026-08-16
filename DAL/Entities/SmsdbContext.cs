@@ -257,6 +257,9 @@ public partial class SmsdbContext : DbContext
                 .HasForeignKey(d => d.TeacherPersonID)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_DailyLessons_TeacherPerson");
+
+            entity.Ignore("PersonId");
+            entity.Ignore("SubjectId");
         });
 
         modelBuilder.Entity<DepartmentManager>(entity =>

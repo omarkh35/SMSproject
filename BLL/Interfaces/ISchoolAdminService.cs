@@ -41,8 +41,14 @@ namespace BLL.Interfaces
         Task<GradeConfigViewDto> GetGradeConfigurationAsync(int gradeId);
         Task<bool> SaveGradeSubjectsConfigurationAsync(SaveGradeSubjectsDto dto);
 
-        // 2. الـ API الثاني لحفظ جدول الامتحانات للصف
         Task<bool> SaveExamScheduleAsync(SaveExamScheduleDto dto);
+
+        Task<SchoolAnnouncementResponseDto> CreateSchoolAnnouncementAsync(SchoolAnnouncementCreateDto dto, int senderPersonId = 0);
+
+        Task<AdminFinanceDashboardDto> GetFinanceDashboardAsync();
+
+        Task<bool> UpdateGradeTuitionFeeAsync(UpdateGradeTuitionFeeDto dto);
+
 
 
     }

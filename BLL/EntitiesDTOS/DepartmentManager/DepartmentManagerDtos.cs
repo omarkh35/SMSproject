@@ -29,6 +29,7 @@ namespace BLL.EntitiesDTOS.DepartmentManager
     {
         public byte? Section { get; set; }
         public short? StartYear { get; set; }
+        public int? SupervisorId { get; set; }
     }
 
     public class StudentToClassDto
@@ -186,6 +187,55 @@ namespace BLL.EntitiesDTOS.DepartmentManager
 
         [Range(0, 99999999, ErrorMessage = "أجرة الحصة يجب أن تكون قيمة منطقية موجبة")]
         public decimal? SalaryPerClass { get; set; }
+    }
+
+    public class UpdateSupervisorDto
+    {
+        [Required(ErrorMessage = "الاسم الأول مطلوب")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "اسم الأب مطلوب")]
+        public string SecondName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "اسم العائلة مطلوب")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "تاريخ الميلاد مطلوب")]
+        public DateOnly DateOfBirth { get; set; }
+
+        public bool Gender { get; set; } // true = ذكر، false = أنثى
+
+        [Required(ErrorMessage = "رقم الهاتف مطلوب")]
+        [Phone(ErrorMessage = "صيغة رقم الهاتف غير صالحة")]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [EmailAddress(ErrorMessage = "صيغة البريد الإلكتروني غير صالحة")]
+        public string? Email { get; set; }
+
+        [Required(ErrorMessage = "قيمة الراتب مطلوبة")]
+        [Range(0, 99999999, ErrorMessage = "الراتب يجب أن يكون قيمة موجبة")]
+        public decimal Salary { get; set; }
+
+        public bool IsActive { get; set; } = true;
+    }
+
+    public class SupervisorDetailsDto
+    {
+        public int SupervisorId { get; set; }
+        public int PersonId { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string SecondName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public DateOnly DateOfBirth { get; set; }
+        public bool Gender { get; set; }
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string AccountNumber { get; set; } = string.Empty;
+        public decimal Salary { get; set; }
+        public bool IsActive { get; set; }
+        public int AssignedSectionsCount { get; set; }
+        public int SupervisedTeachersCount { get; set; }
     }
 
     public class CreateAutomaticClassRoomDto

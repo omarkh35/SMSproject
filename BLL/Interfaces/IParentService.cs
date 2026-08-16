@@ -30,6 +30,17 @@ namespace BLL.Interfaces
 
         Task<SubjectDetailedReportDto?> GetSubjectDetailedReportAsync(int parentPersonId, int studentId, int subjectId);
 
+        Task<StudentPaymentResultDto> MakeStudentPaymentAsync(int parentPersonId, MakeStudentPaymentRequestDto dto);
+
+        Task<ParentWalletDto?> GetParentWalletAsync(int parentPersonId);
+
+        Task<ParentStudentPaymentSummaryDto?> GetStudentPaymentSummaryAsync(int parentPersonId, int studentId);
+
+        Task<IEnumerable<ParentChatThreadDto>> GetParentChatThreadsAsync(int parentPersonId);
+
+        Task<IEnumerable<ParentChatMessageDto>> GetChatHistoryAsync(int parentPersonId, int chatRoomId);
+
+        Task<bool> SendMessageAsync(int parentPersonId, ParentSendMessageDto dto);
 
     }
 }

@@ -1153,6 +1153,71 @@ namespace BLL.Services
         // === RIGHT PANEL: CHAT THREADS LIST USING CHATROOMS ===
         public async Task<IEnumerable<ChatThreadDto>> GetSupervisorChatThreadsAsync(int supervisorPersonId)
         {
+
+            try
+            {
+                var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
+                var activeSupervisor = supervisors.FirstOrDefault();
+                if (activeSupervisor != null)
+                {
+                    var supervisedRooms = await _classRoomRepo.GetAllWithIncludeAndFilterAsync(cr => cr.SupervisorId == activeSupervisor.SupervisorId);
+                    var roomIds = supervisedRooms.Select(r => r.ClassRoomId).ToList();
+
+                    if (roomIds.Any())
+                    {
+                        var classStudents = await _classStudentRepo.GetAllWithIncludeAndFilterAsync(cs => roomIds.Contains(cs.ClassRoomId));
+                        var studentIds = classStudents.Select(cs => cs.StudentId).Distinct().ToList();
+
+                        if (studentIds.Any())
+                        {
+                            var studentParents = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
+                                sp => studentIds.Contains(sp.StudentId),
+                                sp => sp.Parent
+                            );
+
+                            foreach (var sp in studentParents)
+                            {
+                                int parentPersonId = sp.Parent != null ? sp.Parent.PersonId : 0;
+                                if (parentPersonId > 0)
+                                {
+                                    var existing = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
+                                        cr => cr.StudentFocusId == sp.StudentId &&
+                                              cr.SupervisorPersonId == supervisorPersonId &&
+                                              cr.ParentPersonId == parentPersonId
+                                    );
+
+                                    var room = existing.FirstOrDefault();
+                                    if (room == null)
+                                    {
+                                        var newRoom = new ChatRoom
+                                        {
+                                            StudentFocusId = sp.StudentId,
+                                            SupervisorPersonId = supervisorPersonId,
+                                            ParentPersonId = parentPersonId,
+                                            CreatedAt = DateTime.UtcNow,
+                                            IsActive = true
+                                        };
+                                        await _chatRoomRepo.AddAsync(newRoom);
+                                        await _chatRoomRepo.SaveChangesAsync();
+                                    }
+                                    else if (!room.IsActive)
+                                    {
+                                        room.IsActive = true;
+                                        _chatRoomRepo.UpdateAsync(room);
+                                        await _chatRoomRepo.SaveChangesAsync();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Suppress background sync errors
+            }
+
+
             // 1. Fetch all active rooms assigned to this supervisor
             var activeRooms = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
                 cr => cr.SupervisorPersonId == supervisorPersonId && cr.IsActive,

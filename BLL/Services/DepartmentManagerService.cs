@@ -26,6 +26,8 @@ namespace BLL.Services
         IBaseRepositories<StudentParent> _studentParentRepo;
         IBaseRepositories<Mark> _markRepo;
         IBaseRepositories<DepartmentManager> _managerRepo;
+        private readonly IBaseRepositories<ChatRoom> _chatRoomRepo;
+        private readonly IBaseRepositories<Parent> _parentRepo;
 
         public DepartmentManagerService(
             IBaseRepositories<ClassRoom> classRoomRepo,
@@ -39,7 +41,9 @@ namespace BLL.Services
             IBaseRepositories<StudentRecord> studentRecordRepo,
             IBaseRepositories<Mark> markRepo,
             IBaseRepositories<StudentParent> studentParentRepo,
-        IBaseRepositories<DepartmentManager> managerRepo
+        IBaseRepositories<DepartmentManager> managerRepo,
+        IBaseRepositories<ChatRoom> chatRoomRepo,
+            IBaseRepositories<Parent> parentRepo
 
         )
         {
@@ -55,6 +59,9 @@ namespace BLL.Services
             _markRepo = markRepo;
             _studentParentRepo = studentParentRepo;
             _managerRepo = managerRepo;
+            _chatRoomRepo = chatRoomRepo;
+            _parentRepo = parentRepo;
+
         }
 
         public async Task<IEnumerable<ClassRoomDto>> GetAllClassRoomsAsync()
@@ -99,6 +106,11 @@ namespace BLL.Services
             await _classRoomRepo.AddAsync(newClass);
             await _classRoomRepo.SaveChangesAsync();
 
+            if (newClass.SupervisorId.HasValue)
+            {
+                await AutoProvisionChatRoomsForClassRoomAsync(newClass.ClassRoomId, newClass.SupervisorId.Value);
+            }
+
             return new ClassRoomDto
             {
                 Id = newClass.ClassRoomId,
@@ -114,10 +126,19 @@ namespace BLL.Services
             var existing = await _classRoomRepo.GetByIdAsync(id);
             if (existing == null) return false;
 
+            int? oldSupervisorId = existing.SupervisorId;
             existing.StartYear = dto.StartYear ?? existing.StartYear;
+            if (dto.Section.HasValue) existing.Section = dto.Section.Value;
+            if (dto.SupervisorId.HasValue) existing.SupervisorId = dto.SupervisorId.Value;
 
             _classRoomRepo.UpdateAsync(existing);
             await _classRoomRepo.SaveChangesAsync();
+
+            if (existing.SupervisorId.HasValue && existing.SupervisorId != oldSupervisorId)
+            {
+                await AutoProvisionChatRoomsForClassRoomAsync(existing.ClassRoomId, existing.SupervisorId.Value);
+            }
+
             return true;
         }
 
@@ -147,8 +168,137 @@ namespace BLL.Services
 
             await _classStudentRepo.AddAsync(link);
             await _classStudentRepo.SaveChangesAsync();
+
+            try
+            {
+                var classRoom = await _classRoomRepo.GetByIdAsync(dto.ClassRoomId);
+                if (classRoom != null && classRoom.SupervisorId.HasValue)
+                {
+                    var supervisor = await _supervisorRepo.GetByIdAsync(classRoom.SupervisorId.Value);
+                    if (supervisor != null)
+                    {
+                        var studentParents = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
+                            sp => sp.StudentId == dto.StudentId,
+                            sp => sp.Parent
+                        );
+
+                        foreach (var sp in studentParents)
+                        {
+                            int parentPersonId = sp.Parent != null ? sp.Parent.PersonId : 0;
+                            if (parentPersonId <= 0 && sp.ParentID.HasValue)
+                            {
+                                var p = await _parentRepo.GetByIdAsync(sp.ParentID.Value);
+                                if (p != null) parentPersonId = p.PersonId;
+                            }
+
+                            if (parentPersonId > 0)
+                            {
+                                var existingRooms = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
+                                    cr => cr.StudentFocusId == dto.StudentId &&
+                                          cr.SupervisorPersonId == supervisor.PersonId &&
+                                          cr.ParentPersonId == parentPersonId
+                                );
+
+                                var room = existingRooms.FirstOrDefault();
+                                if (room == null)
+                                {
+                                    var newRoom = new ChatRoom
+                                    {
+                                        StudentFocusId = dto.StudentId,
+                                        SupervisorPersonId = supervisor.PersonId,
+                                        ParentPersonId = parentPersonId,
+                                        CreatedAt = DateTime.UtcNow,
+                                        IsActive = true
+                                    };
+                                    await _chatRoomRepo.AddAsync(newRoom);
+                                    await _chatRoomRepo.SaveChangesAsync();
+                                }
+                                else if (!room.IsActive)
+                                {
+                                    room.IsActive = true;
+                                    _chatRoomRepo.UpdateAsync(room);
+                                    await _chatRoomRepo.SaveChangesAsync();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Suppress exception to keep assignment successful
+            }
+
+
             return true;
         }
+
+
+        private async Task AutoProvisionChatRoomsForClassRoomAsync(int classRoomId, int supervisorId)
+        {
+            try
+            {
+                var supervisor = await _supervisorRepo.GetByIdAsync(supervisorId);
+                if (supervisor == null) return;
+
+                var classStudents = await _classStudentRepo.GetAllWithIncludeAndFilterAsync(
+                    cs => cs.ClassRoomId == classRoomId
+                );
+
+                var studentIds = classStudents.Select(cs => cs.StudentId).Distinct().ToList();
+                if (!studentIds.Any()) return;
+
+                var studentParents = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
+                    sp => studentIds.Contains(sp.StudentId),
+                    sp => sp.Parent
+                );
+
+                foreach (var sp in studentParents)
+                {
+                    int parentPersonId = sp.Parent != null ? sp.Parent.PersonId : 0;
+                    if (parentPersonId <= 0 && sp.ParentID.HasValue)
+                    {
+                        var p = await _parentRepo.GetByIdAsync(sp.ParentID.Value);
+                        if (p != null) parentPersonId = p.PersonId;
+                    }
+
+                    if (parentPersonId > 0)
+                    {
+                        var existingRooms = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
+                            cr => cr.StudentFocusId == sp.StudentId &&
+                                  cr.SupervisorPersonId == supervisor.PersonId &&
+                                  cr.ParentPersonId == parentPersonId
+                        );
+
+                        var room = existingRooms.FirstOrDefault();
+                        if (room == null)
+                        {
+                            var newRoom = new ChatRoom
+                            {
+                                StudentFocusId = sp.StudentId,
+                                SupervisorPersonId = supervisor.PersonId,
+                                ParentPersonId = parentPersonId,
+                                CreatedAt = DateTime.UtcNow,
+                                IsActive = true
+                            };
+                            await _chatRoomRepo.AddAsync(newRoom);
+                            await _chatRoomRepo.SaveChangesAsync();
+                        }
+                        else if (!room.IsActive)
+                        {
+                            room.IsActive = true;
+                            _chatRoomRepo.UpdateAsync(room);
+                            await _chatRoomRepo.SaveChangesAsync();
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Suppress exception
+            }
+        }
+
 
         public async Task<bool> AssignTeacherToClassAsync(TeacherToClassDto dto)
         {
@@ -726,6 +876,226 @@ namespace BLL.Services
             await _classRoomRepo.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<SupervisorDetailsDto> GetSupervisorByIdAsync(int managerPersonId, int supervisorId)
+        {
+            var managers = await _managerRepo.GetAllWithIncludeAsync();
+            var activeManager = managers.FirstOrDefault(m => m.PersonId == managerPersonId);
+            if (activeManager == null)
+                throw new UnauthorizedAccessException("حساب مدير القسم غير صالح.");
+
+            var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(
+                s => s.SupervisorId == supervisorId,
+                s => s.Person,
+                s => s.DepartmentManager
+            );
+            var supervisor = supervisors.FirstOrDefault();
+            if (supervisor == null)
+                throw new KeyNotFoundException("الموجه المطلوب غير موجود في النظام.");
+
+            if (supervisor.DepartmentManagerId != activeManager.DepartmentManagerId)
+                throw new UnauthorizedAccessException("ليس لديك صلاحية للوصول إلى بيانات موجه لا يتبع لقسمك.");
+
+            var allUsers = await _userRepo.GetAllAsync();
+            var userAccount = allUsers.FirstOrDefault(u => u.PersonId == supervisor.PersonId);
+
+            var allClassRooms = await _classRoomRepo.GetAllAsync();
+            int assignedSections = allClassRooms.Count(cr => cr.SupervisorId == supervisorId);
+
+            var allTeacherSupervisors = await _teacherSupervisorRepo.GetAllAsync();
+            int supervisedTeachers = allTeacherSupervisors.Count(ts => ts.SupervisorId == supervisorId);
+
+            return new SupervisorDetailsDto
+            {
+                SupervisorId = supervisor.SupervisorId,
+                PersonId = supervisor.PersonId,
+                FirstName = supervisor.Person.FirstName,
+                SecondName = supervisor.Person.SecondName,
+                LastName = supervisor.Person.LastName,
+                FullName = $"{supervisor.Person.FirstName} {supervisor.Person.SecondName} {supervisor.Person.LastName}".Replace("  ", " ").Trim(),
+                DateOfBirth = supervisor.Person.DateOfBirth,
+                Gender = supervisor.Person.Gender,
+                PhoneNumber = userAccount?.PhoneNumber ?? string.Empty,
+                Email = userAccount?.Email,
+                AccountNumber = userAccount?.AccountNumber ?? string.Empty,
+                Salary = supervisor.Salary ?? 0m,
+                IsActive = supervisor.Person.IsActive,
+                AssignedSectionsCount = assignedSections,
+                SupervisedTeachersCount = supervisedTeachers
+            };
+        }
+
+        // =========================================================================
+        // تعديل بيانات الموجه (Update Supervisor)
+        // =========================================================================
+        public async Task<SupervisorDetailsDto> UpdateSupervisorAsync(int managerPersonId, int supervisorId, UpdateSupervisorDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto), "بيانات التعديل مطلوبة.");
+
+            var managers = await _managerRepo.GetAllWithIncludeAsync();
+            var activeManager = managers.FirstOrDefault(m => m.PersonId == managerPersonId);
+            if (activeManager == null)
+                throw new UnauthorizedAccessException("حساب مدير القسم غير صالح.");
+
+            var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(
+                s => s.SupervisorId == supervisorId,
+                s => s.Person
+            );
+            var supervisor = supervisors.FirstOrDefault();
+            if (supervisor == null)
+                throw new KeyNotFoundException("الموجه المطلوب غير موجود في النظام.");
+
+            if (supervisor.DepartmentManagerId != activeManager.DepartmentManagerId)
+                throw new UnauthorizedAccessException("ليس لديك صلاحية لتعديل بيانات موجه لا يتبع لقسمك.");
+
+            string cleanPhone = dto.PhoneNumber.Trim();
+            string? cleanEmail = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim().ToLower();
+
+            // 1. التحقق من عدم تكرار رقم الهاتف مع حساب مستخدم آخر في النظام
+            var allUsers = await _userRepo.GetAllAsync();
+            var phoneTaken = allUsers.Any(u => u.PhoneNumber == cleanPhone && u.PersonId != supervisor.PersonId);
+            if (phoneTaken)
+                throw new InvalidOperationException($"رقم الهاتف '{cleanPhone}' مسجل مسبقاً لمستخدم آخر في النظام.");
+
+            // 2. التحقق من عدم تكرار البريد الإلكتروني مع حساب مستخدم آخر إن وُجد
+            if (!string.IsNullOrEmpty(cleanEmail))
+            {
+                var emailTaken = allUsers.Any(u => !string.IsNullOrEmpty(u.Email) && u.Email.ToLower() == cleanEmail && u.PersonId != supervisor.PersonId);
+                if (emailTaken)
+                    throw new InvalidOperationException($"البريد الإلكتروني '{cleanEmail}' مسجل مسبقاً لمستخدم آخر في النظام.");
+            }
+
+            // 3. تنفيذ التعديلات المتكاملة داخل ترانزكشن لحماية سلامة الجداول (Person + User + Supervisor)
+            await _classRoomRepo.BeginTransactionAsync();
+            try
+            {
+                // أ. تحديث بيانات الشخص (People)
+                supervisor.Person.FirstName = dto.FirstName.Trim();
+                supervisor.Person.SecondName = dto.SecondName.Trim();
+                supervisor.Person.LastName = dto.LastName.Trim();
+                supervisor.Person.DateOfBirth = dto.DateOfBirth;
+                supervisor.Person.Gender = dto.Gender;
+                supervisor.Person.IsActive = dto.IsActive;
+                _personRepo.UpdateAsync(supervisor.Person);
+                await _personRepo.SaveChangesAsync();
+
+                // ب. تحديث بيانات حساب المستخدم (Users)
+                var userAccount = allUsers.FirstOrDefault(u => u.PersonId == supervisor.PersonId);
+                if (userAccount != null)
+                {
+                    userAccount.PhoneNumber = cleanPhone;
+                    userAccount.Email = cleanEmail;
+                    _userRepo.UpdateAsync(userAccount);
+                    await _userRepo.SaveChangesAsync();
+                }
+
+                // ج. تحديث بيانات الموجه المالية (Supervisors)
+                supervisor.Salary = dto.Salary;
+                _supervisorRepo.UpdateAsync(supervisor);
+                await _supervisorRepo.SaveChangesAsync();
+
+                await _classRoomRepo.CommitTransactionAsync();
+
+                return await GetSupervisorByIdAsync(managerPersonId, supervisorId);
+            }
+            catch
+            {
+                await _classRoomRepo.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        // =========================================================================
+        // حذف الموجه بأمان مع التحقق الشامل من كافة المسؤوليات والارتباطات (Delete Supervisor)
+        // =========================================================================
+        public async Task<bool> DeleteSupervisorAsync(int managerPersonId, int supervisorId)
+        {
+            var managers = await _managerRepo.GetAllWithIncludeAsync();
+            var activeManager = managers.FirstOrDefault(m => m.PersonId == managerPersonId);
+            if (activeManager == null)
+                throw new UnauthorizedAccessException("حساب مدير القسم غير صالح.");
+
+            var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(
+                s => s.SupervisorId == supervisorId,
+                s => s.Person
+            );
+            var supervisor = supervisors.FirstOrDefault();
+            if (supervisor == null)
+                throw new KeyNotFoundException("الموجه المطلوب غير موجود في النظام.");
+
+            if (supervisor.DepartmentManagerId != activeManager.DepartmentManagerId)
+                throw new UnauthorizedAccessException("ليس لديك صلاحية لحذف موجه لا يتبع لقسمك.");
+
+            // 1. الفحص الصارم للشعب والغرف الصفية المرتبطة بإشراف هذا الموجه
+            var assignedClassrooms = await _classRoomRepo.GetAllWithIncludeAndFilterAsync(
+                cr => cr.SupervisorId == supervisorId,
+                cr => cr.Grade
+            );
+            if (assignedClassrooms.Any())
+            {
+                var classNames = string.Join("، ", assignedClassrooms.Select(c => $"الصف {c.Grade?.GradeNumber ?? c.GradeId} شعبة {c.Section}"));
+                throw new InvalidOperationException($"لا يمكن حذف الموجه لوجود ({assignedClassrooms.Count()}) شعبة صفية مرتبطة بإشرافه حالياً: ({classNames}). يرجى نقل أو إلغاء إشراف هذه الشعب قبل الحذف.");
+            }
+
+            // 2. الفحص الصارم لعلاقات إشراف المعلمين
+            var assignedTeachers = await _teacherSupervisorRepo.GetAllWithIncludeAndFilterAsync(
+                ts => ts.SupervisorId == supervisorId,
+                ts => ts.Teacher,
+                ts => ts.Teacher.Person
+            );
+            if (assignedTeachers.Any())
+            {
+                var teacherNames = string.Join("، ", assignedTeachers.Take(4).Select(t => $"{t.Teacher.Person.FirstName} {t.Teacher.Person.LastName}".Trim()));
+                throw new InvalidOperationException($"لا يمكن حذف الموجه لأنه يشرف حالياً على ({assignedTeachers.Count()}) معلم: ({teacherNames}). يرجى فك ارتباط إشراف المعلمين أولاً.");
+            }
+
+            // 3. فحص غرف المحادثات النشطة مع أولياء الأمور
+            //var activeChats = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
+            //    cr => cr.SupervisorPersonId == supervisor.PersonId && cr.IsActive
+            //);
+            //if (activeChats.Any())
+            //{
+            //    throw new InvalidOperationException($"لا يمكن حذف الموجه لوجود ({activeChats.Count()}) غرفة محادثة نشطة مع أولياء الأمور. يرجى أرشفة أو إغلاق المحادثات قبل تنفيذ الحذف.");
+            //}
+
+            // 4. تنفيذ الحذف الآمن ضمن ترانزكشن
+            await _classRoomRepo.BeginTransactionAsync();
+            try
+            {
+                int personId = supervisor.PersonId;
+
+                // حذف سجل الموجه
+                _supervisorRepo.Delete(supervisor);
+                await _supervisorRepo.SaveChangesAsync();
+
+                // حذف حساب المستخدم
+                var allUsers = await _userRepo.GetAllAsync();
+                var userAccount = allUsers.FirstOrDefault(u => u.PersonId == personId);
+                if (userAccount != null)
+                {
+                    _userRepo.Delete(userAccount);
+                    await _userRepo.SaveChangesAsync();
+                }
+
+                // إلغاء تفعيل حساب الشخص لضمان عدم وجود بيانات متضاربة
+                var person = await _personRepo.GetByIdAsync(personId);
+                if (person != null)
+                {
+                    person.IsActive = false;
+                    _personRepo.UpdateAsync(person);
+                    await _personRepo.SaveChangesAsync();
+                }
+
+                await _classRoomRepo.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _classRoomRepo.RollbackTransactionAsync();
+                throw;
+            }
         }
     }
 }

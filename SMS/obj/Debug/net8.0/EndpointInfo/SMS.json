@@ -1093,6 +1093,138 @@
         }
       }
     },
+    "/api/Parent/pay": {
+      "post": {
+        "tags": [
+          "Parent"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MakeStudentPaymentRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MakeStudentPaymentRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MakeStudentPaymentRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Parent/wallet": {
+      "get": {
+        "tags": [
+          "Parent"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Parent/student/{studentId}/payment-status": {
+      "get": {
+        "tags": [
+          "Parent"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Parent/chats": {
+      "get": {
+        "tags": [
+          "Parent"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Parent/chat-history/{chatRoomId}": {
+      "get": {
+        "tags": [
+          "Parent"
+        ],
+        "parameters": [
+          {
+            "name": "chatRoomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Parent/send-message": {
+      "post": {
+        "tags": [
+          "Parent"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentSendMessageDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentSendMessageDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentSendMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/SchoolAdmin/subjects": {
       "get": {
         "tags": [
@@ -2423,6 +2555,11 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "supervisorId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -2647,6 +2784,39 @@
         "type": "object",
         "properties": {
           "refreshToken": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MakeStudentPaymentRequestDto": {
+        "required": [
+          "amount",
+          "studentID"
+        ],
+        "type": "object",
+        "properties": {
+          "studentID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amount": {
+            "minimum": 0.01,
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParentSendMessageDto": {
+        "type": "object",
+        "properties": {
+          "chatRoomID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "messageContent": {
             "type": "string",
             "nullable": true
           }

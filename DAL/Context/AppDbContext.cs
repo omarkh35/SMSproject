@@ -249,15 +249,18 @@ public partial class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_DailyLessons_ClassRooms");
 
-            entity.HasOne(d => d.Subject).WithMany()
+            entity.HasOne(d => d.Subject).WithMany(p => p.DailyLessons)
                 .HasForeignKey(d => d.SubjectID)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_DailyLessons_Subjects");
 
-            entity.HasOne(d => d.TeacherPerson).WithMany()
+            entity.HasOne(d => d.TeacherPerson).WithMany(p => p.DailyLessons)
                 .HasForeignKey(d => d.TeacherPersonID)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_DailyLessons_TeacherPerson");
+
+            entity.Ignore("PersonId");
+            entity.Ignore("SubjectId");
         });
 
         modelBuilder.Entity<DepartmentManager>(entity =>

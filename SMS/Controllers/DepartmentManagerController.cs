@@ -199,5 +199,108 @@ namespace SMS.Controllers
                 ? Ok(new { message = "تم إنشاء الشعبة التالية المتتابعة لهذا الصف بنجاح في النظام." })
                 : BadRequest("عذراً، فشلت عملية الإنشاء التلقائي للشعبة.");
         }
+
+        [HttpGet("supervisor/{id}")]
+        public async Task<IActionResult> GetSupervisorById(int id)
+        {
+            try
+            {
+                var managerClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(managerClaim, out int managerPersonId))
+                    return Unauthorized(new { message = "جلسة المستخدم غير صالحة، يرجى تسجيل الدخول مجدداً." });
+
+                var result = await _deptService.GetSupervisorByIdAsync(managerPersonId, id);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "حدث خطأ غير متوقع أثناء جلب بيانات الموجه.", details = ex.Message });
+            }
+        }
+
+        [HttpPut("supervisor/{id}")]
+        public async Task<IActionResult> UpdateSupervisor(int id, [FromBody] UpdateSupervisorDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var managerClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(managerClaim, out int managerPersonId))
+                    return Unauthorized(new { message = "جلسة المستخدم غير صالحة، يرجى تسجيل الدخول مجدداً." });
+
+                var result = await _deptService.UpdateSupervisorAsync(managerPersonId, id, dto);
+                return Ok(new
+                {
+                    message = "تم تحديث بيانات الموجه بنجاح.",
+                    data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "حدث خطأ غير متوقع أثناء تحديث بيانات الموجه.", details = ex.Message });
+            }
+        }
+
+        [HttpDelete("supervisor/{id}")]
+        public async Task<IActionResult> DeleteSupervisor(int id)
+        {
+            try
+            {
+                var managerClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(managerClaim, out int managerPersonId))
+                    return Unauthorized(new { message = "جلسة المستخدم غير صالحة، يرجى تسجيل الدخول مجدداً." });
+
+                var success = await _deptService.DeleteSupervisorAsync(managerPersonId, id);
+                return Ok(new { message = "تم حذف الموجه وسجلاته بنجاح من النظام." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // منع الحذف لوجود ارتباطات ومسؤوليات نشطة (شعب صفية، إشراف معلمين، محادثات)
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    errorCode = "SUPERVISOR_HAS_ACTIVE_DEPENDENCIES"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "حدث خطأ غير متوقع أثناء معالجة حذف الموجه.", details = ex.Message });
+            }
+        }
+
     }
 }

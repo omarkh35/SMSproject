@@ -533,6 +533,32 @@
   },
   {
     "ContainingType": "SMS.Controllers.ParentController",
+    "Method": "GetChatHistory",
+    "RelativePath": "api/Parent/chat-history/{chatRoomId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "chatRoomId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.ParentController",
+    "Method": "GetChatThreads",
+    "RelativePath": "api/Parent/chats",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.ParentController",
     "Method": "GetStudentBagDetails",
     "RelativePath": "api/Parent/children/{studentId}/bag",
     "HttpMethod": "GET",
@@ -565,6 +591,38 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.ParentController",
+    "Method": "MakePayment",
+    "RelativePath": "api/Parent/pay",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.Parent.MakeStudentPaymentRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.ParentController",
+    "Method": "SendMessage",
+    "RelativePath": "api/Parent/send-message",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.Parent.ParentSendMessageDto",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -613,6 +671,22 @@
     "ContainingType": "SMS.Controllers.ParentController",
     "Method": "GetStudentExamSchedule",
     "RelativePath": "api/Parent/student/{studentId}/exam-schedule",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.ParentController",
+    "Method": "GetStudentPaymentStatus",
+    "RelativePath": "api/Parent/student/{studentId}/payment-status",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -676,6 +750,16 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.ParentController",
+    "Method": "GetWallet",
+    "RelativePath": "api/Parent/wallet",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {

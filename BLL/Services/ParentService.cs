@@ -33,6 +33,10 @@ namespace BLL.Services
         private readonly IBaseRepositories<User> _userRepo;
         private readonly IBaseRepositories<Subject> _subjectRepo;
         private readonly IBaseRepositories<Parent> _parentRepo;
+        private readonly IBaseRepositories<Payment> _paymentRepo;
+        private readonly IBaseRepositories<Message> _messageRepo;
+        private readonly IBaseRepositories<ChatRoom> _chatRoomRepo;
+        private readonly IBaseRepositories<Supervisor> _supervisorRepo;
 
 
         public ParentService(
@@ -47,7 +51,9 @@ namespace BLL.Services
             , IBaseRepositories<ExamSchedule> examScheduleRepo,
         IBaseRepositories<StudentRecord> studentRecordRepo, IBaseRepositories<Mark> markRepo,
         IBaseRepositories<GradeSubject> gradeSubjectRepo, IBaseRepositories<Student> studentRepo,
-        IBaseRepositories<User> userRepo, IBaseRepositories<Subject> subjectRepo, IBaseRepositories<Parent> parentRepo  )
+        IBaseRepositories<User> userRepo, IBaseRepositories<Subject> subjectRepo, IBaseRepositories<Parent> parentRepo ,
+        IBaseRepositories<Payment> paymentRepo, IBaseRepositories<Message> messageRepo, IBaseRepositories<ChatRoom> chatRoomRepo,
+            IBaseRepositories<Supervisor> supervisorRepo)
         {
             _studentParentRepo = studentParentRepo;
             _classroomStudentRepo = classroomStudentRepo;
@@ -67,6 +73,10 @@ namespace BLL.Services
             _userRepo = userRepo;
             _subjectRepo = subjectRepo;
             _parentRepo = parentRepo;
+            _paymentRepo = paymentRepo;
+            _messageRepo = messageRepo;
+            _chatRoomRepo = chatRoomRepo;
+            _supervisorRepo = supervisorRepo;
         }
 
 
@@ -629,6 +639,427 @@ namespace BLL.Services
 
             return reportDto;
         }
+
+
+
+        public async Task<StudentPaymentResultDto> MakeStudentPaymentAsync(int parentPersonId, MakeStudentPaymentRequestDto dto)
+        {
+            if (dto.Amount <= 0)
+            {
+                return new StudentPaymentResultDto
+                {
+                    Success = false,
+                    Message = "قيمة المبلغ المراد دفعه يجب أن تكون أكبر من الصفر."
+                };
+            }
+
+            // 1. التحقق من وجود حساب ولي الأمر
+            var parents = await _parentRepo.GetAllWithIncludeAndFilterAsync(
+                p => p.PersonId == parentPersonId,
+                p => p.Person
+            );
+            var parent = parents.FirstOrDefault();
+            if (parent == null)
+            {
+                return new StudentPaymentResultDto
+                {
+                    Success = false,
+                    Message = "لم يتم العثور على حساب ولي الأمر."
+                };
+            }
+
+            // 2. التحقق من أن الطالب مرتبط بولي الأمر الحالي
+            var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
+                sp => (sp.ParentID == parent.Id || sp.Parent.PersonId == parentPersonId) && sp.StudentId == dto.StudentID,
+                sp => sp.Student,
+                sp => sp.Student.Person
+            );
+            var parentLink = parentLinks.FirstOrDefault();
+            if (parentLink == null)
+            {
+                return new StudentPaymentResultDto
+                {
+                    Success = false,
+                    Message = "الطالب المحدد غير مسجل تحت حساب ولي الأمر الحالي."
+                };
+            }
+
+            // 3. جلب السجل الأكاديمي النشط للطالب
+            var studentRecords = await _studentRecordRepo.GetAllWithIncludeAndFilterAsync(
+                sr => sr.StudentId == dto.StudentID
+            );
+            var activeRecord = studentRecords.OrderByDescending(sr => sr.StudyYear).FirstOrDefault();
+            if (activeRecord == null)
+            {
+                return new StudentPaymentResultDto
+                {
+                    Success = false,
+                    Message = "لا يوجد سجل دراسي نشط لهذا الطالب لاحتساب الرسوم."
+                };
+            }
+
+            // 4. احتساب المبالغ والرسوم المستحقة والمدفوعة مسبقاً
+            var allPayments = await _paymentRepo.GetAllWithIncludeAndFilterAsync(
+                p => p.StudentRecordId == activeRecord.StudentRecordId
+            );
+            decimal totalAnnualFee = (decimal)activeRecord.YearlyPayment;
+            decimal totalPaidBefore = allPayments.Sum(p => (decimal)p.PaymentAmount);
+            decimal remainingDue = totalAnnualFee - totalPaidBefore;
+            if (remainingDue < 0) remainingDue = 0;
+
+            // 5. التحقق من عدم اكتمال الدفع مسبقاً
+            if (remainingDue <= 0)
+            {
+                return new StudentPaymentResultDto
+                {
+                    Success = false,
+                    Message = "رسوم الطالب الدراسية مسددة بالكامل بالفعل ولا توجد أي مبالغ مستحقة.",
+                    StudentId = dto.StudentID,
+                    StudentName = $"{parentLink.Student?.Person?.FirstName} {parentLink.Student?.Person?.LastName}".Trim(),
+                    TotalAnnualFee = totalAnnualFee,
+                    TotalPaidSoFar = totalPaidBefore,
+                    RemainingFeeDue = 0,
+                    PreviousWalletBalance = parent.WalletBalance,
+                    NewWalletBalance = parent.WalletBalance
+                };
+            }
+
+            // 6. التحقق من أن المبلغ المطلوب لا يتجاوز المبلغ المتبقي على الطالب (رفض الدفع إذا كان أكبر)
+            if (dto.Amount > remainingDue)
+            {
+                return new StudentPaymentResultDto
+                {
+                    Success = false,
+                    Message = $"المبلغ المطلوب دفعه ({dto.Amount:N2}) أكبر من المبلغ المستحق المتبقي على الطالب ({remainingDue:N2}). تم رفض عملية الدفع.",
+                    StudentId = dto.StudentID,
+                    StudentName = $"{parentLink.Student?.Person?.FirstName} {parentLink.Student?.Person?.LastName}".Trim(),
+                    TotalAnnualFee = totalAnnualFee,
+                    TotalPaidSoFar = totalPaidBefore,
+                    RemainingFeeDue = remainingDue,
+                    PreviousWalletBalance = parent.WalletBalance,
+                    NewWalletBalance = parent.WalletBalance
+                };
+            }
+
+            // 7. التحقق من وجود رصيد كافٍ في محفظة ولي الأمر
+            if (parent.WalletBalance < dto.Amount)
+            {
+                return new StudentPaymentResultDto
+                {
+                    Success = false,
+                    Message = $"رصيد المحفظة الحالي ({parent.WalletBalance:N2}) غير كافٍ لإتمام عملية الدفع بمبلغ ({dto.Amount:N2}).",
+                    StudentId = dto.StudentID,
+                    StudentName = $"{parentLink.Student?.Person?.FirstName} {parentLink.Student?.Person?.LastName}".Trim(),
+                    TotalAnnualFee = totalAnnualFee,
+                    TotalPaidSoFar = totalPaidBefore,
+                    RemainingFeeDue = remainingDue,
+                    PreviousWalletBalance = parent.WalletBalance,
+                    NewWalletBalance = parent.WalletBalance
+                };
+            }
+
+            // 8. تنفيذ عملية الدفع وخصم الرصيد ضمن Transaction لضمان سلامة البيانات
+            var transaction = await _paymentRepo.BeginTransactionAsync();
+            try
+            {
+                decimal previousBalance = parent.WalletBalance;
+                parent.WalletBalance -= dto.Amount;
+                _parentRepo.UpdateAsync(parent);
+                await _parentRepo.SaveChangesAsync();
+
+                var payment = new Payment
+                {
+                    StudentRecordId = activeRecord.StudentRecordId,
+                    PaymentAmount = dto.Amount,
+                    PaymentDate = DateTime.UtcNow
+                };
+                await _paymentRepo.AddAsync(payment);
+                await _paymentRepo.SaveChangesAsync();
+
+                await _paymentRepo.CommitTransactionAsync();
+
+                string studentFullName = $"{parentLink.Student?.Person?.FirstName} {parentLink.Student?.Person?.LastName}".Trim();
+                decimal newRemainingDue = remainingDue - dto.Amount;
+                if (newRemainingDue < 0) newRemainingDue = 0;
+
+                return new StudentPaymentResultDto
+                {
+                    Success = true,
+                    Message = "تمت عملية الدفع بنجاح وخصم المبلغ من محفظة ولي الأمر وتسجيل الدفعة.",
+                    PaymentId = payment.PaymentId,
+                    StudentId = dto.StudentID,
+                    StudentName = studentFullName,
+                    PaidAmount = dto.Amount,
+                    PreviousWalletBalance = previousBalance,
+                    NewWalletBalance = parent.WalletBalance,
+                    TotalAnnualFee = totalAnnualFee,
+                    TotalPaidSoFar = totalPaidBefore + dto.Amount,
+                    RemainingFeeDue = newRemainingDue,
+                    PaymentDate = payment.PaymentDate
+                };
+            }
+            catch (Exception ex)
+            {
+                await _paymentRepo.RollbackTransactionAsync();
+                return new StudentPaymentResultDto
+                {
+                    Success = false,
+                    Message = $"حدث خطأ أثناء معالجة الدفع: {ex.Message}",
+                    StudentId = dto.StudentID,
+                    PreviousWalletBalance = parent.WalletBalance,
+                    NewWalletBalance = parent.WalletBalance
+                };
+            }
+        }
+
+        public async Task<ParentWalletDto?> GetParentWalletAsync(int parentPersonId)
+        {
+            var parents = await _parentRepo.GetAllWithIncludeAndFilterAsync(p => p.PersonId == parentPersonId);
+            var parent = parents.FirstOrDefault();
+            if (parent == null) return null;
+
+            return new ParentWalletDto
+            {
+                ParentId = parent.Id,
+                WalletBalance = parent.WalletBalance,
+                FamilyCardNumber = parent.FamilyCardNumber
+            };
+        }
+
+        public async Task<ParentStudentPaymentSummaryDto?> GetStudentPaymentSummaryAsync(int parentPersonId, int studentId)
+        {
+            var parents = await _parentRepo.GetAllWithIncludeAndFilterAsync(p => p.PersonId == parentPersonId);
+            var parent = parents.FirstOrDefault();
+            if (parent == null) return null;
+
+            var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
+                sp => (sp.ParentID == parent.Id || sp.Parent.PersonId == parentPersonId) && sp.StudentId == studentId,
+                sp => sp.Student,
+                sp => sp.Student.Person
+            );
+            var parentLink = parentLinks.FirstOrDefault();
+            if (parentLink == null) return null;
+
+            var studentRecords = await _studentRecordRepo.GetAllWithIncludeAndFilterAsync(sr => sr.StudentId == studentId);
+            var activeRecord = studentRecords.OrderByDescending(sr => sr.StudyYear).FirstOrDefault();
+            if (activeRecord == null) return null;
+
+            var payments = await _paymentRepo.GetAllWithIncludeAndFilterAsync(p => p.StudentRecordId == activeRecord.StudentRecordId);
+            decimal totalFee = (decimal)activeRecord.YearlyPayment;
+            decimal totalPaid = payments.Sum(p => (decimal)p.PaymentAmount);
+            decimal remainingDue = totalFee - totalPaid;
+            if (remainingDue < 0) remainingDue = 0;
+
+            string studentFullName = $"{parentLink.Student?.Person?.FirstName} {parentLink.Student?.Person?.LastName}".Trim();
+
+            return new ParentStudentPaymentSummaryDto
+            {
+                StudentId = studentId,
+                StudentName = studentFullName,
+                TotalAnnualFee = totalFee,
+                TotalPaid = totalPaid,
+                RemainingDue = remainingDue,
+                IsFullyPaid = remainingDue <= 0,
+                ParentWalletBalance = parent.WalletBalance
+            };
+        }
+
+
+        private async Task EnsureChatRoomsForParentAsync(int parentPersonId)
+        {
+            try
+            {
+                var parents = await _parentRepo.GetAllWithIncludeAndFilterAsync(p => p.PersonId == parentPersonId);
+                var parent = parents.FirstOrDefault();
+
+                var parentLinks = await _studentParentRepo.GetAllWithIncludeAndFilterAsync(
+                    sp => (parent != null && sp.ParentID == parent.Id) || sp.Parent.PersonId == parentPersonId,
+                    sp => sp.Parent,
+                    sp => sp.Student
+                );
+
+                foreach (var link in parentLinks)
+                {
+                    int studentId = link.StudentId;
+
+                    var classLinks = await _classroomStudentRepo.GetAllWithIncludeAndFilterAsync(
+                        cs => cs.StudentId == studentId,
+                        cs => cs.ClassRoom
+                    );
+
+                    var classLink = classLinks.FirstOrDefault();
+                    if (classLink?.ClassRoom != null && classLink.ClassRoom.SupervisorId.HasValue)
+                    {
+                        var supervisor = await _supervisorRepo.GetByIdAsync(classLink.ClassRoom.SupervisorId.Value);
+                        if (supervisor != null)
+                        {
+                            var existingRooms = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
+                                cr => cr.StudentFocusId == studentId &&
+                                      cr.ParentPersonId == parentPersonId &&
+                                      cr.SupervisorPersonId == supervisor.PersonId
+                            );
+
+                            var room = existingRooms.FirstOrDefault();
+                            if (room == null)
+                            {
+                                var newRoom = new ChatRoom
+                                {
+                                    StudentFocusId = studentId,
+                                    ParentPersonId = parentPersonId,
+                                    SupervisorPersonId = supervisor.PersonId,
+                                    CreatedAt = DateTime.UtcNow,
+                                    IsActive = true
+                                };
+                                await _chatRoomRepo.AddAsync(newRoom);
+                                await _chatRoomRepo.SaveChangesAsync();
+                            }
+                            else if (!room.IsActive)
+                            {
+                                room.IsActive = true;
+                                _chatRoomRepo.UpdateAsync(room);
+                                await _chatRoomRepo.SaveChangesAsync();
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Suppress background sync errors
+            }
+        }
+
+        public async Task<IEnumerable<ParentChatThreadDto>> GetParentChatThreadsAsync(int parentPersonId)
+        {
+            await EnsureChatRoomsForParentAsync(parentPersonId);
+
+            var activeRooms = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
+                cr => cr.ParentPersonId == parentPersonId && cr.IsActive,
+                cr => cr.StudentFocus,
+                cr => cr.StudentFocus.Person,
+                cr => cr.SupervisorPerson,
+                cr => cr.Messages
+            );
+
+            var studentIds = activeRooms.Select(r => r.StudentFocusId).Distinct().ToList();
+            var classroomStudents = await _classroomStudentRepo.GetAllWithIncludeAndFilterAsync(
+                cs => studentIds.Contains(cs.StudentId),
+                cs => cs.ClassRoom,
+                cs => cs.ClassRoom.Grade
+            );
+
+            var threadsList = new List<ParentChatThreadDto>();
+
+            foreach (var room in activeRooms)
+            {
+                var classLink = classroomStudents.FirstOrDefault(cs => cs.StudentId == room.StudentFocusId);
+                string classDisplay = classLink?.ClassRoom?.Grade != null
+                    ? $"Grade {classLink.ClassRoom.Grade.GradeNumber} - Section {classLink.ClassRoom.Section}"
+                    : string.Empty;
+
+                int unreadCount = room.Messages.Count(m => m.SenderPersonId != parentPersonId && m.ReadAt == null);
+
+                string supervisorFullName = $"{room.SupervisorPerson?.FirstName} {room.SupervisorPerson?.LastName}".Trim();
+                string studentFullName = $"{room.StudentFocus?.Person?.FirstName} {room.StudentFocus?.Person?.LastName}".Trim();
+
+                threadsList.Add(new ParentChatThreadDto
+                {
+                    ChatRoomID = room.ChatRoomId,
+                    SupervisorPersonID = room.SupervisorPersonId,
+                    SupervisorName = supervisorFullName,
+                    StudentID = room.StudentFocusId,
+                    StudentName = studentFullName,
+                    ClassDisplayName = classDisplay,
+                    LastMessage = room.LastMessageContent ?? "No messages exchanged yet...",
+                    LastMessageTime = room.LastMessageAt ?? room.CreatedAt,
+                    UnreadCount = unreadCount
+                });
+            }
+
+            return threadsList.OrderByDescending(t => t.LastMessageTime ?? DateTime.MinValue).ToList();
+        }
+
+        public async Task<IEnumerable<ParentChatMessageDto>> GetChatHistoryAsync(int parentPersonId, int chatRoomId)
+        {
+            var rooms = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
+                cr => cr.ChatRoomId == chatRoomId && cr.ParentPersonId == parentPersonId && cr.IsActive
+            );
+            var room = rooms.FirstOrDefault();
+            if (room == null) return Enumerable.Empty<ParentChatMessageDto>();
+
+            var rawMessages = await _messageRepo.GetAllWithIncludeAndFilterAsync(
+                m => m.ChatRoomId == chatRoomId
+            );
+
+            var unreadMessages = rawMessages.Where(m => m.SenderPersonId != parentPersonId && m.ReadAt == null).ToList();
+            if (unreadMessages.Any())
+            {
+                foreach (var msg in unreadMessages)
+                {
+                    msg.ReadAt = DateTime.UtcNow;
+                    _messageRepo.UpdateAsync(msg);
+                }
+                await _messageRepo.SaveChangesAsync();
+            }
+
+            return rawMessages
+                .OrderBy(m => m.SentAt)
+                .Select(m => new ParentChatMessageDto
+                {
+                    MessageID = m.MessageId,
+                    SenderPersonID = m.SenderPersonId,
+                    MessageContent = m.MessageContent,
+                    SentAt = m.SentAt,
+                    ReadAt = m.ReadAt,
+                    IsMe = (m.SenderPersonId == parentPersonId)
+                })
+                .ToList();
+        }
+
+        public async Task<bool> SendMessageAsync(int parentPersonId, ParentSendMessageDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.MessageContent)) return false;
+
+            var rooms = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
+                cr => cr.ChatRoomId == dto.ChatRoomID && cr.ParentPersonId == parentPersonId && cr.IsActive
+            );
+            var room = rooms.FirstOrDefault();
+            if (room == null) return false;
+
+            var transaction = await _messageRepo.BeginTransactionAsync();
+            try
+            {
+                var timestamp = DateTime.UtcNow;
+
+                var newMessage = new Message
+                {
+                    ChatRoomId = dto.ChatRoomID,
+                    SenderPersonId = parentPersonId,
+                    MessageContent = dto.MessageContent.Trim(),
+                    SentAt = timestamp,
+                    ReadAt = null
+                };
+                await _messageRepo.AddAsync(newMessage);
+                await _messageRepo.SaveChangesAsync();
+
+                room.LastMessageContent = dto.MessageContent.Length > 255
+                    ? dto.MessageContent.Substring(0, 252) + "..."
+                    : dto.MessageContent.Trim();
+
+                room.LastMessageAt = timestamp;
+                _chatRoomRepo.UpdateAsync(room);
+                await _chatRoomRepo.SaveChangesAsync();
+
+                await _messageRepo.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _messageRepo.RollbackTransactionAsync();
+                return false;
+            }
+        }
+
 
 
     }

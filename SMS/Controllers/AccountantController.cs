@@ -111,5 +111,59 @@ namespace SMS.Controllers
             var result = await _accountantService.GetEducationalStaffSalariesAsync();
             return Ok(result);
         }
+
+        [HttpPost("register-parent")]
+        public async Task<IActionResult> RegisterParent([FromBody] ParentRegistrationDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _accountantService.RegisterNewParentAsync(dto);
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "حدث خطأ غير متوقع أثناء معالجة تسجيل ولي الأمر.", details = ex.Message });
+            }
+        }
+
+        [HttpPost("topup-wallet")]
+        public async Task<IActionResult> TopUpWallet([FromBody] ParentWalletTopUpDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _accountantService.TopUpParentWalletAsync(dto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "حدث خطأ غير متوقع أثناء إضافة الرصيد إلى المحفظة.", details = ex.Message });
+            }
+        }
     }
 }

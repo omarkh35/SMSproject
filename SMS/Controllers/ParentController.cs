@@ -1,4 +1,5 @@
-﻿using BLL.Interfaces;
+﻿using BLL.EntitiesDTOS.Parent;
+using BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -202,8 +203,115 @@ namespace SMS.Controllers
             return Ok(reportCard);
         }
 
+        [HttpPost("pay")]
+        public async Task<IActionResult> MakePayment([FromBody] MakeStudentPaymentRequestDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var claimUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int parentPersonId))
+            {
+                return Unauthorized(new { message = "User identity context is missing or invalid." });
+            }
+
+            var result = await _parentService.MakeStudentPaymentAsync(parentPersonId, dto);
+
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        [HttpGet("wallet")]
+        public async Task<IActionResult> GetWallet()
+        {
+            var claimUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int parentPersonId))
+            {
+                return Unauthorized(new { message = "User identity context is missing or invalid." });
+            }
+
+            var wallet = await _parentService.GetParentWalletAsync(parentPersonId);
+            if (wallet == null)
+            {
+                return NotFound(new { message = "Parent account not found." });
+            }
+
+            return Ok(wallet);
+        }
+
+        [HttpGet("student/{studentId}/payment-status")]
+        public async Task<IActionResult> GetStudentPaymentStatus(int studentId)
+        {
+            var claimUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int parentPersonId))
+            {
+                return Unauthorized(new { message = "User identity context is missing or invalid." });
+            }
+
+            var summary = await _parentService.GetStudentPaymentSummaryAsync(parentPersonId, studentId);
+            if (summary == null)
+            {
+                return Forbid();
+            }
+
+            return Ok(summary);
+        }
 
 
+        [HttpGet("chats")]
+        public async Task<IActionResult> GetChatThreads()
+        {
+            var claimUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int parentPersonId))
+            {
+                return Unauthorized(new { message = "User identity context is missing or invalid." });
+            }
+
+            var threads = await _parentService.GetParentChatThreadsAsync(parentPersonId);
+            return Ok(threads);
+        }
+
+        [HttpGet("chat-history/{chatRoomId}")]
+        public async Task<IActionResult> GetChatHistory(int chatRoomId)
+        {
+            var claimUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int parentPersonId))
+            {
+                return Unauthorized(new { message = "User identity context is missing or invalid." });
+            }
+
+            var messages = await _parentService.GetChatHistoryAsync(parentPersonId, chatRoomId);
+            return Ok(messages);
+        }
+
+        [HttpPost("send-message")]
+        public async Task<IActionResult> SendMessage([FromBody] ParentSendMessageDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var claimUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int parentPersonId))
+            {
+                return Unauthorized(new { message = "User identity context is missing or invalid." });
+            }
+
+            var success = await _parentService.SendMessageAsync(parentPersonId, dto);
+            if (!success)
+            {
+                return BadRequest(new { message = "Failed to send message or access denied to chat room." });
+            }
+
+            return Ok(new { message = "Message sent successfully." });
+        }
 
 
     }

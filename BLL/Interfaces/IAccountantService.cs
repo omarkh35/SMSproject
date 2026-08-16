@@ -22,6 +22,9 @@ namespace BLL.Interfaces
         Task<StudentPaymentDetailsDto?> GetStudentPaymentDetailsAsync(int studentId);
         Task<StaffSalaryDashboardDto> GetEducationalStaffSalariesAsync();
 
+        Task<ParentCreatedResponseDto> RegisterNewParentAsync(ParentRegistrationDto dto);
+        Task<ParentWalletTopUpResponseDto> TopUpParentWalletAsync(ParentWalletTopUpDto dto);
+
 
     }
 }

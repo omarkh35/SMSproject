@@ -44,6 +44,11 @@ namespace BLL.Interfaces
 
         Task<bool> CreateNextSectionAutomatedAsync(CreateAutomaticClassRoomDto dto);
 
+        Task<SupervisorDetailsDto> GetSupervisorByIdAsync(int managerPersonId, int supervisorId);
+        Task<SupervisorDetailsDto> UpdateSupervisorAsync(int managerPersonId, int supervisorId, UpdateSupervisorDto dto);
+        Task<bool> DeleteSupervisorAsync(int managerPersonId, int supervisorId);
+
+
 
     }
 

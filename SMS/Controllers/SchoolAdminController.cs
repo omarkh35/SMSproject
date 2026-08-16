@@ -233,5 +233,50 @@ namespace SMS.Controllers
                 : BadRequest("عذراً، فشلت عملية حفظ برنامج الامتحان.");
         }
 
+        [HttpPost("announcement")]
+        public async Task<IActionResult> CreateSchoolAnnouncement([FromBody] SchoolAnnouncementCreateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            int personId = 0;
+            var personIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(personIdClaim, out int parsedId))
+            {
+                personId = parsedId;
+            }
+
+            var result = await _adminService.CreateSchoolAnnouncementAsync(dto, personId);
+            return Ok(new
+            {
+                message = "تم نشر الإعلان المدرسي بنجاح.",
+                data = result
+            });
+        }
+
+        // =========================================================================
+        // 5. واجهة المالية والرواتب والأقساط الدراسية (School Finance Dashboard)
+        // =========================================================================
+        [HttpGet("finance")]
+        public async Task<IActionResult> GetFinanceDashboard()
+        {
+            var result = await _adminService.GetFinanceDashboardAsync();
+            return Ok(result);
+        }
+
+        // =========================================================================
+        // 6. تعديل قسط صف معين (Edit Tuition Fee by Grade)
+        // =========================================================================
+        [HttpPut("finance/tuition-fee")]
+        public async Task<IActionResult> UpdateTuitionFee([FromBody] UpdateGradeTuitionFeeDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var success = await _adminService.UpdateGradeTuitionFeeAsync(dto);
+            return success
+                ? Ok(new { message = "تم تعديل القسط الدراسي للصف وتحديث سجلات الطلاب بنجاح." })
+                : BadRequest(new { message = "فشلت عملية تعديل القسط الدراسي، يرجى التحقق من معرف الصف." });
+        }
+
+
     }
 }

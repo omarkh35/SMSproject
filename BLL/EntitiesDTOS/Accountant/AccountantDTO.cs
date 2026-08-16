@@ -148,4 +148,76 @@ namespace BLL.EntitiesDTOS.Accountant
         public decimal NetSalary { get; set; }
     }
 
+
+    public class ParentRegistrationDto
+    {
+        [Required(ErrorMessage = "الاسم الأول لولي الأمر مطلوب")]
+        public string FirstName { get; set; } = string.Empty;
+
+        public string SecondName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "اسم العائلة مطلوب")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "تاريخ الميلاد مطلوب")]
+        public DateOnly DateOfBirth { get; set; }
+
+        public bool Gender { get; set; } = true; // true = ذكر افتراضياً
+
+        [Required(ErrorMessage = "رقم الهاتف مطلوب لتسجيل الدخول والتواصل")]
+        [Phone(ErrorMessage = "صيغة رقم الهاتف غير صحيحة")]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [EmailAddress(ErrorMessage = "صيغة البريد الإلكتروني غير صحيحة")]
+        public string? Email { get; set; }
+
+        public string? Password { get; set; }
+
+        [Required(ErrorMessage = "رقم دفتر العائلة مطلوب وهو حقل فريد")]
+        public string FamilyCardNumber { get; set; } = string.Empty;
+    }
+
+    public class ParentCreatedResponseDto
+    {
+        public int ParentId { get; set; }
+        public int PersonId { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string AccountNumber { get; set; } = string.Empty;
+        public string FamilyCardNumber { get; set; } = string.Empty;
+        public decimal WalletBalance { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
+
+    public class ParentWalletTopUpDto
+    {
+        [Required(ErrorMessage = "معرّف ولي الأمر مطلوب")]
+        public int ParentId { get; set; }
+
+        [Required(ErrorMessage = "المبلغ المراد إضافته للمحفظة مطلوب")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "يجب أن يكون المبلغ المضاف أكبر من الصفر")]
+        public decimal Amount { get; set; }
+
+        public string? Notes { get; set; }
+    }
+
+    public class ParentWalletTopUpResponseDto
+    {
+        public int ParentId { get; set; }
+        public int PersonId { get; set; }
+        public string ParentFullName { get; set; } = string.Empty;
+        public string AccountNumber { get; set; } = string.Empty;
+        public string FamilyCardNumber { get; set; } = string.Empty;
+        public decimal PreviousBalance { get; set; }
+        public decimal AddedAmount { get; set; }
+        public decimal CurrentBalance { get; set; }
+        public DateTime TransactionDate { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
+
+
 }
+
+

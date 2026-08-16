@@ -4,6 +4,7 @@ using DAL.Entities;
 using DAL.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,6 +27,7 @@ namespace BLL.Services
         private readonly IBaseRepositories<Supervisor> _supervisorRepo;
         private readonly IBaseRepositories<Accountant> _accountantRepo;
         private readonly IBaseRepositories<DepartmentManager> _managerRepo;
+        private readonly IBaseRepositories<Role> _roleRepo;
 
         public AccountantService(
             IBaseRepositories<StudentRecord> studentRecordRepo,
@@ -41,7 +43,9 @@ namespace BLL.Services
             IBaseRepositories<User> userRepo,
             IBaseRepositories<Teacher> teacherRepo,
             IBaseRepositories<Accountant> accountantRepo,
-            IBaseRepositories<Supervisor> supervisorRepo)
+            IBaseRepositories<Supervisor> supervisorRepo,
+            IBaseRepositories<Role> roleRepo
+            )
         {
             _studentRecordRepo = studentRecordRepo;
             _classRoomRepo = classRoomRepo;
@@ -57,6 +61,7 @@ namespace BLL.Services
             _userRepo = userRepo;
             _teacherRepo = teacherRepo;
             _supervisorRepo = supervisorRepo;
+            _roleRepo = roleRepo;
         }
 
         public async Task<AccountantDashboardDto> GetMainDashboardGridAsync(string? searchName, int? classRoomId, int page)
@@ -629,6 +634,225 @@ namespace BLL.Services
 
             return dashboard;
         }
+
+
+        public async Task<ParentCreatedResponseDto> RegisterNewParentAsync(ParentRegistrationDto dto)
+        {
+            if (dto == null)
+            {
+                throw new ArgumentNullException(nameof(dto), "بيانات ولي الأمر غير مكتملة.");
+            }
+
+            string cleanFamilyCard = dto.FamilyCardNumber?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(cleanFamilyCard))
+            {
+                throw new ArgumentException("رقم دفتر العائلة مطلوب وهو حقل فريد.");
+            }
+
+            // 1. التحقق الحاسم: التأكد من أن رقم العائلة غير موجود مسبقاً في النظام
+            var allParents = await _parentRepo.GetAllAsync();
+            bool familyCardExists = allParents.Any(p =>
+                !string.IsNullOrWhiteSpace(p.FamilyCardNumber) &&
+                p.FamilyCardNumber.Trim().Equals(cleanFamilyCard, StringComparison.OrdinalIgnoreCase));
+
+            if (familyCardExists)
+            {
+                throw new InvalidOperationException($"رقم العائلة '{cleanFamilyCard}' مسجل مسبقاً في النظام لولي أمر آخر.");
+            }
+
+            // 2. التحقق من عدم تكرار رقم الهاتف للمستخدمين
+            string cleanPhone = dto.PhoneNumber?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(cleanPhone))
+            {
+                var allUsers = await _userRepo.GetAllAsync();
+                if (allUsers.Any(u => !string.IsNullOrWhiteSpace(u.PhoneNumber) && u.PhoneNumber.Trim() == cleanPhone))
+                {
+                    throw new InvalidOperationException($"رقم الهاتف '{cleanPhone}' مسجل مسبقاً في النظام لمستخدم آخر.");
+                }
+
+                if (!string.IsNullOrWhiteSpace(dto.Email))
+                {
+                    string cleanEmail = dto.Email.Trim().ToLower();
+                    if (allUsers.Any(u => !string.IsNullOrWhiteSpace(u.Email) && u.Email.Trim().ToLower() == cleanEmail))
+                    {
+                        throw new InvalidOperationException($"البريد الإلكتروني '{dto.Email}' مسجل مسبقاً في النظام لمستخدم آخر.");
+                    }
+                }
+            }
+
+            // 3. تحديد معرّف دور ولي الأمر ديناميكياً
+            int parentRoleId = await GetParentRoleIdAsync();
+
+            // 4. فتح ترانزكشن لحفظ سجلات Person و User و Parent بشكل ذري
+            var transaction = await _personRepo.BeginTransactionAsync();
+            try
+            {
+                // أ. توليد رقم الحساب الفريد من السيكوينس المعتمد
+                string sqlCommand = "SELECT CAST(NEXT VALUE FOR [dbo].[Seq_UserAccountNumber] AS NVARCHAR(8))";
+                string generatedAccountNumber = await _classRoomRepo.ExecuteRawSqlScalarAsync<string>(sqlCommand);
+
+                // ب. إنشاء كيان الشخص (Person)
+                var newPerson = new Person
+                {
+                    FirstName = dto.FirstName.Trim(),
+                    SecondName = string.IsNullOrWhiteSpace(dto.SecondName) ? string.Empty : dto.SecondName.Trim(),
+                    LastName = dto.LastName.Trim(),
+                    DateOfBirth = dto.DateOfBirth,
+                    Gender = dto.Gender,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _personRepo.AddAsync(newPerson);
+                await _personRepo.SaveChangesAsync();
+
+                // ج. تجهيز كلمة المرور (تشفيرها إن وجدت، أو تركها فارغة للتفعيل الذاتي)
+                string? hashedPassword = null;
+                if (!string.IsNullOrWhiteSpace(dto.Password))
+                {
+                    hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password.Trim());
+                }
+
+                // د. إنشاء كيان المستخدم (User)
+                var newUser = new User
+                {
+                    PersonId = newPerson.PersonId,
+                    UserRoleId = parentRoleId,
+                    PhoneNumber = cleanPhone,
+                    Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim().ToLower(),
+                    HashPassword = hashedPassword,
+                    AccountNumber = generatedAccountNumber
+                };
+                await _userRepo.AddAsync(newUser);
+                await _userRepo.SaveChangesAsync();
+
+                // هـ. إنشاء كيان ولي الأمر (Parent) مع رصيد محفظة 0 دون إضافة مبالغ
+                var newParent = new Parent
+                {
+                    PersonId = newPerson.PersonId,
+                    FamilyCardNumber = cleanFamilyCard,
+                    WalletBalance = 0m // بدون رصيد عند الإنشاء
+                };
+                await _parentRepo.AddAsync(newParent);
+                await _parentRepo.SaveChangesAsync();
+
+                await _personRepo.CommitTransactionAsync();
+
+                string combinedFullName = $"{newPerson.FirstName} {newPerson.SecondName} {newPerson.LastName}".Replace("  ", " ").Trim();
+
+                return new ParentCreatedResponseDto
+                {
+                    ParentId = newParent.Id,
+                    PersonId = newPerson.PersonId,
+                    FullName = combinedFullName,
+                    PhoneNumber = newUser.PhoneNumber,
+                    Email = newUser.Email,
+                    AccountNumber = generatedAccountNumber,
+                    FamilyCardNumber = newParent.FamilyCardNumber,
+                    WalletBalance = 0m,
+                    CreatedAt = newPerson.CreatedAt,
+                    Message = "تم تسجيل ولي الأمر بنجاح في النظام وتوليد رقم الحساب."
+                };
+            }
+            catch
+            {
+                await _personRepo.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        // =========================================================================
+        // شحن / إضافة رصيد لمحفظة ولي الأمر من قسم المحاسبة
+        // =========================================================================
+        public async Task<ParentWalletTopUpResponseDto> TopUpParentWalletAsync(ParentWalletTopUpDto dto)
+        {
+            if (dto == null)
+            {
+                throw new ArgumentNullException(nameof(dto), "بيانات شحن المحفظة غير مكتملة.");
+            }
+
+            if (dto.Amount <= 0)
+            {
+                throw new ArgumentException("يجب أن يكون المبلغ المضاف إلى المحفظة أكبر من الصفر.");
+            }
+
+            // 1. البحث عن ولي الأمر إما بمعرف ParentId أو PersonId
+            var parents = await _parentRepo.GetAllWithIncludeAsync(p => p.Person);
+            var parent = parents.FirstOrDefault(p => p.Id == dto.ParentId || p.PersonId == dto.ParentId);
+
+            if (parent == null)
+            {
+                throw new KeyNotFoundException($"لم يتم العثور على سجل ولي الأمر بالمعرّف الممرر: {dto.ParentId}.");
+            }
+
+            // 2. تحديث الرصيد بشكل ذري ضمن ترانزكشن
+            var transaction = await _parentRepo.BeginTransactionAsync();
+            try
+            {
+                decimal previousBalance = parent.WalletBalance;
+                parent.WalletBalance += dto.Amount;
+
+                _parentRepo.UpdateAsync(parent);
+                await _parentRepo.SaveChangesAsync();
+
+                await _parentRepo.CommitTransactionAsync();
+
+                // 3. جلب بيانات المستخدم لمعرفة رقم الحساب
+                var allUsers = await _userRepo.GetAllAsync();
+                var user = allUsers.FirstOrDefault(u => u.PersonId == parent.PersonId);
+
+                string combinedFullName = parent.Person != null
+                    ? $"{parent.Person.FirstName} {parent.Person.SecondName} {parent.Person.LastName}".Replace("  ", " ").Trim()
+                    : "ولي أمر";
+
+                return new ParentWalletTopUpResponseDto
+                {
+                    ParentId = parent.Id,
+                    PersonId = parent.PersonId,
+                    ParentFullName = combinedFullName,
+                    AccountNumber = user?.AccountNumber ?? "N/A",
+                    FamilyCardNumber = parent.FamilyCardNumber ?? "N/A",
+                    PreviousBalance = previousBalance,
+                    AddedAmount = dto.Amount,
+                    CurrentBalance = parent.WalletBalance,
+                    TransactionDate = DateTime.UtcNow,
+                    Message = $"تمت إضافة مبلغ {dto.Amount:N2} إلى محفظة ولي الأمر بنجاح. الرصيد الحالي: {parent.WalletBalance:N2}."
+                };
+            }
+            catch
+            {
+                await _parentRepo.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        // =========================================================================
+        // دالة مساعدة لتحديد معرف دور ولي الأمر في جدول الأدوار Roles
+        // =========================================================================
+        private async Task<int> GetParentRoleIdAsync()
+        {
+            try
+            {
+                var roles = await _roleRepo.GetAllAsync();
+                var parentRole = roles.FirstOrDefault(r =>
+                    !string.IsNullOrWhiteSpace(r.RoleName) &&
+                    (r.RoleName.Equals("Parent", StringComparison.OrdinalIgnoreCase) ||
+                     r.RoleName.Equals("ولي أمر", StringComparison.OrdinalIgnoreCase) ||
+                     r.RoleName.Equals("أب", StringComparison.OrdinalIgnoreCase) ||
+                     r.RoleName.ToLower().Contains("parent")));
+
+                if (parentRole != null)
+                {
+                    return parentRole.RoleId;
+                }
+
+                return roles.FirstOrDefault()?.RoleId ?? 5;
+            }
+            catch
+            {
+                return 5;
+            }
+        }
+
 
     }
 }

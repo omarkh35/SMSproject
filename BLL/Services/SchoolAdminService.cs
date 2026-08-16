@@ -27,6 +27,8 @@ namespace BLL.Services
         private readonly IBaseRepositories<Announcement> _announcementRepo;
         private readonly IBaseRepositories<ClassroomStudent> _classStudentRepo;
         private readonly IBaseRepositories<ExamSchedule> _examScheduleRepo;
+        private readonly IBaseRepositories<ClassPayment> _classPaymentRepo;
+        private readonly IBaseRepositories<Accountant> _accountantRepo;
 
         public SchoolAdminService(
             IBaseRepositories<Subject> subjectRepo,
@@ -897,6 +899,177 @@ namespace BLL.Services
             }
 
             await _examScheduleRepo.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<SchoolAnnouncementResponseDto> CreateSchoolAnnouncementAsync(SchoolAnnouncementCreateDto dto, int senderPersonId = 0)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto), "بيانات الإعلان مطلوبة.");
+
+            // التحقق من هوية المرسل: إذا كان 0 أو غير موجود في جدول People، يتم إسناده لحساب إداري صالح
+            int validSenderId = senderPersonId;
+            if (validSenderId <= 0)
+            {
+                var allPeople = await _personRepo.GetAllAsync();
+                validSenderId = allPeople.FirstOrDefault()?.PersonId ?? 1;
+            }
+            else
+            {
+                var personExists = await _personRepo.GetByIdAsync(validSenderId);
+                if (personExists == null)
+                {
+                    var allPeople = await _personRepo.GetAllAsync();
+                    validSenderId = allPeople.FirstOrDefault()?.PersonId ?? 1;
+                }
+            }
+
+            var announcement = new Announcement
+            {
+                Title = dto.Title.Trim(),
+                AnnouncementBody = dto.Content.Trim(),
+                IsGeneral = dto.IsGeneral,
+                SenderPersonId = validSenderId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _announcementRepo.AddAsync(announcement);
+            await _announcementRepo.SaveChangesAsync();
+
+            var sender = await _personRepo.GetByIdAsync(validSenderId);
+            string senderName = sender != null ? $"{sender.FirstName} {sender.LastName}".Trim() : "Administration";
+
+            return new SchoolAnnouncementResponseDto
+            {
+                AnnouncementId = announcement.AnnouncementId,
+                Title = announcement.Title,
+                Content = announcement.AnnouncementBody,
+                IsGeneral = announcement.IsGeneral,
+                CreatedAt = announcement.CreatedAt ?? DateTime.UtcNow,
+                SenderName = senderName
+            };
+        }
+
+        // =========================================================================
+        // 5. واجهة المالية والرواتب والأقساط (School Finance Dashboard)
+        // =========================================================================
+        public async Task<AdminFinanceDashboardDto> GetFinanceDashboardAsync()
+        {
+            var financeDashboard = new AdminFinanceDashboardDto();
+
+            // 1. حساب إجمالي الرواتب المدفوعة لكافة طاقم المدرسة (TOTAL PAYMENTS - Salaries paid to staff)
+            var allTeachers = await _teacherRepo.GetAllAsync();
+            var allSupervisors = await _supervisorRepo.GetAllAsync();
+            var allManagers = await _managerRepo.GetAllAsync();
+            var allAccountants = await _accountantRepo.GetAllAsync();
+
+            decimal totalTeachersSalary = allTeachers.Sum(t => (decimal)((t.WeeklyClasses ?? 0) * (t.SalaryPerClass ?? 0)));
+            decimal totalSupervisorsSalary = allSupervisors.Sum(s => s.Salary ?? 0m);
+            decimal totalManagersSalary = allManagers.Sum(m => m.Salary ?? 0m);
+            decimal totalAccountantsSalary = allAccountants.Sum(a => a.Salary ?? 0m);
+
+            decimal totalPayments = totalTeachersSalary + totalSupervisorsSalary + totalManagersSalary + totalAccountantsSalary;
+            financeDashboard.TotalPayments = totalPayments;
+
+            // 2. جلب الصفوف وأسعار الأقساط والطلاب المسجلين لكل صف (Tuition Fees by Grade)
+            var allGrades = await _gradeRepo.GetAllAsync();
+            var allClassPayments = await _classPaymentRepo.GetAllAsync();
+            var allStudentRecords = await _studentRecordRepo.GetAllAsync();
+
+            decimal totalReceivables = 0m;
+            int totalStudents = 0;
+
+            foreach (var grade in allGrades.OrderBy(g => g.GradeNumber))
+            {
+                // حساب عدد الطلاب المسجلين في هذا الصف
+                int studentsInGrade = allStudentRecords.Count(sr => sr.GradeId == grade.GradeId);
+                totalStudents += studentsInGrade;
+
+                // جلب رسم القسط لهذا الصف من جدول ClassPayment
+                var classPayment = allClassPayments.FirstOrDefault(cp => cp.Class == (byte)grade.GradeNumber || cp.Class == (byte)grade.GradeId);
+                decimal fee = classPayment?.FullAmount ?? 0m;
+
+                // في حال عدم وجود تسجيل سابق في جدول ClassPayment، نقرأ من القسط السنوي المسجل للطلاب
+                if (fee == 0m && studentsInGrade > 0)
+                {
+                    var sampleRecord = allStudentRecords.FirstOrDefault(sr => sr.GradeId == grade.GradeId && sr.YearlyPayment != null && sr.YearlyPayment > 0);
+                    if (sampleRecord != null)
+                    {
+                        fee = (decimal)sampleRecord.YearlyPayment;
+                    }
+                }
+
+                decimal gradeTotalAmount = fee * studentsInGrade;
+                totalReceivables += gradeTotalAmount;
+
+                financeDashboard.TuitionFeesByGrade.Add(new GradeTuitionFeeGridItemDto
+                {
+                    GradeId = grade.GradeId,
+                    GradeNumber = grade.GradeNumber,
+                    GradeName = $"Grade {grade.GradeNumber}",
+                    TuitionFee = fee,
+                    StudentsCount = studentsInGrade,
+                    TotalAmount = gradeTotalAmount
+                });
+            }
+
+            financeDashboard.TotalReceivables = totalReceivables;
+            financeDashboard.TotalTuitionReceivables = totalReceivables;
+            financeDashboard.TotalStudentsCount = totalStudents;
+            financeDashboard.NetBalance = totalReceivables - totalPayments;
+
+            return financeDashboard;
+        }
+
+        // =========================================================================
+        // 6. تعديل قسط صف معين وتحديث رسوم الطلاب (Edit Tuition Fee by Grade)
+        // =========================================================================
+        public async Task<bool> UpdateGradeTuitionFeeAsync(UpdateGradeTuitionFeeDto dto)
+        {
+            if (dto == null) return false;
+
+            var grade = await _gradeRepo.GetByIdAsync(dto.GradeId);
+            if (grade == null)
+            {
+                var allGrades = await _gradeRepo.GetAllAsync();
+                grade = allGrades.FirstOrDefault(g => g.GradeNumber == dto.GradeId);
+                if (grade == null) return false;
+            }
+
+            byte classByte = (byte)grade.GradeNumber;
+
+            // 1. تحديث أو إنشاء سجل في جدول ClassPayment
+            var allClassPayments = await _classPaymentRepo.GetAllAsync();
+            var existingClassPayment = allClassPayments.FirstOrDefault(cp => cp.Class == classByte || cp.Class == (byte)grade.GradeId);
+
+            if (existingClassPayment != null)
+            {
+                existingClassPayment.FullAmount = dto.TuitionFee;
+                existingClassPayment.Class = classByte;
+                _classPaymentRepo.UpdateAsync(existingClassPayment);
+            }
+            else
+            {
+                var newClassPayment = new ClassPayment
+                {
+                    Class = classByte,
+                    FullAmount = dto.TuitionFee
+                };
+                await _classPaymentRepo.AddAsync(newClassPayment);
+            }
+            await _classPaymentRepo.SaveChangesAsync();
+
+            // 2. مزامنة القسط الدراسي مع سجلات طلاب هذا الصف في StudentRecords
+            var studentRecords = await _studentRecordRepo.GetAllWithIncludeAndFilterAsync(sr => sr.GradeId == grade.GradeId);
+            foreach (var record in studentRecords)
+            {
+                record.YearlyPayment = dto.TuitionFee;
+                _studentRecordRepo.UpdateAsync(record);
+            }
+            if (studentRecords.Any())
+            {
+                await _studentRecordRepo.SaveChangesAsync();
+            }
+
             return true;
         }
 
