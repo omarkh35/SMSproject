@@ -544,7 +544,7 @@ public partial class AppDbContext : DbContext
         modelBuilder.Entity<StudentParent>(entity =>
         {
             entity.Property(e => e.StudentParentId)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("StudentParentID");
             entity.Property(e => e.ParentID).HasColumnName("ParentID");
             entity.Property(e => e.RelationshipType).HasMaxLength(50);

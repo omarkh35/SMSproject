@@ -215,7 +215,7 @@ namespace BLL.Services
                 {
                     StudentId = newStudent.StudentId,
                     ParentID = matchedParent.Id, // المعرف المالي لولي الأمر
-                    RelationshipType = "أب/أم"   // صلة القرابة الافتراضية بناءً على دفتر العائلة
+                    RelationshipType = "Father"   // صلة القرابة الافتراضية بناءً على دفتر العائلة
                 };
                 await _studentParentRepo.AddAsync(newLink);
 

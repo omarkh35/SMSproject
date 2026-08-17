@@ -44,7 +44,9 @@ namespace BLL.Services
         IBaseRepositories<Mark> markRepo,
         IBaseRepositories<Announcement> announcementRepo,
         IBaseRepositories<ClassroomStudent> classStudentRepo,
-        IBaseRepositories<ExamSchedule> examScheduleRepo)
+        IBaseRepositories<ExamSchedule> examScheduleRepo,
+        IBaseRepositories<ClassPayment> classPaymentRepo,
+        IBaseRepositories<Accountant> accountantRepo)
         {
             _subjectRepo = subjectRepo;
             _gradeSubjectRepo = gradeSubjectRepo;
@@ -61,6 +63,8 @@ namespace BLL.Services
             _classStudentRepo = classStudentRepo;
             _examScheduleRepo = examScheduleRepo;
             _classTeacherRepo = classTeacherRepo;
+            _accountantRepo = accountantRepo;
+            _classPaymentRepo = classPaymentRepo;
         }
 
         // =========================================================================
