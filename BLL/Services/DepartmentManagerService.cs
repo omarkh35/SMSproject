@@ -1097,5 +1097,179 @@ namespace BLL.Services
                 throw;
             }
         }
+
+        public async Task<AssignSupervisorToClassResultDto> AssignSupervisorToClassAsync(int managerPersonId, AssignSupervisorToClassDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto), "بيانات إسناد الموجه للشعبة مطلوبة.");
+
+            if (dto.ClassRoomId <= 0)
+                throw new ArgumentException("معرف الشعبة الصفية غير صالح.", nameof(dto.ClassRoomId));
+
+            if (dto.SupervisorId <= 0)
+                throw new ArgumentException("معرف الموجه غير صالح.", nameof(dto.SupervisorId));
+
+            // 1. التحقق من صلاحية وهوية مدير القسم
+            var managers = await _managerRepo.GetAllWithIncludeAsync();
+            var activeManager = managers.FirstOrDefault(m => m.PersonId == managerPersonId);
+            if (activeManager == null)
+                throw new UnauthorizedAccessException("جلسة مدير القسم غير صالحة أو غير مسجل كمدير قسم في النظام.");
+
+            // 2. التحقق من وجود الشعبة الصفية
+            var classRooms = await _classRoomRepo.GetAllWithIncludeAndFilterAsync(
+                c => c.ClassRoomId == dto.ClassRoomId,
+                c => c.Grade,
+                c => c.ClassroomStudents
+            );
+            var classRoom = classRooms.FirstOrDefault();
+            if (classRoom == null)
+                throw new KeyNotFoundException($"الشعبة الصفية رقم ({dto.ClassRoomId}) غير موجودة في النظام.");
+
+            // 3. التحقق من وجود الموجه وحالته
+            var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(
+                s => s.SupervisorId == dto.SupervisorId,
+                s => s.Person
+            );
+            var supervisor = supervisors.FirstOrDefault();
+            if (supervisor == null)
+                throw new KeyNotFoundException($"الموجه رقم ({dto.SupervisorId}) غير موجود في النظام.");
+
+            if (supervisor.Person == null || !supervisor.Person.IsActive)
+                throw new InvalidOperationException($"لا يمكن إسناد الموجه '{supervisor.Person?.FirstName} {supervisor.Person?.LastName}' لأن حسابه غير نشط/معطل في النظام.");
+
+            // 4. التحقق من أن الموجه يتبع لقسم هذا المدير (نطاق الصلاحيات)
+            if (supervisor.DepartmentManagerId != activeManager.DepartmentManagerId)
+                throw new UnauthorizedAccessException("ليس لديك صلاحية لإسناد هذا الموجه لأنه يتبع لقسم/مدير آخر.");
+
+            // 5. التحقق من عدم التكرار (إذا كان الموجه مسنداً بالفعل لنفس الشعبة)
+            if (classRoom.SupervisorId.HasValue && classRoom.SupervisorId.Value == dto.SupervisorId)
+            {
+                string supName = $"{supervisor.Person.FirstName} {supervisor.Person.LastName}".Trim();
+                throw new InvalidOperationException($"الموجه '{supName}' مسند بالفعل إلى هذه الشعبة الصفية (الصف {classRoom.Grade?.GradeNumber ?? classRoom.GradeId} - الشعبة {classRoom.Section}).");
+            }
+
+            // 6. التحقق مما إذا كان الإجراء هو إعادة تعيين (نقل من موجه سابق)
+            int? previousSupervisorId = classRoom.SupervisorId;
+            string? previousSupervisorName = null;
+            bool isReassignment = previousSupervisorId.HasValue && previousSupervisorId.Value != dto.SupervisorId;
+
+            if (isReassignment)
+            {
+                var prevSupervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(
+                    s => s.SupervisorId == previousSupervisorId!.Value,
+                    s => s.Person
+                );
+                var prevSup = prevSupervisors.FirstOrDefault();
+                if (prevSup?.Person != null)
+                {
+                    previousSupervisorName = $"{prevSup.Person.FirstName} {prevSup.Person.LastName}".Trim();
+                }
+            }
+
+            // 7. تحديث سجل الشعبة في قاعدة البيانات
+            var trackedClass = await _classRoomRepo.GetByIdAsync(dto.ClassRoomId);
+            if (trackedClass == null)
+                throw new KeyNotFoundException($"الشعبة الصفية رقم ({dto.ClassRoomId}) غير موجودة في النظام.");
+
+            trackedClass.SupervisorId = dto.SupervisorId;
+            _classRoomRepo.UpdateAsync(trackedClass);
+            await _classRoomRepo.SaveChangesAsync();
+
+            // 8. مزامنة غرف المحادثة تلقائياً بين الموجه الجديد وأولياء أمور طلاب هذه الشعبة
+            await AutoProvisionChatRoomsForClassRoomAsync(trackedClass.ClassRoomId, supervisor.SupervisorId);
+
+            // 9. جلب إحصائيات ومعلومات الاتصال للموجه
+            var allUsers = await _userRepo.GetAllAsync();
+            var userAccount = allUsers.FirstOrDefault(u => u.PersonId == supervisor.PersonId);
+
+            var allClasses = await _classRoomRepo.GetAllAsync();
+            int totalSupervisedCount = allClasses.Count(c => c.SupervisorId == supervisor.SupervisorId);
+
+            string supervisorFullName = $"{supervisor.Person.FirstName} {supervisor.Person.SecondName} {supervisor.Person.LastName}".Replace("  ", " ").Trim();
+            int gradeNumber = classRoom.Grade?.GradeNumber ?? classRoom.GradeId;
+            int studentsCount = classRoom.ClassroomStudents?.Count ?? 0;
+
+            string successMessage = isReassignment
+                ? $"تم تغيير موجه الشعبة بنجاح من '{previousSupervisorName}' إلى '{supervisorFullName}' للصف {gradeNumber} - الشعبة {classRoom.Section}."
+                : $"تم إسناد الموجه '{supervisorFullName}' بنجاح إلى الصف {gradeNumber} - الشعبة {classRoom.Section}.";
+
+            return new AssignSupervisorToClassResultDto
+            {
+                ClassRoomId = classRoom.ClassRoomId,
+                GradeId = classRoom.GradeId,
+                GradeNumber = gradeNumber,
+                Section = classRoom.Section,
+                StartYear = classRoom.StartYear,
+                SupervisorId = supervisor.SupervisorId,
+                SupervisorName = supervisorFullName,
+                SupervisorPhone = userAccount?.PhoneNumber ?? string.Empty,
+                PreviousSupervisorId = previousSupervisorId,
+                PreviousSupervisorName = previousSupervisorName,
+                IsReassignment = isReassignment,
+                TotalStudentsInClass = studentsCount,
+                TotalSupervisedClassesCount = totalSupervisedCount,
+                Message = successMessage
+            };
+        }
+
+        // =========================================================================
+        // إلغاء إسناد الموجه من شعبة صفية (Unassign Supervisor From Class)
+        // =========================================================================
+        public async Task<UnassignSupervisorFromClassResultDto> UnassignSupervisorFromClassAsync(int managerPersonId, int classRoomId)
+        {
+            if (classRoomId <= 0)
+                throw new ArgumentException("معرف الشعبة الصفية غير صالح.", nameof(classRoomId));
+
+            var managers = await _managerRepo.GetAllWithIncludeAsync();
+            var activeManager = managers.FirstOrDefault(m => m.PersonId == managerPersonId);
+            if (activeManager == null)
+                throw new UnauthorizedAccessException("جلسة مدير القسم غير صالحة أو غير مسجل كمدير قسم في النظام.");
+
+            var classRooms = await _classRoomRepo.GetAllWithIncludeAndFilterAsync(
+                c => c.ClassRoomId == classRoomId,
+                c => c.Grade
+            );
+            var classRoom = classRooms.FirstOrDefault();
+            if (classRoom == null)
+                throw new KeyNotFoundException($"الشعبة الصفية رقم ({classRoomId}) غير موجودة في النظام.");
+
+            if (!classRoom.SupervisorId.HasValue)
+                throw new InvalidOperationException($"الشعبة الصفية (الصف {classRoom.Grade?.GradeNumber ?? classRoom.GradeId} - الشعبة {classRoom.Section}) ليس لها موجه مسند بالفعل لإلغاء الإسناد.");
+
+            int removedSupervisorId = classRoom.SupervisorId.Value;
+            var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(
+                s => s.SupervisorId == removedSupervisorId,
+                s => s.Person
+            );
+            var supervisor = supervisors.FirstOrDefault();
+
+            if (supervisor != null && supervisor.DepartmentManagerId != activeManager.DepartmentManagerId)
+                throw new UnauthorizedAccessException("ليس لديك صلاحية لإلغاء إسناد هذا الموجه لأنه يتبع لقسم/مدير آخر.");
+
+            var trackedClass = await _classRoomRepo.GetByIdAsync(classRoomId);
+            if (trackedClass != null)
+            {
+                trackedClass.SupervisorId = null;
+                _classRoomRepo.UpdateAsync(trackedClass);
+                await _classRoomRepo.SaveChangesAsync();
+            }
+
+            string removedName = supervisor?.Person != null
+                ? $"{supervisor.Person.FirstName} {supervisor.Person.LastName}".Trim()
+                : $"الموجه رقم {removedSupervisorId}";
+
+            int gradeNumber = classRoom.Grade?.GradeNumber ?? classRoom.GradeId;
+
+            return new UnassignSupervisorFromClassResultDto
+            {
+                ClassRoomId = classRoom.ClassRoomId,
+                GradeId = classRoom.GradeId,
+                GradeNumber = gradeNumber,
+                Section = classRoom.Section,
+                RemovedSupervisorId = removedSupervisorId,
+                RemovedSupervisorName = removedName,
+                Message = $"تم إلغاء إسناد الموجه '{removedName}' من الصف {gradeNumber} - الشعبة {classRoom.Section} بنجاح."
+            };
+        }
     }
 }

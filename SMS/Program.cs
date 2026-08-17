@@ -8,7 +8,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using BLL.Notifications.Interfaces;
 using Microsoft.Extensions.Logging;
+using SMS.Hubs;
+using SMS.Services;
+using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,13 +21,20 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowNgrok",
         policy =>
         {
-            policy.AllowAnyOrigin()   
-                  .AllowAnyMethod()   
-                  .AllowAnyHeader();  
+
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+
+            //policy.AllowAnyOrigin()   
+            //      .AllowAnyMethod()   
+            //      .AllowAnyHeader();  
         });
 });
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -76,9 +87,14 @@ builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<ISupervisorService, SupervisorService>();
 builder.Services.AddScoped<IAccountantService, AccountantService>();
 builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
+builder.Services.AddScoped<ISchoolSettingService, SchoolSettingService>();
 
 
-//builder.Services.AddBusinessLayer();
+builder.Services.AddBusinessLayer();
+
+// «” Œœ«„ SignalRParentNotificationDispatcher ·≈—”«· «·≈‘⁄«—«  «··ÕŸÌ… In-App ⁄»— WebSockets
+builder.Services.AddSingleton<IParentPushNotificationDispatcher, SignalRParentNotificationDispatcher>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -114,6 +130,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes("THIS_IS_A_VERY_SECRET_KEY_123456"))
         };
+
+        //  „ﬂÌ‰ ﬁ—«¡… «·‹ Token „‰ «·‹ Query String ·« ’«·«  SignalR (WebSockets)
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
+
+
     });
 
 
@@ -147,6 +180,9 @@ app.UseStaticFiles();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+// —»ÿ ﬁ‰«… «·≈‘⁄«—«  «··ÕŸÌ… · ÿ»Ìﬁ «·√Â· (SignalR Hub)
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.MapControllers();
 

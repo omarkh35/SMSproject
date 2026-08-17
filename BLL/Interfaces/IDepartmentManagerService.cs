@@ -48,6 +48,8 @@ namespace BLL.Interfaces
         Task<SupervisorDetailsDto> UpdateSupervisorAsync(int managerPersonId, int supervisorId, UpdateSupervisorDto dto);
         Task<bool> DeleteSupervisorAsync(int managerPersonId, int supervisorId);
 
+        Task<AssignSupervisorToClassResultDto> AssignSupervisorToClassAsync(int managerPersonId, AssignSupervisorToClassDto dto);
+        Task<UnassignSupervisorFromClassResultDto> UnassignSupervisorFromClassAsync(int managerPersonId, int classRoomId);
 
 
     }

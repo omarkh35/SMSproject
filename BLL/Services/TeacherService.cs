@@ -2,6 +2,8 @@
 using DAL.Entities;
 using DAL.Interfaces;
 using BLL.Interfaces;
+using BLL.Notifications.Events;
+using BLL.Notifications.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +27,7 @@ namespace BLL.Services
         private readonly IBaseRepositories<StudentNote> _studentNoteRepo;
         private readonly IBaseRepositories<DailyLesson> _dailyLessonRepo;
         private readonly IBaseRepositories<Homework> _homeworkRepo;
+        private readonly INotificationPublisher _notificationPublisher;
 
 
         public TeacherService(
@@ -37,7 +40,7 @@ namespace BLL.Services
             IBaseRepositories<ClassroomStudent> classroomStudentRepo, IBaseRepositories<Mark> markRepo,
             IBaseRepositories<StudentRecord> studentRecordRepo, IBaseRepositories<StudentAttendance> studentAttendanceRepo,
             IBaseRepositories<StudentNote> studentNoteRepo, IBaseRepositories<DailyLesson> dailyLessonRepo,
-            IBaseRepositories<Homework> homeworkRepo)
+            IBaseRepositories<Homework> homeworkRepo, INotificationPublisher notificationPublisher)
         {                                                            
             _personRepo = personRepo;
             _teacherRepo = teacherRepo;
@@ -52,6 +55,7 @@ namespace BLL.Services
             _studentNoteRepo = studentNoteRepo;
             _dailyLessonRepo = dailyLessonRepo;
             _homeworkRepo = homeworkRepo;
+            _notificationPublisher = notificationPublisher;
         }
 
         public async Task<TeacherDashboardDto?> GetTeacherDashboardAsync(int teacherPersonId)
@@ -303,6 +307,19 @@ namespace BLL.Services
             }
 
             await _markRepo.SaveChangesAsync();
+
+            // Publish MarksReleasedEvent for all students who received marks
+            var targetStudentIds = inputDto.StudentMarks.Select(m => m.StudentID).Distinct().ToList();
+            await _notificationPublisher.PublishAsync(new MarksReleasedEvent
+            {
+                //ClassRoomId = inputDto.ClassRoomID,
+                SubjectId = inputDto.SubjectID,
+                ExamTypeId = inputDto.ExamTypeID,
+                ExamDate = inputDto.ExamDate,
+                StudentIds = targetStudentIds
+            });
+
+
             return true;
         }
 
@@ -395,6 +412,18 @@ namespace BLL.Services
 
             await _studentNoteRepo.AddAsync(newNote);
             await _studentNoteRepo.SaveChangesAsync();
+
+            // Publish StudentNoteAddedEvent to notify parents
+            await _notificationPublisher.PublishAsync(new StudentNoteAddedEvent
+            {
+                StudentId = newNote.StudentId,
+                TeacherPersonId = teacherPersonId,
+                NoteContent = newNote.NoteContent,
+                NoteId = newNote.NoteId,
+                OccurredAt = newNote.CreatedAt ?? DateTime.UtcNow
+            });
+
+
             return true;
         }
 
@@ -459,6 +488,20 @@ namespace BLL.Services
 
             await _homeworkRepo.AddAsync(newHomework);
             await _homeworkRepo.SaveChangesAsync();
+
+
+            // Publish HomeworkAssignedEvent to notify all parents in this classroom
+            await _notificationPublisher.PublishAsync(new HomeworkAssignedEvent
+            {
+                ClassRoomId = newHomework.ClassRoomId,
+                SubjectId = newHomework.SubjectId,
+                TeacherPersonId = teacherPersonId,
+                Title = newHomework.Title,
+                Description = newHomework.Description,
+                HomeworkId = newHomework.HomeworkId,
+                OccurredAt = newHomework.CreatedAt ?? DateTime.UtcNow
+            });
+
 
             return true;
         }

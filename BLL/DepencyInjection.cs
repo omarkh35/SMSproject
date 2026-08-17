@@ -1,14 +1,7 @@
-﻿using BLL.EntitiesDTOS.User;
-using BLL.Interfaces;
-using BLL.Services;
-using DAL.Entities;
-using DAL.Interfaces;
+﻿using BLL.Notifications.Events;
+using BLL.Notifications.Interfaces;
+using BLL.Notifications.Services;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BLL
 {
@@ -16,10 +9,20 @@ namespace BLL
     {
         public static IServiceCollection AddBusinessLayer(this IServiceCollection services)
         {
-           
+            // Register Push Notification Dispatcher (zero-DB in-memory push)
+            services.AddSingleton<IParentPushNotificationDispatcher, ParentPushNotificationDispatcher>();
+
+            // Register Centralized Event Publisher
+            services.AddScoped<INotificationPublisher, NotificationPublisher>();
+
+            // Register Parent Push Notification Event Subscribers
+            services.AddScoped<INotificationSubscriber<StudentNoteAddedEvent>, ParentPushNotificationSubscriber>();
+            services.AddScoped<INotificationSubscriber<HomeworkAssignedEvent>, ParentPushNotificationSubscriber>();
+            services.AddScoped<INotificationSubscriber<MarksReleasedEvent>, ParentPushNotificationSubscriber>();
+            services.AddScoped<INotificationSubscriber<ChatMessageSentEvent>, ParentPushNotificationSubscriber>();
+
             return services;
         }
-
-
     }
 }
+

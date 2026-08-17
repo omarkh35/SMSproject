@@ -302,5 +302,76 @@ namespace SMS.Controllers
             }
         }
 
+        [HttpPost("assign-supervisor-to-class")]
+        public async Task<IActionResult> AssignSupervisorToClass([FromBody] AssignSupervisorToClassDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var managerClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(managerClaim, out int managerPersonId))
+                    return Unauthorized(new { message = "جلسة المستخدم غير صالحة، يرجى تسجيل الدخول مجدداً." });
+
+                var result = await _deptService.AssignSupervisorToClassAsync(managerPersonId, dto);
+                return Ok(new { message = result.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "حدث خطأ غير متوقع أثناء إسناد الموجه للشعبة الصفية.", details = ex.Message });
+            }
+        }
+
+        [HttpDelete("remove-supervisor-from-class/{classRoomId}")]
+        public async Task<IActionResult> RemoveSupervisorFromClass(int classRoomId)
+        {
+            try
+            {
+                var managerClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(managerClaim, out int managerPersonId))
+                    return Unauthorized(new { message = "جلسة المستخدم غير صالحة، يرجى تسجيل الدخول مجدداً." });
+
+                var result = await _deptService.UnassignSupervisorFromClassAsync(managerPersonId, classRoomId);
+                return Ok(new { message = result.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "حدث خطأ غير متوقع أثناء إلغاء إسناد الموجه من الشعبة.", details = ex.Message });
+            }
+        }
+
     }
 }

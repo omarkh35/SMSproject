@@ -1,4 +1,5 @@
 ﻿using BLL.EntitiesDTOS.SchoolAdmin;
+using BLL.EntitiesDTOS.General;
 using BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,9 +12,15 @@ namespace SMS.Controllers
     public class SchoolAdminController : ControllerBase
     {
         private readonly ISchoolAdminService _adminService;
-        public SchoolAdminController(ISchoolAdminService adminService)
+        private readonly ISchoolSettingService _schoolSettingService;
+
+        public SchoolAdminController(
+            ISchoolAdminService adminService,
+            ISchoolSettingService schoolSettingService)
         {
             _adminService = adminService;
+            _schoolSettingService = schoolSettingService;
+
         }
         [HttpGet("subjects")]
         public async Task<IActionResult> GetAllSubjects()
@@ -276,6 +283,46 @@ namespace SMS.Controllers
                 ? Ok(new { message = "تم تعديل القسط الدراسي للصف وتحديث سجلات الطلاب بنجاح." })
                 : BadRequest(new { message = "فشلت عملية تعديل القسط الدراسي، يرجى التحقق من معرف الصف." });
         }
+
+        // =========================================================================
+        // 7. جلب وتعديل معلومات وهوية المدرسة (School Settings & Identity)
+        // =========================================================================
+        [HttpGet("school-info")]
+        public async Task<IActionResult> GetSchoolInfo()
+        {
+            var info = await _schoolSettingService.GetSchoolInfoAsync();
+            return Ok(info);
+        }
+
+        [HttpPut("school-info")]
+        public async Task<IActionResult> UpdateSchoolInfo([FromBody] UpdateSchoolInfoDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _schoolSettingService.UpdateSchoolInfoAsync(dto);
+                return Ok(new
+                {
+                    message = "تم حفظ وتحديث بيانات وشعار المدرسة بنجاح.",
+                    data = result
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ غير متوقع أثناء تحديث بيانات المدرسة.",
+                    details = ex.Message
+                });
+            }
+        }
+
 
 
     }

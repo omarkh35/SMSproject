@@ -242,4 +242,46 @@ namespace BLL.EntitiesDTOS.DepartmentManager
     {
         public int GradeID { get; set; }
     }
+
+    public class AssignSupervisorToClassDto
+    {
+        [Required(ErrorMessage = "معرف الشعبة الصفية مطلوب")]
+        [Range(1, int.MaxValue, ErrorMessage = "معرف الشعبة الصفية يجب أن يكون رقماً موجباً أكبر من الصفر")]
+        public int ClassRoomId { get; set; }
+
+        [Required(ErrorMessage = "معرف الموجه مطلوب")]
+        [Range(1, int.MaxValue, ErrorMessage = "معرف الموجه يجب أن يكون رقماً موجباً أكبر من الصفر")]
+        public int SupervisorId { get; set; }
+    }
+
+    public class AssignSupervisorToClassResultDto
+    {
+        public int ClassRoomId { get; set; }
+        public int GradeId { get; set; }
+        public int GradeNumber { get; set; }
+        public byte Section { get; set; }
+        public short StartYear { get; set; }
+        public int SupervisorId { get; set; }
+        public string SupervisorName { get; set; } = string.Empty;
+        public string SupervisorPhone { get; set; } = string.Empty;
+        public int? PreviousSupervisorId { get; set; }
+        public string? PreviousSupervisorName { get; set; }
+        public bool IsReassignment { get; set; }
+        public int TotalStudentsInClass { get; set; }
+        public int TotalSupervisedClassesCount { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
+
+    public class UnassignSupervisorFromClassResultDto
+    {
+        public int ClassRoomId { get; set; }
+        public int GradeId { get; set; }
+        public int GradeNumber { get; set; }
+        public byte Section { get; set; }
+        public int RemovedSupervisorId { get; set; }
+        public string RemovedSupervisorName { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+    }
+
+
 }

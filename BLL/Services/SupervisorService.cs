@@ -2,6 +2,8 @@
 using BLL.Interfaces;
 using DAL.Entities;
 using DAL.Interfaces;
+using BLL.Notifications.Events;
+using BLL.Notifications.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,6 +31,7 @@ namespace BLL.Services
         IBaseRepositories<Teacher> _teacherRepo;
         IBaseRepositories<ChatRoom> _chatRoomRepo;
         IBaseRepositories<Message> _messageRepo;
+        private readonly INotificationPublisher _notificationPublisher;
 
         public SupervisorService(IBaseRepositories<ClassRoom> classRoomRepo, IBaseRepositories<Supervisor> supervisorRepo,
             IBaseRepositories<ClassroomStudent> classStudentRepo,
@@ -39,7 +42,7 @@ namespace BLL.Services
         IBaseRepositories<StudentRecord> studentRecordRepo,
         IBaseRepositories<ExamSchedule> examScheduleRepo, IBaseRepositories<StudentParent> studentParentRepo,
         IBaseRepositories<Teacher> teacherRepo, IBaseRepositories<ChatRoom> chatRoomRepo,
-        IBaseRepositories<Message> messageRepo)
+        IBaseRepositories<Message> messageRepo, INotificationPublisher notificationPublisher)
         {
             _classRoomRepo = classRoomRepo;
             _supervisorRepo = supervisorRepo;
@@ -59,6 +62,7 @@ namespace BLL.Services
             _chatRoomRepo = chatRoomRepo;
             _messageRepo = messageRepo;
             _studentRecordRepo = studentRecordRepo;
+            _notificationPublisher = notificationPublisher;
 
         }
 
@@ -1317,6 +1321,25 @@ namespace BLL.Services
                 await _chatRoomRepo.SaveChangesAsync();
 
                 await _chatRoomRepo.CommitTransactionAsync();
+
+                // Publish ChatMessageSentEvent to notify recipient (e.g., Parent)
+                int receiverPersonId = (senderPersonId == room.SupervisorPersonId)
+                    ? room.ParentPersonId
+                    : room.SupervisorPersonId;
+
+                await _notificationPublisher.PublishAsync(new ChatMessageSentEvent
+                {
+                    ChatRoomId = room.ChatRoomId,
+                    SenderPersonId = senderPersonId,
+                    ReceiverPersonId = receiverPersonId,
+                    StudentFocusId = room.StudentFocusId,
+                    MessageContent = newMessage.MessageContent,
+                    MessageId = newMessage.MessageId,
+                    OccurredAt = timestamp
+                });
+
+
+
                 return true;
             }
             catch

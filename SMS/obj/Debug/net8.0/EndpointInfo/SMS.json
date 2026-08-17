@@ -1029,6 +1029,72 @@
         }
       }
     },
+    "/api/DepartmentManager/assign-supervisor-to-class": {
+      "post": {
+        "tags": [
+          "DepartmentManager"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignSupervisorToClassDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignSupervisorToClassDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignSupervisorToClassDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DepartmentManager/remove-supervisor-from-class/{classRoomId}": {
+      "delete": {
+        "tags": [
+          "DepartmentManager"
+        ],
+        "parameters": [
+          {
+            "name": "classRoomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/General/school-info": {
+      "get": {
+        "tags": [
+          "General"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Parent/MyChildren": {
       "get": {
         "tags": [
@@ -1996,6 +2062,47 @@
         }
       }
     },
+    "/api/SchoolAdmin/school-info": {
+      "get": {
+        "tags": [
+          "SchoolAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "SchoolAdmin"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSchoolInfoDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSchoolInfoDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSchoolInfoDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Supervisor/main-dashboard": {
       "get": {
         "tags": [
@@ -2736,6 +2843,28 @@
           "password": {
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssignSupervisorToClassDto": {
+        "required": [
+          "classRoomId",
+          "supervisorId"
+        ],
+        "type": "object",
+        "properties": {
+          "classRoomId": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "supervisorId": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -3640,6 +3769,24 @@
             "minimum": 0,
             "type": "number",
             "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateSchoolInfoDTO": {
+        "required": [
+          "schoolName"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolName": {
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "schoolLogo": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

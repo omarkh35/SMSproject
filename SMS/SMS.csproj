@@ -26,6 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Hubs\" />
+    <Folder Include="Services\" />
     <Folder Include="wwwroot\uploads\exams\" />
     <Folder Include="wwwroot\uploads\profiles\" />
     <Folder Include="wwwroot\uploads\schedules\" />
