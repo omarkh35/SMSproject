@@ -77,6 +77,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 
 // Example using Scoped lifetime
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped(typeof(IBaseRepositories<>), typeof(BaseRepositry<>));
 builder.Services.AddScoped<BLL.Interfaces.IAuthService, BLL.Services.AuthService>();
 builder.Services.AddScoped<BLL.Interfaces.IJwtService, BLL.Services.JwtService>();
@@ -88,6 +89,7 @@ builder.Services.AddScoped<ISupervisorService, SupervisorService>();
 builder.Services.AddScoped<IAccountantService, AccountantService>();
 builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 builder.Services.AddScoped<ISchoolSettingService, SchoolSettingService>();
+builder.Services.AddScoped<IFileService, FileService>();
 
 
 builder.Services.AddBusinessLayer();

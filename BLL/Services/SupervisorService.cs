@@ -134,22 +134,18 @@ namespace BLL.Services
         {
             var dashboard = new SupervisorMainDashboardDto();
 
-            // NOTE: Changed to DateTime.Today to align with local school timezone daily tracking logic safely
             var todayDate = DateOnly.FromDateTime(DateTime.Today);
 
-            // 1. Get the current Supervisor's tracking context safely
             var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
             var activeSupervisor = supervisors.FirstOrDefault();
             if (activeSupervisor == null) return dashboard;
 
-            // 2. Load rooms assigned directly to this supervisor (FIXED: Using activeSupervisor.Id primary key)
             var rooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             var supervisedRooms = rooms.Where(cr => cr.SupervisorId == activeSupervisor.SupervisorId).ToList();
             var supervisedRoomIds = supervisedRooms.Select(cr => cr.ClassRoomId).ToList();
 
             dashboard.ClassesCount = supervisedRooms.Count;
 
-            // Populate Dropdown collection mapping
             foreach (var r in supervisedRooms)
             {
                 dashboard.SupervisedClasses.Add(new SupervisorClassDropdownDto
@@ -159,8 +155,6 @@ namespace BLL.Services
                 });
             }
 
-            // 3. Collect students operating inside those rooms
-            // FIX: Added explicit includes for ClassRoom and Grade to safely hydrate downstream grid builders
             var classroomStudents = await _classStudentRepo.GetAllWithIncludeAsync(
                 cs => cs.Student,
                 cs => cs.Student.Person,
@@ -173,7 +167,6 @@ namespace BLL.Services
 
             dashboard.TotalStudentsCount = managedStudentIds.Distinct().Count();
 
-            // 4. Evaluate real-time Attendance logs for today
             var todayAttendance = await _studentAttendanceRepo.GetAllWithIncludeAndFilterAsync(
                 sa => sa.AttendanceDate == todayDate && managedStudentIds.Contains(sa.StudentId)
             );
@@ -181,13 +174,11 @@ namespace BLL.Services
             dashboard.AbsentTodayCount = todayAttendance.Count(sa => sa.Status == 2); // 2 = Absent
             dashboard.PresentTodayCount = todayAttendance.Count(sa => sa.Status == 1 || sa.Status == 3); // 1 = Present, 3 = Late
 
-            // 5. Hydrate the "Absent Today" Global Real-time Exception Grid List Feed View
             var alertRecords = todayAttendance.Where(sa => sa.Status == 2 || sa.Status == 3).ToList();
             foreach (var alert in alertRecords)
             {
                 var studentInfo = managedStudents.FirstOrDefault(cs => cs.StudentId == alert.StudentId);
 
-                // Defensive Check: Safeguard memory loop from un-hydrated or corrupt orphaned rows
                 if (studentInfo == null || studentInfo.ClassRoom == null || studentInfo.ClassRoom.Grade == null)
                     continue;
 
@@ -206,7 +197,6 @@ namespace BLL.Services
 
         public async Task<ClassRollCallDto?> GetClassroomRollCallAsync(int supervisorPersonId, int classRoomId)
         {
-            // Validation: Verify this room actually falls under this specific supervisor's scope line
             var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
             var activeSupervisor = supervisors.FirstOrDefault();
             if (activeSupervisor == null) return null;
@@ -217,7 +207,6 @@ namespace BLL.Services
             var rollCall = new ClassRollCallDto();
             var todayDate = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
-            // Get all students enrolled in this target classroom
             var classroomStudents = await _classStudentRepo.GetAllWithIncludeAndFilterAsync(
                 cs => cs.ClassRoomId == classRoomId,
                 cs => cs.Student,
@@ -226,7 +215,6 @@ namespace BLL.Services
 
             var studentIdsInClass = classroomStudents.Select(cs => cs.StudentId).ToList();
 
-            // Check if attendance transactions have been recorded for this classroom block today
             var classAttendance = await _studentAttendanceRepo.GetAllWithIncludeAndFilterAsync(
                 sa => sa.ClassRoomId == classRoomId && sa.AttendanceDate == todayDate
             );
@@ -239,11 +227,9 @@ namespace BLL.Services
             else
             {
                 rollCall.IsAttendanceTaken = false;
-                // Matches exact textual notification business rule requirement specified
                 rollCall.StatusMessage = "Attendance was not taken yet";
             }
 
-            // Hydrate list for grid checkboxes display fields mapping
             foreach (var cs in classroomStudents)
             {
                 var todaysStatusRecord = classAttendance.FirstOrDefault(sa => sa.StudentId == cs.StudentId);
@@ -275,7 +261,6 @@ namespace BLL.Services
 
         public async Task<IEnumerable<SupervisorTaskDto>> GetTodayTasksAsync(int supervisorPersonId)
         {
-            // Fetch pending tasks with eager loading chain links included
             var allTasks = await _taskRepo.GetAllWithIncludeAndFilterAsync(
                 t => t.AssignedPersonID == supervisorPersonId && !t.IsDone,
                 t => t.ClassRoom,
@@ -291,7 +276,6 @@ namespace BLL.Services
                 ClassRoomID = t.ClassRoomID,
                 PriorityLevel = t.PriorityLevel,
 
-                // Dynamically build the "Class/Section" textual format safely
                 ClassRoomName = t.ClassRoom != null && t.ClassRoom.Grade != null
                     ? $"{GetGradeOrdinalWord(t.ClassRoom.Grade.GradeNumber)}/{GetSectionOrdinalWord(t.ClassRoom.Section)}"
                     : "General Task"
@@ -318,7 +302,6 @@ namespace BLL.Services
             };
         }
 
-        // Helper method to convert Section byte numbers to text strings safely
         private static string GetSectionOrdinalWord(byte sectionNumber)
         {
             return sectionNumber switch
@@ -380,7 +363,6 @@ namespace BLL.Services
 
         public async Task<AttendanceSheetLoadDto?> LoadAttendanceSheetAsync(int supervisorPersonId, int classRoomId)
         {
-            // 1. Validation Hierarchy Guard
             var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
             var activeSupervisor = supervisors.FirstOrDefault();
             if (activeSupervisor == null || await VerifyOversightAsync(activeSupervisor.SupervisorId, classRoomId) == false)
@@ -389,17 +371,14 @@ namespace BLL.Services
             var sheet = new AttendanceSheetLoadDto();
             var todayDate = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
-            // 2. Load Supervised Students for this specific Class
             var classStudents = await _classStudentRepo.GetAllWithIncludeAndFilterAsync(
                 cs => cs.ClassRoomId == classRoomId, cs => cs.Student, cs => cs.Student.Person
             );
 
-            // 3. Load Supervised Teachers linked to this specific Class
             var classTeachers = await _classTeacherRepo.GetAllWithIncludeAndFilterAsync(
                 ct => ct.ClassRoomId == classRoomId, ct => ct.Teacher, ct => ct.Teacher.Person
             );
 
-            // 4. Fetch existing real-time logs for today
             var studentAttendanceToday = await _studentAttendanceRepo.GetAllWithIncludeAndFilterAsync(
                 sa => sa.ClassRoomId == classRoomId && sa.AttendanceDate == todayDate
             );
@@ -411,7 +390,6 @@ namespace BLL.Services
 
             sheet.IsAlreadyRecordedToday = studentAttendanceToday.Any() || teacherAttendanceToday.Any();
 
-            // 5. Hydrate Student Grid Rows (with pre-saved state if existing)
             foreach (var cs in classStudents)
             {
                 var existingLog = studentAttendanceToday.FirstOrDefault(sa => sa.StudentId == cs.StudentId);
@@ -419,12 +397,11 @@ namespace BLL.Services
                 {
                     StudentID = cs.StudentId,
                     FullName = $"{cs.Student.Person.FirstName} {cs.Student.Person.LastName}",
-                    Status = existingLog?.Status ?? 1, // Default to 1 (Present) if clean load
+                    Status = existingLog?.Status ?? 1, 
                     Note = existingLog?.Notes ?? string.Empty
                 });
             }
 
-            // 6. Hydrate Teacher Grid Rows (with pre-saved state if existing)
             foreach (var ct in classTeachers)
             {
                 var existingLog = teacherAttendanceToday.FirstOrDefault(ta => ta.TeacherId == ct.TeacherId);
@@ -432,7 +409,7 @@ namespace BLL.Services
                 {
                     TeacherID = ct.TeacherId,
                     FullName = $"{ct.Teacher.Person.FirstName} {ct.Teacher.Person.LastName}",
-                    Status = existingLog?.Status ?? 1, // Default to 1 (Present) if clean load
+                    Status = existingLog?.Status ?? 1, 
                     Note = existingLog?.Notes ?? string.Empty
                 });
             }
@@ -449,11 +426,9 @@ namespace BLL.Services
 
             var todayDate = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
-            // Use transaction engine via Base Repo to safeguard mass entry writes
             var transaction = await _classRoomRepo.BeginTransactionAsync();
             try
             {
-                // === PROCESS STUDENTS (UPSERT WORKFLOW) ===
                 var existingStudentLogs = await _studentAttendanceRepo.GetAllWithIncludeAndFilterAsync(
                     sa => sa.ClassRoomId == dto.ClassRoomID && sa.AttendanceDate == todayDate
                 );
@@ -463,7 +438,6 @@ namespace BLL.Services
                     var matchedLog = existingStudentLogs.FirstOrDefault(sa => sa.StudentId == sDto.StudentID);
                     if (matchedLog != null)
                     {
-                        // UPDATE
                         matchedLog.Status = sDto.Status;
                         matchedLog.Notes = sDto.Note;
                         matchedLog.UpdatedAt = DateTime.UtcNow;
@@ -471,7 +445,6 @@ namespace BLL.Services
                     }
                     else
                     {
-                        // INSERT
                         var newLog = new StudentAttendance
                         {
                             StudentId = sDto.StudentID,
@@ -486,7 +459,6 @@ namespace BLL.Services
                 }
                 await _studentAttendanceRepo.SaveChangesAsync();
 
-                // === PROCESS TEACHERS (UPSERT WORKFLOW) ===
                 var teacherIds = dto.TeacherRecords.Select(t => t.TeacherID).ToList();
                 var existingTeacherLogs = await _teacherAttendanceRepo.GetAllWithIncludeAndFilterAsync(
                     ta => ta.AttendanceDate == todayDate && teacherIds.Contains(ta.TeacherId)
@@ -497,7 +469,6 @@ namespace BLL.Services
                     var matchedLog = existingTeacherLogs.FirstOrDefault(ta => ta.TeacherId == tDto.TeacherID);
                     if (matchedLog != null)
                     {
-                        // UPDATE
                         matchedLog.Status = tDto.Status;
                         matchedLog.Notes = tDto.Note;
                         matchedLog.UpdatedAt = DateTime.UtcNow;
@@ -505,7 +476,6 @@ namespace BLL.Services
                     }
                     else
                     {
-                        // INSERT
                         var newLog = new TeacherAttendance
                         {
                             TeacherId = tDto.TeacherID,
@@ -529,7 +499,6 @@ namespace BLL.Services
             }
         }
 
-        // Internal reusable architecture guard
         private async Task<bool> VerifyOversightAsync(int supervisorId, int classRoomId)
         {
             var room = await _classRoomRepo.GetByIdAsync(classRoomId);
@@ -540,7 +509,6 @@ namespace BLL.Services
         {
             var pageData = new AnnouncementManagementPageDto();
 
-            // 1. Hydrate the Dropdown options list
             pageData.TargetOptions.Add(new AnnouncementTargetDropdownDto { ClassRoomID = null, DisplayName = "All classes" });
 
             var classes = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
@@ -549,11 +517,10 @@ namespace BLL.Services
                 pageData.TargetOptions.Add(new AnnouncementTargetDropdownDto
                 {
                     ClassRoomID = cr.ClassRoomId,
-                    DisplayName = $"{cr.Grade.GradeNumber}th Grade / Class {cr.Section}" // Matches UI dropdown look
+                    DisplayName = $"{cr.Grade.GradeNumber}th Grade / Class {cr.Section}" 
                 });
             }
 
-            // 2. Hydrate Published History List at the bottom (Filtered to only show announcements sent by THIS user)
             var myAnnouncements = await _announcementRepo.GetAllWithIncludeAndFilterAsync(
                 a => a.SenderPersonId == senderPersonId,
                 a => a.AnnouncementClassrooms
@@ -591,7 +558,6 @@ namespace BLL.Services
             var transaction = await _announcementRepo.BeginTransactionAsync();
             try
             {
-                // 1. Insert into main Announcements table
                 var newAnnouncement = new Announcement
                 {
                     SenderPersonId = senderPersonId,
@@ -601,9 +567,8 @@ namespace BLL.Services
                     CreatedAt = DateTime.UtcNow
                 };
                 await _announcementRepo.AddAsync(newAnnouncement);
-                await _announcementRepo.SaveChangesAsync(); // Generates AnnouncementID
+                await _announcementRepo.SaveChangesAsync(); 
 
-                // 2. If targeted to specific classes, populate the link junction table
                 if (!dto.IsGeneral && dto.TargetClassRoomIDs.Any())
                 {
                     foreach (var classRoomId in dto.TargetClassRoomIDs)
@@ -637,7 +602,6 @@ namespace BLL.Services
             var target = records.FirstOrDefault();
             if (target == null) return false;
 
-            // Cascade delete any mapped child class targets links safely first inside transaction scope if your DB context doesn't handle cascades natively
             foreach (var childLink in target.AnnouncementClassrooms.ToList())
             {
                 _announcementClassroomRepo.Delete(childLink);
@@ -655,12 +619,10 @@ namespace BLL.Services
             var classCards = new List<SupervisorClassCardDto>();
             var currentYear = (short)DateTime.UtcNow.Year;
 
-            // 1. Locate the supervisor profile linked to this identity
             var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
             var activeSupervisor = supervisors.FirstOrDefault();
             if (activeSupervisor == null) return classCards;
 
-            // 2. Fetch all components via generic repositories to process mappings
             var allRooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             var supervisedRooms = allRooms.Where(cr => cr.SupervisorId == activeSupervisor.SupervisorId).ToList();
             var supervisedRoomIds = supervisedRooms.Select(cr => cr.ClassRoomId).ToList();
@@ -668,20 +630,16 @@ namespace BLL.Services
             var allClassroomStudents = await _classStudentRepo.GetAllAsync();
             var allMarks = await _markRepo.GetAllWithIncludeAsync(m => m.ExamType);
 
-            // Fetch image-based programs paths we designed earlier
             var allSchedules = await _scheduleRepo.GetAllAsync();
             var allExamSchedules = await _examScheduleRepo.GetAllAsync();
 
-            // 3. Process calculations loop per Supervised Class Card
             foreach (var room in supervisedRooms)
             {
-                // Calculate Number of Students
                 var studentIdsInClass = allClassroomStudents
                     .Where(cs => cs.ClassRoomId == room.ClassRoomId)
                     .Select(cs => cs.StudentId)
                     .ToList();
 
-                // Calculate Class Average based on all approved marks recorded inside this specific room
                 var classApprovedMarks = allMarks
                     .Where(m => m.IsApproved && studentIdsInClass.Contains(m.StudentRecordId))
                     .ToList();
@@ -689,7 +647,6 @@ namespace BLL.Services
                 string averageDisplay = "N/A";
                 if (classApprovedMarks.Any())
                 {
-                    // Convert everything out of a uniform scale (percentage) for the UI card layout
                     double totalPercentageSum = classApprovedMarks
                         .Sum(m => (double)(m.MarkValue / m.FullMark) * 100);
 
@@ -697,11 +654,8 @@ namespace BLL.Services
                     averageDisplay = $"{Math.Round(average)} %";
                 }
 
-                // Extract Schedule Images File Paths
-                // ScheduleType 1 = ClassRoom Weekly Program, ReferenceID = ClassRoomID
                 var weeklyProg = allSchedules.FirstOrDefault(s => s.ScheduleType == 1 && s.ReferenceId == room.ClassRoomId);
 
-                // ExamSchedules match via GradeID for the current academic session year context
                 var examProg = allExamSchedules.FirstOrDefault(es => es.GradeId == room.GradeId && es.AcademicYear == currentYear);
 
                 classCards.Add(new SupervisorClassCardDto
@@ -709,7 +663,7 @@ namespace BLL.Services
                     ClassRoomID = room.ClassRoomId,
                     ClassName = $"{room.Grade.GradeNumber}th grade / {GetSectionNameWord(room.Section)}",
                     NumberOfStudents = studentIdsInClass.Count,
-                    ClassAverage = averageDisplay, // Maps dynamically to "79 %" layout style
+                    ClassAverage = averageDisplay, 
                     WeeklyWorkScheduleUrl = weeklyProg?.ImagePath ?? "uploads/schedules/default_schedule.png",
                     SemesterExamScheduleUrl = examProg?.ImagePath ?? "uploads/schedules/default_exams.png"
                 });
@@ -718,7 +672,6 @@ namespace BLL.Services
             return classCards;
         }
 
-        // Optional layout string cleaner helper method
         private string GetSectionNameWord(byte sectionNumber)
         {
             return sectionNumber switch
@@ -734,25 +687,21 @@ namespace BLL.Services
         {
             var studentList = new List<SupervisorStudentGridDto>();
 
-            // 1. Locate supervisor primary key context
             var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
             var activeSupervisor = supervisors.FirstOrDefault();
             if (activeSupervisor == null) return studentList;
 
-            // 2. Fetch supervised classrooms
             var rooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             var supervisedRoomIds = rooms
                 .Where(cr => cr.SupervisorId == activeSupervisor.SupervisorId)
                 .Select(cr => cr.ClassRoomId)
                 .ToList();
 
-            // If the UI passes a specific ClassRoomID filter, target only that class
             if (classRoomId.HasValue && supervisedRoomIds.Contains(classRoomId.Value))
             {
                 supervisedRoomIds = new List<int> { classRoomId.Value };
             }
 
-            // 3. Gather student tracking links inside those targeted rooms
             var classroomStudents = await _classStudentRepo.GetAllWithIncludeAsync(
                 cs => cs.Student,
                 cs => cs.Student.Person
@@ -762,7 +711,6 @@ namespace BLL.Services
                 .Where(cs => supervisedRoomIds.Contains(cs.ClassRoomId))
                 .ToList();
 
-            // Apply text search bar filter if provided (matches name arrays)
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 searchTerm = searchTerm.ToLower().Trim();
@@ -774,14 +722,11 @@ namespace BLL.Services
 
             var managedStudentIds = filteredClassStudents.Select(cs => cs.StudentId).ToList();
 
-            // 4. Pre-load master transaction layers for bulk optimization loop calculations
             var allMarks = await _markRepo.GetAllAsync();
             var allAttendance = await _studentAttendanceRepo.GetAllAsync();
 
-            // 5. Map Rows and compute analytical columns metrics
             foreach (var cs in filteredClassStudents)
             {
-                // Metric A: Compute GPA (Average of all APPROVED exam marks)
                 var studentMarks = allMarks.Where(m => m.IsApproved && m.StudentRecordId == cs.StudentId).ToList();
                 string gpaDisplay = "0 %";
                 if (studentMarks.Any())
@@ -790,12 +735,10 @@ namespace BLL.Services
                     gpaDisplay = $"{Math.Round(average)} %";
                 }
 
-                // Metric B: Compute Attendance Rate (Present / Total Days Taken)
                 var studentHistory = allAttendance.Where(sa => sa.StudentId == cs.StudentId).ToList();
                 string attendanceDisplay = "100 %";
                 if (studentHistory.Any())
                 {
-                    // Status: 1 = Present, 3 = Late (both count as attending school)
                     int attendedDays = studentHistory.Count(sa => sa.Status == 1 || sa.Status == 3);
                     double rate = ((double)attendedDays / studentHistory.Count) * 100;
                     attendanceDisplay = $"{Math.Round(rate)} %";
@@ -809,21 +752,19 @@ namespace BLL.Services
                     FullName = $"{cs.Student.Person.FirstName} {cs.Student.Person.SecondName} {cs.Student.Person.LastName}".Replace("  ", " ").Trim(),
                     ClassName = matchedRoom != null ? $"{matchedRoom.Grade.GradeNumber}th" : "N/A",
                     SectionName = matchedRoom != null ? GetSectionNameWord(matchedRoom.Section) : "N/A",
-                    GPA = gpaDisplay,              // e.g. "70 %" as shown in your visual design layout
-                    AttendanceRate = attendanceDisplay // e.g. "86 %" as shown in your visual design layout
+                    GPA = gpaDisplay,             
+                    AttendanceRate = attendanceDisplay 
                 });
             }
 
             return studentList;
         }
 
-        // === STUDENT ATTENDANCE WORKFLOW ===
         public async Task<bool> SaveStudentAttendanceWorkflowAsync(int supervisorPersonId, SaveStudentAttendanceDto dto)
         {
             var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
             var activeSupervisor = supervisors.FirstOrDefault();
 
-            // Safety check: Fix applied to use activeSupervisor.Id instead of SupervisorId trap
             if (activeSupervisor == null || await VerifyOversightAsync(activeSupervisor.SupervisorId, dto.ClassRoomID) == false)
                 return false;
 
@@ -871,14 +812,13 @@ namespace BLL.Services
             }
         }
 
-        // === TEACHER ATTENDANCE WORKFLOW ===
         public async Task<bool> SaveTeacherAttendanceWorkflowAsync(int supervisorPersonId, SaveTeacherAttendanceDto dto)
         {
             var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
             var activeSupervisor = supervisors.FirstOrDefault();
             if (activeSupervisor == null) return false;
 
-            var todayDate = DateOnly.FromDateTime(DateTime.Today); // DateTime format for Teacher table
+            var todayDate = DateOnly.FromDateTime(DateTime.Today); 
             var transaction = await _classRoomRepo.BeginTransactionAsync();
 
             try
@@ -892,7 +832,6 @@ namespace BLL.Services
                 {
                     var matchedLog = existingTeacherLogs.FirstOrDefault(ta => ta.TeacherId == tDto.TeacherID);
 
-                    // Business Rule: Force MissedPeriods to null if teacher is marked Present safely
                     var missedPeriods = tDto.Status == 1 ? null : tDto.MissedPeriodsCount;
 
                     if (matchedLog != null)
@@ -929,7 +868,6 @@ namespace BLL.Services
 
         public async Task<StudentDetailsPageDto?> GetStudentDetailedProfileAsync(int studentId, int month, int year)
         {
-            // 1. Fetch Student Records info with full model hierarchy tracking
             var studentRecords = await _studentRecordRepo.GetAllWithIncludeAndFilterAsync(
              sr => sr.StudentId == studentId,
              sr => sr.Student,
@@ -943,7 +881,6 @@ namespace BLL.Services
             var pageData = new StudentDetailsPageDto { StudentID = studentId };
             pageData.FullName = $"{targetRecord.Student.Person.FirstName} {targetRecord.Student.Person.LastName}";
 
-            // 2. Resolve Class and Section display string names
             var classLinks = await _classStudentRepo.GetAllWithIncludeAsync(cs => cs.ClassRoom, cs => cs.ClassRoom.Grade);
             var activeLink = classLinks.FirstOrDefault(cs => cs.StudentId == studentId);
             pageData.ClassAndSection = activeLink != null
@@ -956,15 +893,12 @@ namespace BLL.Services
     sp => sp.Parent.Person.Users
 );
 
-            // Find the link matching this student id
             var primaryParentLink = parents.FirstOrDefault(sp => sp.StudentId == studentId);
 
-            // Access the phone safely through: StudentParent -> Parent -> Person -> Users
             var parentUser = primaryParentLink?.Parent?.Person?.Users?.FirstOrDefault();
 
             pageData.ParentPhoneNumber = parentUser?.PhoneNumber ?? "No Registered Contact Number";
 
-            // 4. Hydrate Approved Marks List Feed
             var allMarks = await _markRepo.GetAllWithIncludeAsync(m => m.Subject);
             var studentApprovedMarks = allMarks.Where(m => m.IsApproved && m.StudentRecordId == studentId).ToList();
 
@@ -972,13 +906,12 @@ namespace BLL.Services
             {
                 pageData.MarksList.Add(new StudentDetailsMarkItemDto
                 {
-                    SubjectName = mark.Subject.SubjectName.ToUpper(), // Formats 'MATHEMATICS' or 'ARABIC' cleanly
+                    SubjectName = mark.Subject.SubjectName.ToUpper(), 
                     AchievedScore = mark.MarkValue,
                     MaximumScore = mark.FullMark
                 });
             }
 
-            // 5. Calculate Cumulative GPA Percentage Display Value
             if (studentApprovedMarks.Any())
             {
                 double averageGpa = studentApprovedMarks.Average(m => (double)(m.MarkValue / m.FullMark) * 100);
@@ -989,7 +922,6 @@ namespace BLL.Services
                 pageData.TotalGPA = "0%";
             }
 
-            // 6. Hydrate Attendance Calendar Heatmap Grid Matrix
             var allAttendance = await _studentAttendanceRepo.GetAllAsync();
             var targetedMonthlyAttendanceLogs = allAttendance
                 .Where(sa => sa.StudentId == studentId &&
@@ -1002,7 +934,7 @@ namespace BLL.Services
                 pageData.CalendarLogs.Add(new CalendarAttendanceDayDto
                 {
                     DayNumber = log.AttendanceDate.Day,
-                    StatusType = log.Status // Maps directly to 1, 2, 3, or 4 color-code states
+                    StatusType = log.Status
                 });
             }
 
@@ -1013,19 +945,16 @@ namespace BLL.Services
         {
             var sidebarList = new List<SupervisorTeacherSidebarDto>();
 
-            // 1. Resolve the supervisor profile context
             var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(s => s.PersonId == supervisorPersonId);
             var activeSupervisor = supervisors.FirstOrDefault();
             if (activeSupervisor == null) return sidebarList;
 
-            // 2. Locate Classrooms under this supervisor
             var allRooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             var supervisedRoomIds = allRooms
                 .Where(cr => cr.SupervisorId == activeSupervisor.SupervisorId)
                 .Select(cr => cr.ClassRoomId)
                 .ToList();
 
-            // 3. Find Teachers operating inside those specific Classrooms via Junction Table
             var classroomTeachers = await _classTeacherRepo.GetAllWithIncludeAsync(
                 ct => ct.Teacher,
                 ct => ct.Teacher.Person,
@@ -1033,19 +962,16 @@ namespace BLL.Services
                 ct => ct.Subject
             );
 
-            // Filter to retain teachers working within our supervised spaces
             var supervisedTeacherLinks = classroomTeachers
                 .Where(ct => supervisedRoomIds.Contains(ct.ClassRoomId))
                 .ToList();
 
-            // Group the linkages by Teacher to prevent duplicate sidebar entity cards rows
             var uniqueTeachers = supervisedTeacherLinks
                 .Select(ct => ct.Teacher)
                 .GroupBy(t => t.TeacherId)
                 .Select(g => g.First())
                 .ToList();
 
-            // Apply left sidebar text search criteria if active
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 searchTerm = searchTerm.ToLower().Trim();
@@ -1055,12 +981,10 @@ namespace BLL.Services
                     .ToList();
             }
 
-            // 4. Map Sidebar elements and cross-join display titles
             foreach (var teacher in uniqueTeachers)
             {
                 var linksForThisTeacher = supervisedTeacherLinks.Where(ct => ct.TeacherId == teacher.TeacherId).ToList();
 
-                // Format Classes string layout list (e.g., "SEVENTH / FIRST / THIRD")
                 var classNames = linksForThisTeacher
                     .Select(ct => allRooms.FirstOrDefault(r => r.ClassRoomId == ct.ClassRoomId))
                     .Where(r => r != null)
@@ -1070,7 +994,6 @@ namespace BLL.Services
 
                 string classesDisplayStr = string.Join(" / ", classNames);
 
-                // Format Subjects string layout list (e.g., "SCIENCE - PHYSICS")
                 var subjectNames = linksForThisTeacher
                     .Select(ct => ct.Subject.SubjectName.ToUpper())
                     .Distinct();
@@ -1082,7 +1005,7 @@ namespace BLL.Services
                 sidebarList.Add(new SupervisorTeacherSidebarDto
                 {
                     TeacherID = teacher.TeacherId,
-                    FullName = $"{teacher.Person.FirstName} {teacher.Person.LastName}".ToLower(), // Matches UI lowercase look
+                    FullName = $"{teacher.Person.FirstName} {teacher.Person.LastName}".ToLower(), 
                     PhoneNumber = associatedUser?.PhoneNumber ?? "No Number",
                     ClassesDisplay = classesDisplayStr,
                     SubjectsDisplay = subjectsDisplayStr
@@ -1094,7 +1017,6 @@ namespace BLL.Services
 
         public async Task<TeacherDetailsPaneDto?> GetTeacherPaneDetailsAsync(int teacherId, int month, int year)
         {
-            // 1. Fetch Teacher entity with core identity records graph
             var teachersList = await _teacherRepo.GetAllWithIncludeAndFilterAsync(
                 t => t.TeacherId == teacherId,
                 t => t.Person,
@@ -1109,7 +1031,6 @@ namespace BLL.Services
             var userAccount = targetTeacher.Person.Users.FirstOrDefault();
             paneData.PhoneNumber = userAccount?.PhoneNumber ?? "No Number";
 
-            // 2. Extract layout text metadata fields utilizing our pre-designed link processing logic
             var allRooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             var allSchedules = await _scheduleRepo.GetAllAsync();
             var classroomTeachers = await _classTeacherRepo.GetAllWithIncludeAsync(ct => ct.Subject);
@@ -1125,12 +1046,9 @@ namespace BLL.Services
             paneData.ClassesDisplay = string.Join(" / ", classNames);
             paneData.SubjectsDisplay = string.Join(" - ", teacherWorkLinks.Select(ct => ct.Subject.SubjectName.ToUpper()).Distinct());
 
-            // 3. Resolve Weekly Work Schedule image attachment path
-            // ScheduleType 2 = Teacher Personal Program Schedule, ReferenceID = TeacherID
             var personalSchedule = allSchedules.FirstOrDefault(s => s.ScheduleType == 2 && s.ReferenceId == teacherId);
             paneData.WeeklyWorkScheduleUrl = personalSchedule?.ImagePath ?? "uploads/schedules/default_teacher.png";
 
-            // 4. Hydrate Monthly Teacher Attendance Grid Matrix (Color States Tracker)
             var allTeacherAttendance = await _teacherAttendanceRepo.GetAllAsync();
             var monthlyLogs = allTeacherAttendance
                 .Where(ta => ta.TeacherId == teacherId && ta.AttendanceDate.Month == month && ta.AttendanceDate.Year == year)
@@ -1141,7 +1059,6 @@ namespace BLL.Services
                 paneData.AttendanceCalendar.Add(new CalendarAttendanceDayDto
                 {
                     DayNumber = log.AttendanceDate.Day,
-                    // Mapping Status: 1=Present (Green), 2=Absent (Red), 3=Late (Yellow), 4=Sick/Other (Black)
                     StatusType = log.Status
                 });
             }
@@ -1149,12 +1066,10 @@ namespace BLL.Services
             return paneData;
         }
 
-        // Private layout text normalization helpers
         private string GetGradeWord(int gradeNumber) => gradeNumber switch { 7 => "SEVENTH", 8 => "EIGHTH", 9 => "NINTH", _ => $"{gradeNumber}TH" };
         private string GetSectionWord(byte section) => section switch { 1 => "FIRST", 2 => "SECOND", 3 => "THIRD", _ => $"SEC {section}" };
 
 
-        // === RIGHT PANEL: CHAT THREADS LIST USING CHATROOMS ===
         public async Task<IEnumerable<ChatThreadDto>> GetSupervisorChatThreadsAsync(int supervisorPersonId)
         {
 
@@ -1218,21 +1133,18 @@ namespace BLL.Services
             }
             catch
             {
-                // Suppress background sync errors
             }
 
 
-            // 1. Fetch all active rooms assigned to this supervisor
             var activeRooms = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
                 cr => cr.SupervisorPersonId == supervisorPersonId && cr.IsActive,
-                cr => cr.StudentFocus,       // Assuming navigation property to Student Entity
+                cr => cr.StudentFocus,       
                 cr => cr.StudentFocus.Person,
-                cr => cr.ParentPerson        // Assuming navigation property to Person Entity for Parent
+                cr => cr.ParentPerson        
             );
 
             var threadsList = new List<ChatThreadDto>();
 
-            // 2. Map directly from the tracked chatroom metadata columns
             foreach (var room in activeRooms)
             {
                 threadsList.Add(new ChatThreadDto
@@ -1246,14 +1158,11 @@ namespace BLL.Services
                 });
             }
 
-            // Order threads by the last active message timeline update
             return threadsList.OrderByDescending(t => t.LastMessageTime ?? DateTime.MinValue);
         }
 
-        // === LEFT PANEL: FETCH CONVERSATION BY ROOM ID ===
         public async Task<IEnumerable<ChatMessageDto>> GetChatHistoryAsync(int supervisorPersonId, int chatRoomId)
         {
-            // Query messages table directly by ChatRoomID instead of doing an open-ended person search
             var rawMessages = await _messageRepo.GetAllWithIncludeAndFilterAsync(
                 m => m.ChatRoomId == chatRoomId
             );
@@ -1270,7 +1179,7 @@ namespace BLL.Services
             }
 
             return rawMessages
-                .OrderBy(m => m.SentAt) // Ensure chronological order for screen scroll
+                .OrderBy(m => m.SentAt) 
                 .Select(m => new ChatMessageDto
                 {
                     MessageID = m.MessageId,
@@ -1284,34 +1193,29 @@ namespace BLL.Services
 
         public async Task<bool> SendMessageAsync(int senderPersonId, SendMessageDto dto)
         {
-            // 1. Verify the chatroom exists and is currently active
             var room = await _chatRoomRepo.GetByIdAsync(dto.ChatRoomID);
             if (room == null || !room.IsActive) return false;
 
-            // Optional Security: Verify sender is authorized to post to this chatroom block
             if (room.SupervisorPersonId != senderPersonId && room.ParentPersonId != senderPersonId)
                 return false;
 
-            // 2. Open transaction engine to wrap mass data updates securely
             var transaction = await _chatRoomRepo.BeginTransactionAsync();
             try
             {
                 var timestamp = DateTime.UtcNow;
 
-                // 3. Construct and insert the new message record
                 var newMessage = new Message
                 {
                     ChatRoomId = dto.ChatRoomID,
                     SenderPersonId = senderPersonId,
                     MessageContent = dto.MessageContent,
                     SentAt = timestamp,
-                    ReadAt = null // Initially unread until opened by receiver
+                    ReadAt = null 
                 };
                 await _messageRepo.AddAsync(newMessage);
-                await _messageRepo.SaveChangesAsync(); // Generates the MessageID
+                await _messageRepo.SaveChangesAsync();
 
-                // 4. Update parent ChatRoom tracking columns to reflect the exchange
-                // Enforcing length constraint safeties up to 255 characters
+
                 room.LastMessageContent = dto.MessageContent.Length > 255
                     ? dto.MessageContent.Substring(0, 252) + "..."
                     : dto.MessageContent;
@@ -1322,7 +1226,6 @@ namespace BLL.Services
 
                 await _chatRoomRepo.CommitTransactionAsync();
 
-                // Publish ChatMessageSentEvent to notify recipient (e.g., Parent)
                 int receiverPersonId = (senderPersonId == room.SupervisorPersonId)
                     ? room.ParentPersonId
                     : room.SupervisorPersonId;

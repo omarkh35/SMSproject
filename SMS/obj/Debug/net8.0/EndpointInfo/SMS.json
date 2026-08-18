@@ -50,17 +50,7 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StudentRegistrationDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StudentRegistrationDto"
-              }
-            },
-            "application/*+json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/StudentRegistrationDto"
               }
@@ -546,37 +536,6 @@
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/DepartmentManager/classroom": {
-      "post": {
-        "tags": [
-          "DepartmentManager"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClassRoomCreateDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClassRoomCreateDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClassRoomCreateDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK"
@@ -1964,17 +1923,7 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveExamScheduleDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveExamScheduleDto"
-              }
-            },
-            "application/*+json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/SaveExamScheduleDto"
               }
@@ -2079,17 +2028,7 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSchoolInfoDTO"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSchoolInfoDTO"
-              }
-            },
-            "application/*+json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateSchoolInfoDTO"
               }
@@ -2869,29 +2808,6 @@
         },
         "additionalProperties": false
       },
-      "ClassRoomCreateDto": {
-        "type": "object",
-        "properties": {
-          "gradeId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "section": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "startYear": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "supervisorId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "ClassRoomUpdateDto": {
         "type": "object",
         "properties": {
@@ -3325,6 +3241,11 @@
             "minLength": 1,
             "type": "string"
           },
+          "scheduleImageFile": {
+            "type": "string",
+            "format": "binary",
+            "nullable": true
+          },
           "academicYear": {
             "type": "integer",
             "format": "int32"
@@ -3403,6 +3324,11 @@
           },
           "attachmentPath": {
             "type": "string",
+            "nullable": true
+          },
+          "attachmentFile": {
+            "type": "string",
+            "format": "binary",
             "nullable": true
           }
         },
@@ -3600,6 +3526,11 @@
             "type": "string",
             "nullable": true
           },
+          "studentPhotoFile": {
+            "type": "string",
+            "format": "binary",
+            "nullable": true
+          },
           "homeAddress": {
             "type": "string",
             "nullable": true
@@ -3786,6 +3717,11 @@
           },
           "schoolLogo": {
             "type": "string",
+            "nullable": true
+          },
+          "logoFile": {
+            "type": "string",
+            "format": "binary",
             "nullable": true
           }
         },

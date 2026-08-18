@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,6 +29,7 @@ namespace BLL.EntitiesDTOS.Teacher
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? AttachmentPath { get; set; }
+        public IFormFile? AttachmentFile { get; set; }
     }
 
 }

@@ -29,7 +29,6 @@ namespace SMS.Controllers
             return Ok(result);
         }
 
-        // ENDPOINT 2: Dropdown Value Change Event Listener Target
         [HttpGet("classroom/{classRoomId}")]
         public async Task<IActionResult> GetClassroomRollCall(int classRoomId)
         {
@@ -168,7 +167,6 @@ namespace SMS.Controllers
         [HttpGet("students/{studentId}/details")]
         public async Task<IActionResult> GetStudentProfileDetails(int studentId, [FromQuery] int month, [FromQuery] int year)
         {
-            // Fall back to current system calendar metrics if parameters are omitted by mobile UI
             if (month < 1 || month > 12) month = DateTime.UtcNow.Month;
             if (year < 2000) year = DateTime.UtcNow.Year;
 

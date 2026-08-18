@@ -308,7 +308,6 @@ namespace BLL.Services
 
             await _markRepo.SaveChangesAsync();
 
-            // Publish MarksReleasedEvent for all students who received marks
             var targetStudentIds = inputDto.StudentMarks.Select(m => m.StudentID).Distinct().ToList();
             await _notificationPublisher.PublishAsync(new MarksReleasedEvent
             {
@@ -413,7 +412,6 @@ namespace BLL.Services
             await _studentNoteRepo.AddAsync(newNote);
             await _studentNoteRepo.SaveChangesAsync();
 
-            // Publish StudentNoteAddedEvent to notify parents
             await _notificationPublisher.PublishAsync(new StudentNoteAddedEvent
             {
                 StudentId = newNote.StudentId,
@@ -490,7 +488,6 @@ namespace BLL.Services
             await _homeworkRepo.SaveChangesAsync();
 
 
-            // Publish HomeworkAssignedEvent to notify all parents in this classroom
             await _notificationPublisher.PublishAsync(new HomeworkAssignedEvent
             {
                 ClassRoomId = newHomework.ClassRoomId,

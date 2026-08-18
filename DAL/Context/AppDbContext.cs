@@ -279,7 +279,7 @@ public partial class AppDbContext : DbContext
         {
             entity.Property(e => e.ExamScheduleId).HasColumnName("ExamScheduleID");
             entity.Property(e => e.GradeId).HasColumnName("GradeID");
-            entity.Property(e => e.ImagePath).HasMaxLength(255);
+            entity.Property(e => e.ImagePath).HasMaxLength(500);
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.Grade).WithMany(p => p.ExamSchedules)
@@ -329,7 +329,7 @@ public partial class AppDbContext : DbContext
             entity.ToTable("Homework");
 
             entity.Property(e => e.HomeworkId).HasColumnName("HomeworkID");
-            entity.Property(e => e.AttachmentPath).HasMaxLength(255);
+            entity.Property(e => e.AttachmentPath).HasMaxLength(500);
             entity.Property(e => e.ClassRoomId).HasColumnName("ClassRoomID");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.SubjectId).HasColumnName("SubjectID");
@@ -461,7 +461,7 @@ public partial class AppDbContext : DbContext
         modelBuilder.Entity<Schedule>(entity =>
         {
             entity.Property(e => e.ScheduleId).HasColumnName("ScheduleID");
-            entity.Property(e => e.ImagePath).HasMaxLength(255);
+            entity.Property(e => e.ImagePath).HasMaxLength(500);
             entity.Property(e => e.ReferenceId)
                 .HasComment("Type 1 ClassRoomID , Type 2 TeacherID")
                 .HasColumnName("ReferenceID");
@@ -476,7 +476,7 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.SettingId).HasColumnName("SettingID");
             entity.Property(e => e.LastUpdated).HasDefaultValueSql("(getdate())");
-            entity.Property(e => e.SchoolLogo).HasMaxLength(255);
+            entity.Property(e => e.SchoolLogo).HasMaxLength(500);
             entity.Property(e => e.SchoolName).HasMaxLength(100);
         });
 
@@ -487,7 +487,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.MotherName).HasMaxLength(30);
             entity.Property(e => e.PersonId).HasColumnName("PersonID");
-            entity.Property(e => e.Picture).HasMaxLength(100);
+            entity.Property(e => e.Picture).HasMaxLength(500);
 
             entity.HasOne(d => d.Person).WithMany(p => p.Students)
                 .HasForeignKey(d => d.PersonId)

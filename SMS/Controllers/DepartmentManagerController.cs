@@ -32,13 +32,13 @@ namespace SMS.Controllers
             return Ok(result);
         }
 
-        [HttpPost("classroom")]
-        public async Task<IActionResult> CreateClassRoom([FromBody] ClassRoomCreateDto dto)
-        {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var result = await _deptService.CreateClassRoomAsync(dto);
-            return Ok(result);
-        }
+        //[HttpPost("classroom")]
+        //public async Task<IActionResult> CreateClassRoom([FromBody] ClassRoomCreateDto dto)
+        //{
+        //    if (!ModelState.IsValid) return BadRequest(ModelState);
+        //    var result = await _deptService.CreateClassRoomAsync(dto);
+        //    return Ok(result);
+        //}
 
         [HttpPut("classroom/{id}")]
         public async Task<IActionResult> UpdateClassRoom(int id, [FromBody] ClassRoomUpdateDto dto)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -229,7 +230,10 @@ namespace BLL.EntitiesDTOS.SchoolAdmin
         public byte Semester { get; set; }
 
         [Required(ErrorMessage = "مسار صورة الجدول مطلوب")]
-        public string ImagePath { get; set; } = string.Empty;
+        public string? ImagePath { get; set; }
+
+        // ملف صورة جدول الامتحانات الفعلي
+        public IFormFile? ScheduleImageFile { get; set; }
 
         [Required(ErrorMessage = "السنة الدراسية مطلوبة")]
         public short AcademicYear { get; set; } // e.g., 2026

@@ -2,6 +2,7 @@
 using BLL.Interfaces;
 using DAL.Entities;
 using DAL.Interfaces;
+using System.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +14,12 @@ namespace BLL.Services
     public class SchoolSettingService : ISchoolSettingService
     {
         private readonly IBaseRepositories<SchoolSetting> _schoolSettingRepo;
+        private readonly IFileService _fileService;
 
-        public SchoolSettingService(IBaseRepositories<SchoolSetting> schoolSettingRepo)
+        public SchoolSettingService(IBaseRepositories<SchoolSetting> schoolSettingRepo, IFileService fileService)
         {
             _schoolSettingRepo = schoolSettingRepo;
+            _fileService = fileService;
         }
 
         public async Task<SchoolInfoDTO?> GetSchoolInfoAsync()
@@ -52,13 +55,24 @@ namespace BLL.Services
             var settings = await _schoolSettingRepo.GetAllAsync();
             var setting = settings.FirstOrDefault();
 
+            string? logoPath = setting?.SchoolLogo;
+
+            if (dto.LogoFile != null)
+            {
+                if (!string.IsNullOrEmpty(setting?.SchoolLogo))
+                {
+                    _fileService.DeleteFile(setting.SchoolLogo);
+                }
+                logoPath = await _fileService.SaveFileAsync(dto.LogoFile, "logos");
+            }
+
+
             if (setting == null)
             {
-                // إذا لم يكن هناك سجل سابق، يتم إنشاء سجل جديد بالقيم المدخلة
                 setting = new SchoolSetting
                 {
                     SchoolName = dto.SchoolName.Trim(),
-                    SchoolLogo = dto.SchoolLogo,
+                    SchoolLogo = logoPath,
                     LastUpdated = DateTime.Now
                 };
 
@@ -67,11 +81,12 @@ namespace BLL.Services
             }
             else
             {
-                // تحديث السجل الموجود مسبقاً
                 setting.SchoolName = dto.SchoolName.Trim();
-                setting.SchoolLogo = dto.SchoolLogo;
-                setting.LastUpdated = DateTime.Now;
-
+                if (!string.IsNullOrEmpty(logoPath))
+                {
+                    setting.SchoolLogo = logoPath;
+                }
+                setting.LastUpdated = DateTime.UtcNow;
                 _schoolSettingRepo.UpdateAsync(setting);
                 await _schoolSettingRepo.SaveChangesAsync();
             }
@@ -79,8 +94,8 @@ namespace BLL.Services
             return new SchoolInfoDTO
             {
                 SettingId = setting.SettingId,
-                SchoolName = setting.SchoolName ?? string.Empty,
-                SchoolLogo = setting.SchoolLogo,
+                SchoolName = setting.SchoolName,
+                SchoolLogo = _fileService.GetFullUrl(setting.SchoolLogo),
                 LastUpdated = setting.LastUpdated
             };
         }

@@ -28,6 +28,8 @@ namespace BLL.Services
         private readonly IBaseRepositories<Accountant> _accountantRepo;
         private readonly IBaseRepositories<DepartmentManager> _managerRepo;
         private readonly IBaseRepositories<Role> _roleRepo;
+        private readonly IBaseRepositories<Grade> _gradeRepo;
+        private readonly IFileService _fileService;
 
         public AccountantService(
             IBaseRepositories<StudentRecord> studentRecordRepo,
@@ -44,7 +46,9 @@ namespace BLL.Services
             IBaseRepositories<Teacher> teacherRepo,
             IBaseRepositories<Accountant> accountantRepo,
             IBaseRepositories<Supervisor> supervisorRepo,
-            IBaseRepositories<Role> roleRepo
+            IBaseRepositories<Role> roleRepo,
+            IBaseRepositories<Grade> gradeRepo,
+            IFileService fileService
             )
         {
             _studentRecordRepo = studentRecordRepo;
@@ -62,14 +66,15 @@ namespace BLL.Services
             _teacherRepo = teacherRepo;
             _supervisorRepo = supervisorRepo;
             _roleRepo = roleRepo;
+            _gradeRepo = gradeRepo;
+            _fileService = fileService;
         }
 
         public async Task<AccountantDashboardDto> GetMainDashboardGridAsync(string? searchName, int? classRoomId, int page)
         {
             var dashboard = new AccountantDashboardDto();
-            const int pageSize = 8; // Renders 8 structured row items per view block
+            const int pageSize = 8; 
 
-            // 1. Fetch ClassRooms with related Grades to populate the UI dropdown filter component
             var allClassRooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             dashboard.AvailableClasses = allClassRooms.Select(cr => new ClassDropdownItemDto
             {
@@ -77,10 +82,8 @@ namespace BLL.Services
                 ClassDisplayName = $"Grade {cr.Grade.GradeNumber} - Section {cr.Section}"
             }).ToList();
 
-            // 2. Load all current class assignment links to avoid inline loop queries
             var classroomAllocations = await _classroomStudentRepo.GetAllWithIncludeAsync();
 
-            // 3. Query academic StudentRecords, joining back to Student and personal info profiles
             var baseQueryRecords = await _studentRecordRepo.GetAllWithIncludeAsync(
                 sr => sr.Student,
                 sr => sr.Student.Person
@@ -88,7 +91,6 @@ namespace BLL.Services
 
             var filteredRecords = baseQueryRecords.AsEnumerable();
 
-            // 4. Evaluate and execute dynamic full text lookup criteria safely
             if (!string.IsNullOrWhiteSpace(searchName))
             {
                 string cleanSearch = searchName.Trim().ToLower();
@@ -99,7 +101,6 @@ namespace BLL.Services
                 );
             }
 
-            // 5. Filter records conditionally if a specific classroom dropdown element is selected
             if (classRoomId.HasValue)
             {
                 var targetStudentIds = classroomAllocations
@@ -112,7 +113,6 @@ namespace BLL.Services
 
             var matchingRecordsList = filteredRecords.ToList();
 
-            // 6. Compute architectural pagination frames
             dashboard.TotalStudentsCount = matchingRecordsList.Count;
             dashboard.TotalPages = (int)Math.Ceiling((double)dashboard.TotalStudentsCount / pageSize);
 
@@ -122,7 +122,6 @@ namespace BLL.Services
                 .Take(pageSize)
                 .ToList();
 
-            // 7. Map database properties into the flat UI rendering layer model objects
             foreach (var record in paginatedData)
             {
                 string classDisplayStr = "Not Assigned";
@@ -145,7 +144,7 @@ namespace BLL.Services
                     FullName = combinedFullName,
                     MotherName = record.Student.MotherName,
                     ClassAndSection = classDisplayStr,
-                    AnnualFee = (decimal)record.YearlyPayment // Handles money SQL translation safely
+                    AnnualFee = (decimal)record.YearlyPayment 
                 });
             }
 
@@ -157,24 +156,33 @@ namespace BLL.Services
 
         public async Task<bool> RegisterNewStudentAsync(StudentRegistrationDto dto)
         {
-            // 1. التدفق البديل: التحقق من وجود رقم العائلة في جدول الأهل مسبقاً
             var allParents = await _parentRepo.GetAllWithIncludeAsync();
             var matchedParent = allParents.FirstOrDefault(p =>
                 p.FamilyCardNumber != null &&
                 p.FamilyCardNumber.Trim() == dto.FamilyNumber.Trim()
             );
 
-            // إذا لم يكن رقم العائلة موجوداً، نرفض التسجيل فوراً
             if (matchedParent == null)
             {
                 throw new InvalidOperationException("عذراً، رقم العائلة هذا غير مسجل في النظام. يجب إنشاء حساب لولي الأمر أولاً قبل تسجيل الأبناء.");
             }
 
-            // 2. فتح ترانزكشن لحماية البيانات في الجداول المتعددة
+
+            var targetGrade = await _gradeRepo.GetByIdAsync(dto.GradeID);
+            if (targetGrade == null)
+            {
+                throw new ArgumentException($"الصف الدراسي المحدد برقم ({dto.GradeID}) غير موجود في النظام. يرجى اختيار صف دراسي صحيح.");
+            }
+
+            string? savedPhotoPath = dto.StudentPhotoPath;
+            if (dto.StudentPhotoFile != null)
+            {
+                savedPhotoPath = await _fileService.SaveFileAsync(dto.StudentPhotoFile, "students");
+            }
+
             var transaction = await _studentRecordRepo.BeginTransactionAsync();
             try
             {
-                // أ. إنشاء سجل الشخص (People)
                 var newPerson = new Person
                 {
                     FirstName = dto.FirstName.Trim(),
@@ -186,9 +194,8 @@ namespace BLL.Services
                     CreatedAt = DateTime.UtcNow
                 };
                 await _personRepo.AddAsync(newPerson);
-                await _personRepo.SaveChangesAsync(); // توليد PersonID
+                await _personRepo.SaveChangesAsync(); 
 
-                // ب. إنشاء سجل الطالب (Students) مرتبطاً بالـ PersonID
                 var newStudent = new Student
                 {
                     PersonId = newPerson.PersonId,
@@ -198,9 +205,8 @@ namespace BLL.Services
                     CreatedAt = DateTime.UtcNow
                 };
                 await _studentRepo.AddAsync(newStudent);
-                await _studentRepo.SaveChangesAsync(); // توليد StudentID
+                await _studentRepo.SaveChangesAsync();
 
-                // ج. إنشاء السجل الأكاديمي السنوي (StudentRecords) مرتبطاً بالـ StudentID
                 var newAcademicRecord = new StudentRecord
                 {
                     StudentId = newStudent.StudentId,
@@ -210,16 +216,14 @@ namespace BLL.Services
                 };
                 await _studentRecordRepo.AddAsync(newAcademicRecord);
 
-                // د. الربط التلقائي في جدول العلاقات (StudentParents) باستخدام الـ ParentID الذي وجدناه
                 var newLink = new StudentParent
                 {
                     StudentId = newStudent.StudentId,
-                    ParentID = matchedParent.Id, // المعرف المالي لولي الأمر
-                    RelationshipType = "Father"   // صلة القرابة الافتراضية بناءً على دفتر العائلة
+                    ParentID = matchedParent.Id, 
+                    RelationshipType = "Father"  
                 };
                 await _studentParentRepo.AddAsync(newLink);
 
-                // حفظ جميع التغييرات النهائية وتأكيد العملية
                 await _studentRecordRepo.SaveChangesAsync();
                 await _studentParentRepo.SaveChangesAsync();
 
@@ -229,13 +233,16 @@ namespace BLL.Services
             catch
             {
                 await _studentRecordRepo.RollbackTransactionAsync();
+                if (dto.StudentPhotoFile != null && !string.IsNullOrEmpty(savedPhotoPath))
+                {
+                    _fileService.DeleteFile(savedPhotoPath);
+                }
                 return false;
             }
         }
 
         public async Task<StudentDetailsFormDto?> GetStudentDetailsForFormAsync(int studentId)
         {
-            // Fetch latest active academic entry track record for student mapping values
             var academicHistory = await _studentRecordRepo.GetAllWithIncludeAsync(
                 sr => sr.Student,
                 sr => sr.Student.Person
@@ -244,7 +251,6 @@ namespace BLL.Services
             var currentRecord = academicHistory.FirstOrDefault(sr => sr.StudentId == studentId);
             if (currentRecord == null) return null;
 
-            // Optional: pull structural tracking from StudentParents table if family cards are tracked
 
             return new StudentDetailsFormDto
             {
@@ -271,19 +277,16 @@ namespace BLL.Services
                 var activeRecord = records.FirstOrDefault(sr => sr.StudentId == studentId);
                 if (activeRecord == null) return false;
 
-                // Mutate Person profiles tracking values
                 activeRecord.Student.Person.FirstName = dto.FirstName.Trim();
                 activeRecord.Student.Person.SecondName = dto.FatherName.Trim();
                 activeRecord.Student.Person.LastName = dto.FamilyName.Trim();
                 activeRecord.Student.Person.DateOfBirth = dto.DateOfBirth;
                 activeRecord.Student.Person.Gender = dto.Gender;
 
-                // Mutate Student explicit records values
                 activeRecord.Student.MotherName = dto.MotherName.Trim();
                 activeRecord.Student.Address = dto.HomeAddress.Trim();
                 if (dto.StudentPhotoPath != null) activeRecord.Student.Picture = dto.StudentPhotoPath;
 
-                // Mutate current dynamic academic year fields safely
                 activeRecord.GradeId = dto.GradeID;
                 activeRecord.StudyYear = dto.AcademicYear;
 
@@ -307,13 +310,11 @@ namespace BLL.Services
                 var records = await _studentRecordRepo.GetAllWithIncludeAsync(sr => sr.Student);
                 var studentRecordsList = records.Where(sr => sr.StudentId == studentId).ToList();
 
-                // 1. Remove academic record entries matching target student
                 foreach (var r in studentRecordsList)
                 {
-                    _studentRecordRepo.Delete(r); // Adjust standard delete based on repo structure
+                    _studentRecordRepo.Delete(r); 
                 }
 
-                // 2. Cascade down to clear out base entities cleanly or flags dependent on system preference
                 await _studentRecordRepo.SaveChangesAsync();
                 await _studentRecordRepo.CommitTransactionAsync();
                 return true;
@@ -329,29 +330,24 @@ namespace BLL.Services
         public async Task<ParentAccountsDashboardDto> GetParentAccountsGridAsync(string? searchQuery, int page)
         {
             var dashboard = new ParentAccountsDashboardDto();
-            const int pageSize = 4; // يعرض 4 كروت للأهل في الصفحة
+            const int pageSize = 4; 
 
-            // 1. جلب جدول الآباء مع بياناتهم الشخصية فقط (بدون تفرعات المستخدمين المعقدة)
             var baseQueryParents = await _parentRepo.GetAllWithIncludeAsync(p => p.Person);
 
-            // 2. جلب جدول المستخدمين بالكامل بشكل مسطح ومنفصل لربط الحسابات بأمان
             var allUsers = await _userRepo.GetAllAsync();
 
             var filteredParents = baseQueryParents.AsEnumerable();
 
-            // 3. تنفيذ منطق البحث المزدوج بدقة (بالاسم أو برقم الحساب)
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 string cleanSearch = searchQuery.Trim().ToLower();
 
                 filteredParents = filteredParents.Where(p =>
                 {
-                    // فحص الاسم
                     bool nameMatch = p.Person.FirstName.ToLower().Contains(cleanSearch) ||
                                      p.Person.SecondName.ToLower().Contains(cleanSearch) ||
                                      p.Person.LastName.ToLower().Contains(cleanSearch);
 
-                    // فحص رقم الحساب عبر مطابقة الـ PersonId في الذاكرة مع جدول المستخدمين
                     var matchedUser = allUsers.FirstOrDefault(u => u.PersonId == p.PersonId);
                     bool accountMatch = matchedUser != null &&
                                         matchedUser.AccountNumber != null &&
@@ -363,7 +359,6 @@ namespace BLL.Services
 
             var matchingList = filteredParents.ToList();
 
-            // 4. احتساب الصفوف والـ Pagination لبطاقات الأهل
             dashboard.TotalParentsCount = matchingList.Count;
             dashboard.TotalPages = (int)Math.Ceiling((double)dashboard.TotalParentsCount / pageSize);
 
@@ -373,10 +368,8 @@ namespace BLL.Services
                 .Take(pageSize)
                 .ToList();
 
-            // 5. بناء مخرجات الشبكة Display Models بأمان تام دون أي انهارات
             foreach (var parent in paginatedData)
             {
-                // ربط الحساب الشخصي من جدول المستخدمين المجلوب مسبقاً في الذاكرة
                 var userAccount = allUsers.FirstOrDefault(u => u.PersonId == parent.PersonId);
 
                 string parentCombinedName = $"{parent.Person.FirstName} {parent.Person.SecondName} {parent.Person.LastName}".Replace("  ", " ").Trim();
@@ -400,7 +393,6 @@ namespace BLL.Services
             var dashboard = new InstallmentTrackingDashboardDto();
             const int pageSize = 4; // Renders 4 rows per page layout
 
-            // 1. Fetch Classrooms and Grades for the filter dropdown component menu
             var allClassRooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             dashboard.AvailableClasses = allClassRooms.Select(cr => new ClassDropdownItemDto
             {
@@ -408,32 +400,27 @@ namespace BLL.Services
                 ClassDisplayName = $"Grade {cr.Grade.GradeNumber} - Section {cr.Section}"
             }).ToList();
 
-            // 2. Fetch current student classroom allocations and total historical payments logged
             var classroomAllocations = await _classroomStudentRepo.GetAllWithIncludeAsync();
             var allPayments = await _paymentRepo.GetAllWithIncludeAsync();
 
-            // 3. Load active StudentRecords linked to personal data trees
             var academicRecords = await _studentRecordRepo.GetAllWithIncludeAsync(
                 sr => sr.Student,
                 sr => sr.Student.Person,
                 sr => sr.Student.Person.Users
             );
 
-            // 4. Track separate global lists to calculate entire school metrics cleanly
             var fullSchoolCalculatedList = new List<InstallmentStudentGridItemDto>();
 
             foreach (var record in academicRecords)
             {
-                // Calculate financial metrics by individual student record
                 var studentPayments = allPayments.Where(p => p.StudentRecordId == record.StudentRecordId);
                 decimal totalPaid = (decimal)studentPayments.Sum(p => p.PaymentAmount);
                 decimal annualFee = (decimal)record.YearlyPayment;
                 decimal amountDue = annualFee - totalPaid;
-                if (amountDue < 0) amountDue = 0; // Guard clause against overflow anomalies
+                if (amountDue < 0) amountDue = 0; 
 
                 string currentStatus = amountDue == 0 ? "PAID" : "UNPAID";
 
-                // Resolve classroom mapping values string representation
                 string classDisplayStr = "Not Assigned";
                 var currentRoomLink = classroomAllocations.FirstOrDefault(ca => ca.StudentId == record.StudentId);
                 if (currentRoomLink != null)
@@ -457,24 +444,19 @@ namespace BLL.Services
                 });
             }
 
-            // =========================================================================
-            // CORRECTED WORKFLOW: CALCULATE TOP METRICS ON ALL COMBINED STUDENTS GLOBAL
-            // =========================================================================
+           
             dashboard.TotalAmounts = fullSchoolCalculatedList.Sum(s => s.AnnualFees);
             dashboard.RemainingToPay = fullSchoolCalculatedList.Sum(s => s.AmountDue);
             dashboard.PaymentAmounts = dashboard.TotalAmounts - dashboard.RemainingToPay;
 
-            // 5. Apply Independent Grid View Filters (Search, Class select dropdown, ALL/PAID/UNPAID Chips)
             var filteredQuery = fullSchoolCalculatedList.AsEnumerable();
 
-            // Filter Criteria A: Search by Name Input
             if (!string.IsNullOrWhiteSpace(searchName))
             {
                 string cleanSearch = searchName.Trim().ToLower();
                 filteredQuery = filteredQuery.Where(s => s.StudentName.ToLower().Contains(cleanSearch));
             }
 
-            // Filter Criteria B: Filter by specific Class Selection list dropdown
             if (classRoomId.HasValue)
             {
                 var targetStudentIds = classroomAllocations
@@ -485,7 +467,6 @@ namespace BLL.Services
                 filteredQuery = filteredQuery.Where(s => targetStudentIds.Contains(s.StudentID));
             }
 
-            // Filter Criteria C: ALL, PAID, UNPAID horizontal layout chips toggle state selection
             if (!string.IsNullOrWhiteSpace(filterStatus) && !filterStatus.Equals("All", StringComparison.OrdinalIgnoreCase))
             {
                 filteredQuery = filteredQuery.Where(s => s.Status.Equals(filterStatus, StringComparison.OrdinalIgnoreCase));
@@ -493,7 +474,6 @@ namespace BLL.Services
 
             var finalizedFilteredList = filteredQuery.ToList();
 
-            // 6. Paginate the resulting matching layout slice elements
             dashboard.TotalPages = (int)Math.Ceiling((double)finalizedFilteredList.Count / pageSize);
             dashboard.Students = finalizedFilteredList
                 .Skip((page - 1) * pageSize)
@@ -507,32 +487,26 @@ namespace BLL.Services
 
         public async Task<StudentPaymentDetailsDto?> GetStudentPaymentDetailsAsync(int studentId)
         {
-            // 1. Fetch latest active academic entry tracking row for this student
             var academicRecords = await _studentRecordRepo.GetAllWithIncludeAsync(sr => sr.Student);
             var activeRecord = academicRecords.FirstOrDefault(sr => sr.StudentId == studentId);
             if (activeRecord == null) return null;
 
-            // 2. Load all historical payment transactions recorded against this specific record ID
             var allPayments = await _paymentRepo.GetAllWithIncludeAsync();
             var studentReceipts = allPayments
                 .Where(p => p.StudentRecordId == activeRecord.StudentRecordId)
-                .OrderBy(p => p.PaymentDate) // Ensures older logs render at top of history feed
+                .OrderBy(p => p.PaymentDate) 
                 .ToList();
 
-            // 3. Compute live financial constraints balances
             decimal totalFee = (decimal)activeRecord.YearlyPayment;
             decimal totalPaid = (decimal)studentReceipts.Sum(p => p.PaymentAmount);
             decimal balanceDue = totalFee - totalPaid;
-            if (balanceDue < 0) balanceDue = 0; // Guard clause parameter protection
-
-            // 4. Populate output object structure
+            if (balanceDue < 0) balanceDue = 0; 
             var details = new StudentPaymentDetailsDto
             {
                 TotalFee = totalFee,
                 Balance = balanceDue,
                 InstallmentSchedule = studentReceipts.Select(p => new InstallmentHistoryItemDto
                 {
-                    // Formats target time stamps cleanly matching your screenshot representation ("13/8/2022")
                     PaymentDateStr = p.PaymentDate.ToString("d/M/yyyy"),
                     AmountPaid = (decimal)p.PaymentAmount
                 }).ToList()
@@ -545,17 +519,14 @@ namespace BLL.Services
         {
             var dashboard = new StaffSalaryDashboardDto();
 
-            // تحديد نطاق الشهر الماضي لفحص حالة الدفع التاريخية
             var today = DateTime.Today;
             var lastMonthStart = new DateTime(today.Year, today.Month, 1).AddMonths(-1);
             var lastMonthEnd = new DateTime(today.Year, today.Month, 1).AddDays(-1);
 
-            // جلب سجلات الصرف والـ Users للربط
             var payments = await _salaryPaymentRepo.GetAllWithIncludeAsync();
             var users = await _userRepo.GetAllWithIncludeAsync();
             var lastMonthPayments = payments.Where(p => p.PaymentDate >= lastMonthStart && p.PaymentDate <= lastMonthEnd).ToList();
 
-            // 1. معالجة الأساتذة (Teachers)
             var teachers = await _teacherRepo.GetAllWithIncludeAsync(t => t.Person);
             foreach (var t in teachers)
             {
@@ -575,7 +546,6 @@ namespace BLL.Services
                 });
             }
 
-            // 2. معالجة الموجهين (Supervisors)
             var supervisors = await _supervisorRepo.GetAllWithIncludeAsync(s => s.Person);
             foreach (var s in supervisors)
             {
@@ -594,7 +564,6 @@ namespace BLL.Services
                 });
             }
 
-            // 3. معالجة المحاسبين (Accountants)
             var accountants = await _accountantRepo.GetAllWithIncludeAsync(a => a.Person);
             foreach (var a in accountants)
             {
@@ -613,7 +582,6 @@ namespace BLL.Services
                 });
             }
 
-            // 4. معالجة مدراء الأقسام (Department Managers)
             var managers = await _managerRepo.GetAllWithIncludeAsync(m => m.Person);
             foreach (var m in managers)
             {
@@ -649,7 +617,6 @@ namespace BLL.Services
                 throw new ArgumentException("رقم دفتر العائلة مطلوب وهو حقل فريد.");
             }
 
-            // 1. التحقق الحاسم: التأكد من أن رقم العائلة غير موجود مسبقاً في النظام
             var allParents = await _parentRepo.GetAllAsync();
             bool familyCardExists = allParents.Any(p =>
                 !string.IsNullOrWhiteSpace(p.FamilyCardNumber) &&
@@ -660,7 +627,6 @@ namespace BLL.Services
                 throw new InvalidOperationException($"رقم العائلة '{cleanFamilyCard}' مسجل مسبقاً في النظام لولي أمر آخر.");
             }
 
-            // 2. التحقق من عدم تكرار رقم الهاتف للمستخدمين
             string cleanPhone = dto.PhoneNumber?.Trim() ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(cleanPhone))
             {
@@ -680,18 +646,14 @@ namespace BLL.Services
                 }
             }
 
-            // 3. تحديد معرّف دور ولي الأمر ديناميكياً
             int parentRoleId = await GetParentRoleIdAsync();
 
-            // 4. فتح ترانزكشن لحفظ سجلات Person و User و Parent بشكل ذري
             var transaction = await _personRepo.BeginTransactionAsync();
             try
             {
-                // أ. توليد رقم الحساب الفريد من السيكوينس المعتمد
                 string sqlCommand = "SELECT CAST(NEXT VALUE FOR [dbo].[Seq_UserAccountNumber] AS NVARCHAR(8))";
                 string generatedAccountNumber = await _classRoomRepo.ExecuteRawSqlScalarAsync<string>(sqlCommand);
 
-                // ب. إنشاء كيان الشخص (Person)
                 var newPerson = new Person
                 {
                     FirstName = dto.FirstName.Trim(),
@@ -705,14 +667,12 @@ namespace BLL.Services
                 await _personRepo.AddAsync(newPerson);
                 await _personRepo.SaveChangesAsync();
 
-                // ج. تجهيز كلمة المرور (تشفيرها إن وجدت، أو تركها فارغة للتفعيل الذاتي)
                 string? hashedPassword = null;
                 if (!string.IsNullOrWhiteSpace(dto.Password))
                 {
                     hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password.Trim());
                 }
 
-                // د. إنشاء كيان المستخدم (User)
                 var newUser = new User
                 {
                     PersonId = newPerson.PersonId,
@@ -725,12 +685,11 @@ namespace BLL.Services
                 await _userRepo.AddAsync(newUser);
                 await _userRepo.SaveChangesAsync();
 
-                // هـ. إنشاء كيان ولي الأمر (Parent) مع رصيد محفظة 0 دون إضافة مبالغ
                 var newParent = new Parent
                 {
                     PersonId = newPerson.PersonId,
                     FamilyCardNumber = cleanFamilyCard,
-                    WalletBalance = 0m // بدون رصيد عند الإنشاء
+                    WalletBalance = 0m 
                 };
                 await _parentRepo.AddAsync(newParent);
                 await _parentRepo.SaveChangesAsync();
@@ -760,9 +719,7 @@ namespace BLL.Services
             }
         }
 
-        // =========================================================================
-        // شحن / إضافة رصيد لمحفظة ولي الأمر من قسم المحاسبة
-        // =========================================================================
+     
         public async Task<ParentWalletTopUpResponseDto> TopUpParentWalletAsync(ParentWalletTopUpDto dto)
         {
             if (dto == null)
@@ -775,7 +732,6 @@ namespace BLL.Services
                 throw new ArgumentException("يجب أن يكون المبلغ المضاف إلى المحفظة أكبر من الصفر.");
             }
 
-            // 1. البحث عن ولي الأمر إما بمعرف ParentId أو PersonId
             var parents = await _parentRepo.GetAllWithIncludeAsync(p => p.Person);
             var parent = parents.FirstOrDefault(p => p.Id == dto.ParentId || p.PersonId == dto.ParentId);
 
@@ -784,7 +740,6 @@ namespace BLL.Services
                 throw new KeyNotFoundException($"لم يتم العثور على سجل ولي الأمر بالمعرّف الممرر: {dto.ParentId}.");
             }
 
-            // 2. تحديث الرصيد بشكل ذري ضمن ترانزكشن
             var transaction = await _parentRepo.BeginTransactionAsync();
             try
             {
@@ -796,7 +751,6 @@ namespace BLL.Services
 
                 await _parentRepo.CommitTransactionAsync();
 
-                // 3. جلب بيانات المستخدم لمعرفة رقم الحساب
                 var allUsers = await _userRepo.GetAllAsync();
                 var user = allUsers.FirstOrDefault(u => u.PersonId == parent.PersonId);
 
@@ -825,9 +779,7 @@ namespace BLL.Services
             }
         }
 
-        // =========================================================================
-        // دالة مساعدة لتحديد معرف دور ولي الأمر في جدول الأدوار Roles
-        // =========================================================================
+    
         private async Task<int> GetParentRoleIdAsync()
         {
             try

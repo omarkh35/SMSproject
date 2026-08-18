@@ -334,22 +334,6 @@
   },
   {
     "ContainingType": "SMS.Controllers.DepartmentManagerController",
-    "Method": "CreateClassRoom",
-    "RelativePath": "api/DepartmentManager/classroom",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "dto",
-        "Type": "BLL.EntitiesDTOS.DepartmentManager.ClassRoomCreateDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "SMS.Controllers.DepartmentManagerController",
     "Method": "GetClassRoomById",
     "RelativePath": "api/DepartmentManager/classroom/{id}",
     "HttpMethod": "GET",

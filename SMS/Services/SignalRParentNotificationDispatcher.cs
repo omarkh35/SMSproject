@@ -9,11 +9,7 @@ using System.Threading.Tasks;
 
 namespace SMS.Services
 {
-    /// <summary>
-    /// مرسل الإشعارات اللحظي داخل التطبيق (In-App SignalR Dispatcher)
-    /// يقوم ببث الإشعار وحمولة الـ Deep Linking فوراً لهواتف الأهل المفتوحة عبر WebSockets
-    /// بدون أي وسيط خارجي وبدون تخزين في قاعدة البيانات.
-    /// </summary>
+   
     public class SignalRParentNotificationDispatcher : IParentPushNotificationDispatcher
     {
         private readonly IHubContext<NotificationHub> _hubContext;
@@ -45,8 +41,6 @@ namespace SMS.Services
                 payload.Data.DeepLinkUrl
             );
 
-            // إرسال الإشعار اللحظي إلى حسابات أولياء الأمور المستهدفين فقط
-            // عن طريق اسم الحدث "ReceiveParentNotification"
             await _hubContext.Clients.Users(targetUserIds).SendAsync("ReceiveParentNotification", payload);
         }
     }

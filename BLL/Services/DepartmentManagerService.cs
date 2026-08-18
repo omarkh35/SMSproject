@@ -144,7 +144,6 @@ namespace BLL.Services
 
         public async Task<bool> DeleteClassRoomAsync(int id)
         {
-            // هون لازم نتحقق انو مدير القسم هو المسؤول عن الصف 
             var existing = await _classRoomRepo.GetByIdAsync(id);
             if (existing == null) return false;
 
@@ -226,7 +225,7 @@ namespace BLL.Services
             }
             catch
             {
-                // Suppress exception to keep assignment successful
+               
             }
 
 
@@ -295,7 +294,7 @@ namespace BLL.Services
             }
             catch
             {
-                // Suppress exception
+               
             }
         }
 
@@ -502,33 +501,28 @@ namespace BLL.Services
             var dashboard = new StudentDirectoryDashboardDto();
             const int pageSize = 8;
 
-            // 1. جلب الموجهين مع تضمين مدير القسم والشخص الخاص بمدير القسم لمنع الـ Shadow Properties تماماً
             var allSupervisors = await _supervisorRepo.GetAllWithIncludeAsync(
                 s => s.DepartmentManager,
                 s => s.DepartmentManager.Person
             );
 
-            // تصحيح المطابقة باستخدام PersonID الصواب للسكريبت
             var activeSupervisorIds = allSupervisors
                 .Where(s => s.DepartmentManager.PersonId == managerPersonId)
                 .Select(s => s.SupervisorId)
                 .ToList();
 
-            // 2. جلب الصفوف الخاضعة لإشراف هؤلاء الموجهين (تصحيح المسميات لـ ClassRoomID و SupervisorID)
             var allClassRooms = await _classRoomRepo.GetAllWithIncludeAsync(cr => cr.Grade);
             var managedClassRooms = allClassRooms
                 .Where(cr => cr.SupervisorId != null && activeSupervisorIds.Contains(cr.SupervisorId.Value))
                 .ToList();
             var managedClassRoomIds = managedClassRooms.Select(cr => cr.ClassRoomId).ToList();
 
-            // 3. تحديد الطلاب الفعليين داخل هذه الغرف الصفية
             var allClassroomStudents = await _classStudentRepo.GetAllWithIncludeAsync(cs => cs.ClassRoom);
             var managedClassroomStudents = allClassroomStudents
                 .Where(cs => managedClassRoomIds.Contains(cs.ClassRoomId))
                 .ToList();
             var managedStudentIds = managedClassroomStudents.Select(cs => cs.StudentId).Distinct().ToList();
 
-            // 4. سحب سجلات الطلاب وتطبيق شرط البحث بالاسم (مع تصحيح StudentID)
             var allStudentRecords = await _studentRecordRepo.GetAllWithIncludeAsync(sr => sr.Student, sr => sr.Student.Person);
             var filteredStudentRecords = allStudentRecords.Where(sr => managedStudentIds.Contains(sr.StudentId));
 
@@ -547,7 +541,6 @@ namespace BLL.Services
             dashboard.TotalStudentsCount = relevantStudentRecords.Count;
             dashboard.TotalPages = (int)Math.Ceiling((double)dashboard.TotalStudentsCount / pageSize);
 
-            // 5. حساب نسبة النجاح الأكاديمية للفصل الأول (تصحيح السجل ليكون StudentRecordID المطابق للسكريبت)
             var allMarks = await _markRepo.GetAllWithIncludeAsync(m => m.ExamType);
             var sem1Exams = allMarks
                 .Where(m => m.IsApproved && m.ExamType.Semester == 1 && managedStudentIds.Contains(m.StudentRecordId))
@@ -570,16 +563,13 @@ namespace BLL.Services
         .Take(pageSize)
         .ToList();
 
-            // 7. الحل الجذري: جلب علاقات الأهل بشكل مسطح دون الدخول في تفرعات المستخدمين العكسية المعقدة
             var allStudentParents = await _studentParentRepo.GetAllWithIncludeAsync(
                 sp => sp.Parent,
                 sp => sp.Parent.Person
             );
 
-            // جلب جدول المستخدمين (Users) بشكل منفصل في سطر واحد سريع لربط الهواتف عبر الذاكرة مباشرة
             var allUsers = await _userRepo.GetAllAsync();
 
-            // 8. صياغة المخرجات النهائية بأمان تام
             foreach (var record in paginatedRecords)
             {
                 string gradeDisplay = "-";
@@ -596,13 +586,11 @@ namespace BLL.Services
                     }
                 }
 
-                // استخراج الهاتف بأمان عبر فحص متقاطع نقي في الذاكرة (In-Memory Lookup)
                 var parentLink = allStudentParents.FirstOrDefault(sp => sp.StudentId == record.StudentId);
                 string parentPhone = "No Number";
 
                 if (parentLink?.Parent?.Person != null)
                 {
-                    // نذهب لجدول المستخدمين مباشرة ونبحث باستخدام الـ PersonID الصحيح والمؤكد للمشروع
                     var parentUserAccount = allUsers.FirstOrDefault(u => u.PersonId == parentLink.Parent.PersonId);
                     if (parentUserAccount != null)
                     {
@@ -632,13 +620,10 @@ namespace BLL.Services
         {
             var dashboard = new SupervisorsDashboardDto();
 
-            // 1. Fetch all classrooms globally to calculate cross-sectional card summaries
             var allClassRooms = await _classRoomRepo.GetAllWithIncludeAsync();
 
-            // Open Sections rule: Count classrooms that have no supervisor assigned
             dashboard.OpenSections = allClassRooms.Count(cr => cr.SupervisorId == null);
 
-            // 2. Fetch all supervisors under this specific Department Manager's oversight line
             var baseSupervisors = await _supervisorRepo.GetAllWithIncludeAsync(
                 s => s.Person,
                 s => s.DepartmentManager
@@ -650,13 +635,10 @@ namespace BLL.Services
              
             dashboard.TotalSupervisors = managedSupervisors.Count;
 
-            // 3. Gather user security contact channels to resolve direct telephone links
             var allUsers = await _userRepo.GetAllWithIncludeAsync();
 
-            // 4. Hydrate row array metrics
             foreach (var sup in managedSupervisors)
             {
-                // Sections rule: Calculate count of active classrooms assigned to this distinct supervisor ID
                 int supervisedCount = allClassRooms.Count(cr => cr.SupervisorId == sup.SupervisorId);
 
                 var relatedUser = allUsers.FirstOrDefault(u => u.PersonId == sup.PersonId);
@@ -671,11 +653,10 @@ namespace BLL.Services
                     FullName = combinedFullName,
                     Phone = phoneContact,
                     Status = calculatedStatus,
-                    SectionsCount = supervisedCount // Outputs flat integer amount directly
+                    SectionsCount = supervisedCount 
                 });
             }
 
-            // Assigned Sections card metric: Accumulate sum of all sections handled by active supervisors combined
             dashboard.AssignedSections = dashboard.Supervisors.Sum(s => s.SectionsCount);
 
             return dashboard;
@@ -685,16 +666,13 @@ namespace BLL.Services
         {
             var dashboard = new TeachersDashboardDto();
 
-            // 1. جلب جميع المعلمين النشطين في النظام مع معلوماتهم الشخصية
             var allTeachers = await _teacherRepo.GetAllWithIncludeAsync(t => t.Person);
             var activeTeachers = allTeachers.Where(t => t.Person.IsActive).ToList();
 
             dashboard.TotalTeachers = activeTeachers.Count;
 
-            // 2. جلب حسابات المستخدمين لاستخراج أرقام الهواتف
             var allUsers = await _userRepo.GetAllWithIncludeAsync();
 
-            // 3. بناء الأسطر لجدول المعلمين
             foreach (var teacher in activeTeachers)
             {
                 var relatedUser = allUsers.FirstOrDefault(u => u.PersonId == teacher.PersonId);
@@ -707,7 +685,7 @@ namespace BLL.Services
                     TeacherID = teacher.TeacherId,
                     FullName = combinedFullName,
                     Phone = phoneContact,
-                    Lessons = teacher.WeeklyClasses ?? 0 // عرض الحصص الأسبوعية مباشرة كرقم
+                    Lessons = teacher.WeeklyClasses ?? 0
                 });
             }
 
@@ -717,21 +695,17 @@ namespace BLL.Services
 
         public async Task<string?> RegisterSupervisorWorkflowAsync(int managerPersonId, CreateSupervisorDto dto)
         {
-            // 1. جلب سجل مدير القسم الحالي لمعرفة الـ DepartmentManagerID لربط المشرف به
             var managers = await _managerRepo.GetAllWithIncludeAsync();
             var activeManager = managers.FirstOrDefault(m => m.PersonId == managerPersonId);
             if (activeManager == null) return null;
 
-            // 2. فتح ترانزكشن لحماية البيانات عبر الجداول الثلاثة
             var transaction = await _classRoomRepo.BeginTransactionAsync();
 
             try
             {
-                // أ. توليد رقم الحساب تلقائياً باستخدام السيكوينس الموثق لديك بالداتابيز
                 string sqlCommand = "SELECT CAST(NEXT VALUE FOR [dbo].[Seq_UserAccountNumber] AS NVARCHAR(8))";
                 string generatedAccountNumber = await _classRoomRepo.ExecuteRawSqlScalarAsync<string>(sqlCommand);
 
-                // ب. بناء وحفظ سجل الشخص (People)
                 var newPerson = new Person
                 {
                     FirstName = dto.FirstName.Trim(),
@@ -739,18 +713,17 @@ namespace BLL.Services
                     LastName = dto.LastName.Trim(),
                     DateOfBirth = dto.DateOfBirth,
                     Gender = dto.Gender,
-                    IsActive = true, // تفعيل الحساب تلقائياً عند الإنشاء
+                    IsActive = true, 
                     CreatedAt = DateTime.UtcNow
                 };
                 await _personRepo.AddAsync(newPerson);
-                await _personRepo.SaveChangesAsync(); // هنا يتولد الـ PersonID
+                await _personRepo.SaveChangesAsync(); 
 
                 
-                // د. بناء وحفظ سجل المستخدم (Users) مرتبطاً بالـ PersonID
                 var newUser = new User
                 {
                     PersonId = newPerson.PersonId,
-                    UserRoleId = 4, // رقم الدور 4 وهو المخصص للموجه (Supervisor) في نظام الأدوار لديك
+                    UserRoleId = 4, 
                     PhoneNumber = dto.PhoneNumber.Trim(),
                     Email = dto.Email?.Trim().ToLower(),
                     HashPassword = null,
@@ -759,23 +732,20 @@ namespace BLL.Services
                 await _userRepo.AddAsync(newUser);
                 await _userRepo.SaveChangesAsync();
 
-                // هـ. بناء وحفظ سجل الموجه (Supervisors) مرتبطاً بمدير القسم والشخص
                 var newSupervisor = new Supervisor
                 {
-                    DepartmentManagerId = activeManager.DepartmentManagerId, // ربطه بمدير القسم الصانع للحساب
+                    DepartmentManagerId = activeManager.DepartmentManagerId, 
                     PersonId = newPerson.PersonId,
                     Salary = dto.Salary
                 };
                 await _supervisorRepo.AddAsync(newSupervisor);
                 await _supervisorRepo.SaveChangesAsync();
 
-                // 3. تأكيد وإغلاق المعاملة بنجاح
                 await _classRoomRepo.CommitTransactionAsync();
                 return generatedAccountNumber;
             }
             catch
             {
-                // التراجع عن أي إدخال مجتزأ في حال حدوث أي خطأ تشغيلي لحماية سلامة البيانات
                 await _classRoomRepo.RollbackTransactionAsync();
                 return null;
             }
@@ -784,16 +754,13 @@ namespace BLL.Services
 
         public async Task<string?> RegisterTeacherWorkflowAsync(CreateTeacherDto dto)
         {
-            // 1. فتح ترانزكشن لحماية تتابع الجداول الثلاثة
             var transaction = await _classRoomRepo.BeginTransactionAsync();
 
             try
             {
-                // أ. توليد رقم الحساب تلقائياً باستخدام السيكوينس المعتمد في السكريبت
                 string sqlCommand = "SELECT CAST(NEXT VALUE FOR [dbo].[Seq_UserAccountNumber] AS NVARCHAR(8))";
                 string generatedAccountNumber = await _classRoomRepo.ExecuteRawSqlScalarAsync<string>(sqlCommand);
 
-                // ب. بناء وحفظ سجل الشخص (People) ومطابقة PersonID بالحروف الكبيرة
                 var newPerson = new Person
                 {
                     FirstName = dto.FirstName.Trim(),
@@ -801,26 +768,24 @@ namespace BLL.Services
                     LastName = dto.LastName.Trim(),
                     DateOfBirth = dto.DateOfBirth,
                     Gender = dto.Gender,
-                    IsActive = true, // تفعيل حساب المعلم فور إنشائه
+                    IsActive = true, 
                     CreatedAt = DateTime.UtcNow
                 };
                 await _personRepo.AddAsync(newPerson);
-                await _personRepo.SaveChangesAsync(); // توليد الـ PersonID
+                await _personRepo.SaveChangesAsync(); 
 
-                // ج. بناء وحفظ سجل المستخدم (Users) - معرّف دور المعلم هو 2 في نظامك
                 var newUser = new User
                 {
                     PersonId = newPerson.PersonId,
-                    UserRoleId = 2, // دور المعلم (Teacher)
+                    UserRoleId = 2,
                     PhoneNumber = dto.PhoneNumber.Trim(),
                     Email = dto.Email?.Trim().ToLower(),
-                    HashPassword = null, // متروك فارغاً NULL ليتم تعيينه لاحقاً عند التفعيل
+                    HashPassword = null, 
                     AccountNumber = generatedAccountNumber
                 };
                 await _userRepo.AddAsync(newUser);
                 await _userRepo.SaveChangesAsync();
 
-                // د. بناء وحفظ سجل المعلم (Teachers) مرتبطاً بالـ PersonID
                 var newTeacher = new Teacher
                 {
                     PersonId = newPerson.PersonId,
@@ -830,15 +795,12 @@ namespace BLL.Services
                 await _teacherRepo.AddAsync(newTeacher);
                 await _teacherRepo.SaveChangesAsync();
 
-                // 2. تأكيد وإغلاق المعاملة بنجاح
                 await _classRoomRepo.CommitTransactionAsync();
 
-                // إرجاع رقم الحساب المتولد لعرضه في الواجهة
                 return generatedAccountNumber;
             }
             catch
             {
-                // التراجع الشامل لحماية سلامة الجداول في حال حدوث أي خطأ
                 await _classRoomRepo.RollbackTransactionAsync();
                 return null;
             }
@@ -846,28 +808,24 @@ namespace BLL.Services
 
         public async Task<bool> CreateNextSectionAutomatedAsync(CreateAutomaticClassRoomDto dto)
         {
-            // 1. جلب جميع الغرف الصفية المسجلة مسبقاً لهذا الصف (GradeID) المحدد
             var existingClassRooms = await _classRoomRepo.GetAllWithIncludeAndFilterAsync(
                 cr => cr.GradeId == dto.GradeID
             );
 
-            byte nextSectionNumber = 1; // القيمة الافتراضية إذا كان الصف جديداً كلياً ولا يملك أي شعبة
+            byte nextSectionNumber = 1; 
 
             if (existingClassRooms.Any())
             {
-                // 2. تطبيق الاستراتيجية الأفضل: البحث عن أعلى رقم شعبة موجود حالياً وزيادته بـ 1
                 var maxSection = existingClassRooms.Max(cr => cr.Section);
                 nextSectionNumber = (byte)(maxSection + 1);
             }
 
-            // 3. تحديد السنة الدراسية الحالية تلقائياً (StartYear) بناءً على تاريخ السيرفر الحالي
             short currentAcademicYear = (short)DateTime.Today.Year;
 
-            // 4. بناء كائن الشعبة الجديدة وحفظه في الداتابيز (SupervisorID يترك NULL حتى يتم فرزه لاحقاً)
             var newClassRoom = new ClassRoom
             {
                 GradeId = dto.GradeID,
-                Section = nextSectionNumber, // الرقم التلقائي الذكي (مثل 4)
+                Section = nextSectionNumber, 
                 SupervisorId = null,
                 StartYear = currentAcademicYear
             };
@@ -926,9 +884,7 @@ namespace BLL.Services
             };
         }
 
-        // =========================================================================
-        // تعديل بيانات الموجه (Update Supervisor)
-        // =========================================================================
+      
         public async Task<SupervisorDetailsDto> UpdateSupervisorAsync(int managerPersonId, int supervisorId, UpdateSupervisorDto dto)
         {
             if (dto == null)
@@ -953,13 +909,11 @@ namespace BLL.Services
             string cleanPhone = dto.PhoneNumber.Trim();
             string? cleanEmail = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim().ToLower();
 
-            // 1. التحقق من عدم تكرار رقم الهاتف مع حساب مستخدم آخر في النظام
             var allUsers = await _userRepo.GetAllAsync();
             var phoneTaken = allUsers.Any(u => u.PhoneNumber == cleanPhone && u.PersonId != supervisor.PersonId);
             if (phoneTaken)
                 throw new InvalidOperationException($"رقم الهاتف '{cleanPhone}' مسجل مسبقاً لمستخدم آخر في النظام.");
 
-            // 2. التحقق من عدم تكرار البريد الإلكتروني مع حساب مستخدم آخر إن وُجد
             if (!string.IsNullOrEmpty(cleanEmail))
             {
                 var emailTaken = allUsers.Any(u => !string.IsNullOrEmpty(u.Email) && u.Email.ToLower() == cleanEmail && u.PersonId != supervisor.PersonId);
@@ -967,11 +921,9 @@ namespace BLL.Services
                     throw new InvalidOperationException($"البريد الإلكتروني '{cleanEmail}' مسجل مسبقاً لمستخدم آخر في النظام.");
             }
 
-            // 3. تنفيذ التعديلات المتكاملة داخل ترانزكشن لحماية سلامة الجداول (Person + User + Supervisor)
             await _classRoomRepo.BeginTransactionAsync();
             try
             {
-                // أ. تحديث بيانات الشخص (People)
                 supervisor.Person.FirstName = dto.FirstName.Trim();
                 supervisor.Person.SecondName = dto.SecondName.Trim();
                 supervisor.Person.LastName = dto.LastName.Trim();
@@ -981,7 +933,6 @@ namespace BLL.Services
                 _personRepo.UpdateAsync(supervisor.Person);
                 await _personRepo.SaveChangesAsync();
 
-                // ب. تحديث بيانات حساب المستخدم (Users)
                 var userAccount = allUsers.FirstOrDefault(u => u.PersonId == supervisor.PersonId);
                 if (userAccount != null)
                 {
@@ -991,7 +942,6 @@ namespace BLL.Services
                     await _userRepo.SaveChangesAsync();
                 }
 
-                // ج. تحديث بيانات الموجه المالية (Supervisors)
                 supervisor.Salary = dto.Salary;
                 _supervisorRepo.UpdateAsync(supervisor);
                 await _supervisorRepo.SaveChangesAsync();
@@ -1007,9 +957,7 @@ namespace BLL.Services
             }
         }
 
-        // =========================================================================
-        // حذف الموجه بأمان مع التحقق الشامل من كافة المسؤوليات والارتباطات (Delete Supervisor)
-        // =========================================================================
+       
         public async Task<bool> DeleteSupervisorAsync(int managerPersonId, int supervisorId)
         {
             var managers = await _managerRepo.GetAllWithIncludeAsync();
@@ -1028,7 +976,6 @@ namespace BLL.Services
             if (supervisor.DepartmentManagerId != activeManager.DepartmentManagerId)
                 throw new UnauthorizedAccessException("ليس لديك صلاحية لحذف موجه لا يتبع لقسمك.");
 
-            // 1. الفحص الصارم للشعب والغرف الصفية المرتبطة بإشراف هذا الموجه
             var assignedClassrooms = await _classRoomRepo.GetAllWithIncludeAndFilterAsync(
                 cr => cr.SupervisorId == supervisorId,
                 cr => cr.Grade
@@ -1039,7 +986,6 @@ namespace BLL.Services
                 throw new InvalidOperationException($"لا يمكن حذف الموجه لوجود ({assignedClassrooms.Count()}) شعبة صفية مرتبطة بإشرافه حالياً: ({classNames}). يرجى نقل أو إلغاء إشراف هذه الشعب قبل الحذف.");
             }
 
-            // 2. الفحص الصارم لعلاقات إشراف المعلمين
             var assignedTeachers = await _teacherSupervisorRepo.GetAllWithIncludeAndFilterAsync(
                 ts => ts.SupervisorId == supervisorId,
                 ts => ts.Teacher,
@@ -1051,7 +997,6 @@ namespace BLL.Services
                 throw new InvalidOperationException($"لا يمكن حذف الموجه لأنه يشرف حالياً على ({assignedTeachers.Count()}) معلم: ({teacherNames}). يرجى فك ارتباط إشراف المعلمين أولاً.");
             }
 
-            // 3. فحص غرف المحادثات النشطة مع أولياء الأمور
             //var activeChats = await _chatRoomRepo.GetAllWithIncludeAndFilterAsync(
             //    cr => cr.SupervisorPersonId == supervisor.PersonId && cr.IsActive
             //);
@@ -1060,17 +1005,16 @@ namespace BLL.Services
             //    throw new InvalidOperationException($"لا يمكن حذف الموجه لوجود ({activeChats.Count()}) غرفة محادثة نشطة مع أولياء الأمور. يرجى أرشفة أو إغلاق المحادثات قبل تنفيذ الحذف.");
             //}
 
-            // 4. تنفيذ الحذف الآمن ضمن ترانزكشن
+          
             await _classRoomRepo.BeginTransactionAsync();
             try
             {
                 int personId = supervisor.PersonId;
 
-                // حذف سجل الموجه
+                
                 _supervisorRepo.Delete(supervisor);
                 await _supervisorRepo.SaveChangesAsync();
 
-                // حذف حساب المستخدم
                 var allUsers = await _userRepo.GetAllAsync();
                 var userAccount = allUsers.FirstOrDefault(u => u.PersonId == personId);
                 if (userAccount != null)
@@ -1079,7 +1023,6 @@ namespace BLL.Services
                     await _userRepo.SaveChangesAsync();
                 }
 
-                // إلغاء تفعيل حساب الشخص لضمان عدم وجود بيانات متضاربة
                 var person = await _personRepo.GetByIdAsync(personId);
                 if (person != null)
                 {
@@ -1109,13 +1052,11 @@ namespace BLL.Services
             if (dto.SupervisorId <= 0)
                 throw new ArgumentException("معرف الموجه غير صالح.", nameof(dto.SupervisorId));
 
-            // 1. التحقق من صلاحية وهوية مدير القسم
             var managers = await _managerRepo.GetAllWithIncludeAsync();
             var activeManager = managers.FirstOrDefault(m => m.PersonId == managerPersonId);
             if (activeManager == null)
                 throw new UnauthorizedAccessException("جلسة مدير القسم غير صالحة أو غير مسجل كمدير قسم في النظام.");
 
-            // 2. التحقق من وجود الشعبة الصفية
             var classRooms = await _classRoomRepo.GetAllWithIncludeAndFilterAsync(
                 c => c.ClassRoomId == dto.ClassRoomId,
                 c => c.Grade,
@@ -1125,7 +1066,6 @@ namespace BLL.Services
             if (classRoom == null)
                 throw new KeyNotFoundException($"الشعبة الصفية رقم ({dto.ClassRoomId}) غير موجودة في النظام.");
 
-            // 3. التحقق من وجود الموجه وحالته
             var supervisors = await _supervisorRepo.GetAllWithIncludeAndFilterAsync(
                 s => s.SupervisorId == dto.SupervisorId,
                 s => s.Person
@@ -1137,18 +1077,15 @@ namespace BLL.Services
             if (supervisor.Person == null || !supervisor.Person.IsActive)
                 throw new InvalidOperationException($"لا يمكن إسناد الموجه '{supervisor.Person?.FirstName} {supervisor.Person?.LastName}' لأن حسابه غير نشط/معطل في النظام.");
 
-            // 4. التحقق من أن الموجه يتبع لقسم هذا المدير (نطاق الصلاحيات)
             if (supervisor.DepartmentManagerId != activeManager.DepartmentManagerId)
                 throw new UnauthorizedAccessException("ليس لديك صلاحية لإسناد هذا الموجه لأنه يتبع لقسم/مدير آخر.");
 
-            // 5. التحقق من عدم التكرار (إذا كان الموجه مسنداً بالفعل لنفس الشعبة)
             if (classRoom.SupervisorId.HasValue && classRoom.SupervisorId.Value == dto.SupervisorId)
             {
                 string supName = $"{supervisor.Person.FirstName} {supervisor.Person.LastName}".Trim();
                 throw new InvalidOperationException($"الموجه '{supName}' مسند بالفعل إلى هذه الشعبة الصفية (الصف {classRoom.Grade?.GradeNumber ?? classRoom.GradeId} - الشعبة {classRoom.Section}).");
             }
 
-            // 6. التحقق مما إذا كان الإجراء هو إعادة تعيين (نقل من موجه سابق)
             int? previousSupervisorId = classRoom.SupervisorId;
             string? previousSupervisorName = null;
             bool isReassignment = previousSupervisorId.HasValue && previousSupervisorId.Value != dto.SupervisorId;
@@ -1166,7 +1103,6 @@ namespace BLL.Services
                 }
             }
 
-            // 7. تحديث سجل الشعبة في قاعدة البيانات
             var trackedClass = await _classRoomRepo.GetByIdAsync(dto.ClassRoomId);
             if (trackedClass == null)
                 throw new KeyNotFoundException($"الشعبة الصفية رقم ({dto.ClassRoomId}) غير موجودة في النظام.");
@@ -1175,10 +1111,8 @@ namespace BLL.Services
             _classRoomRepo.UpdateAsync(trackedClass);
             await _classRoomRepo.SaveChangesAsync();
 
-            // 8. مزامنة غرف المحادثة تلقائياً بين الموجه الجديد وأولياء أمور طلاب هذه الشعبة
             await AutoProvisionChatRoomsForClassRoomAsync(trackedClass.ClassRoomId, supervisor.SupervisorId);
 
-            // 9. جلب إحصائيات ومعلومات الاتصال للموجه
             var allUsers = await _userRepo.GetAllAsync();
             var userAccount = allUsers.FirstOrDefault(u => u.PersonId == supervisor.PersonId);
 
@@ -1212,9 +1146,7 @@ namespace BLL.Services
             };
         }
 
-        // =========================================================================
-        // إلغاء إسناد الموجه من شعبة صفية (Unassign Supervisor From Class)
-        // =========================================================================
+      
         public async Task<UnassignSupervisorFromClassResultDto> UnassignSupervisorFromClassAsync(int managerPersonId, int classRoomId)
         {
             if (classRoomId <= 0)

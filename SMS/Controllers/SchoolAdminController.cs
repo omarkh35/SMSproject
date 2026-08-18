@@ -113,9 +113,7 @@ namespace SMS.Controllers
             return Ok(new { message = "تم حذف مدير القسم بنجاح" });
         }
 
-        // =========================================================================
-        // 3. التحكم بالموجهين (Supervisors)
-        // =========================================================================
+       
         [HttpGet("supervisors-detail")]
         public async Task<IActionResult> GetAllSupervisors()
         {
@@ -167,7 +165,6 @@ namespace SMS.Controllers
         {
             if (page < 1) page = 1;
 
-            // (ملاحظة: تأكد من حقن واجهة الخدمة IAdminTeacherManagementService عبر مشيد الكنترولر لديك)
             var result = await _adminService.GetTeachersManagementGridAsync(searchName, page);
             return Ok(result);
         }
@@ -177,7 +174,6 @@ namespace SMS.Controllers
         {
             if (page < 1) page = 1;
 
-            // (ملاحظة: تأكد من حقن واجهة الخدمة IAdminSupervisorManagementService عبر مشيد الكnترولر)
             var result = await _adminService.GetSupervisorsManagementGridAsync(searchName, page);
             return Ok(result);
         }
@@ -187,7 +183,6 @@ namespace SMS.Controllers
         {
             if (page < 1) page = 1;
 
-            // (ملاحظة: تأكد من حقن واجهة الخدمة IAdminDepartmentManagerService عبر مشيد الكنترولر)
             var result = await _adminService.GetDepartmentManagersGridAsync(searchName, page);
             return Ok(result);
         }
@@ -202,7 +197,6 @@ namespace SMS.Controllers
         {
             if (page < 1) page = 1;
 
-            // (ملاحظة: تأكد من حقن واجهة الخدمة IAdminStudentManagementService عبر مشيد الكنترولر)
             var result = await _adminService.GetStudentsManagementGridAsync(searchName, gradeId, sectionNumber, page);
             return Ok(result);
         }
@@ -215,7 +209,6 @@ namespace SMS.Controllers
             return Ok(result);
         }
 
-        // 2. حفظ مصفوفة المواد التي تم تعديل واختيار الـ Checkboxes لها
         [HttpPost("save-grade-subjects")]
         public async Task<IActionResult> SaveGradeSubjects([FromBody] SaveGradeSubjectsDto dto)
         {
@@ -228,8 +221,8 @@ namespace SMS.Controllers
                 : BadRequest("عذراً، فشلت العملية.");
         }
 
-        // 3. الـ API الثاني المطلوب لحفظ جدول الامتحانات للصف
         [HttpPost("save-exam-schedule")]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> SaveExamSchedule([FromBody] SaveExamScheduleDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -260,9 +253,7 @@ namespace SMS.Controllers
             });
         }
 
-        // =========================================================================
-        // 5. واجهة المالية والرواتب والأقساط الدراسية (School Finance Dashboard)
-        // =========================================================================
+      
         [HttpGet("finance")]
         public async Task<IActionResult> GetFinanceDashboard()
         {
@@ -270,9 +261,7 @@ namespace SMS.Controllers
             return Ok(result);
         }
 
-        // =========================================================================
-        // 6. تعديل قسط صف معين (Edit Tuition Fee by Grade)
-        // =========================================================================
+        
         [HttpPut("finance/tuition-fee")]
         public async Task<IActionResult> UpdateTuitionFee([FromBody] UpdateGradeTuitionFeeDto dto)
         {
@@ -284,9 +273,7 @@ namespace SMS.Controllers
                 : BadRequest(new { message = "فشلت عملية تعديل القسط الدراسي، يرجى التحقق من معرف الصف." });
         }
 
-        // =========================================================================
-        // 7. جلب وتعديل معلومات وهوية المدرسة (School Settings & Identity)
-        // =========================================================================
+        
         [HttpGet("school-info")]
         public async Task<IActionResult> GetSchoolInfo()
         {
@@ -295,6 +282,7 @@ namespace SMS.Controllers
         }
 
         [HttpPut("school-info")]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> UpdateSchoolInfo([FromBody] UpdateSchoolInfoDTO dto)
         {
             if (!ModelState.IsValid)

@@ -28,6 +28,8 @@ namespace SMS.Controllers
         }
 
         [HttpPost("register-student")]
+        [Consumes("multipart/form-data")]
+
         public async Task<IActionResult> RegisterStudent([FromBody] StudentRegistrationDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

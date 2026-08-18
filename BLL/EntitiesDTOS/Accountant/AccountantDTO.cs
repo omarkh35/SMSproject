@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -51,6 +52,9 @@ namespace BLL.EntitiesDTOS.Accountant
         public bool Gender { get; set; }
 
         public string? StudentPhotoPath { get; set; }
+
+        // ملف صورة الطالب الفعلي عند الرفع
+        public IFormFile? StudentPhotoFile { get; set; }
         public string HomeAddress { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "رقم العائلة مطلوب لربط الطالب بولي أمره")]

@@ -5,10 +5,7 @@ using System.Threading.Tasks;
 
 namespace SMS.Hubs
 {
-    /// <summary>
-    /// قناة الاتصال اللحظي للإشعارات داخل التطبيق (In-App Realtime Notification Hub)
-    /// تعتمد على WebSockets وتقوم بربط كل مستخدم بـ PersonId الخاص به القادم من JWT
-    /// </summary>
+    
     [Authorize]
     public class NotificationHub : Hub
     {
