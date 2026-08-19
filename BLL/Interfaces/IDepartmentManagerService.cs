@@ -51,6 +51,9 @@ namespace BLL.Interfaces
         Task<AssignSupervisorToClassResultDto> AssignSupervisorToClassAsync(int managerPersonId, AssignSupervisorToClassDto dto);
         Task<UnassignSupervisorFromClassResultDto> UnassignSupervisorFromClassAsync(int managerPersonId, int classRoomId);
 
+        Task<bool> SaveClassRoomScheduleAsync(SaveClassRoomScheduleDto dto);
+        Task<bool> SaveTeacherScheduleAsync(SaveTeacherScheduleDto dto);
+
 
     }
 

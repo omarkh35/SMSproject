@@ -269,6 +269,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "SMS.Controllers.AuthController",
+    "Method": "VerifyOtp",
+    "RelativePath": "api/Auth/verify-otp",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BLL.EntitiesDTOS.Auth.AccountActivationVerifyDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "SMS.Controllers.DepartmentManagerController",
     "Method": "AssignStudentToClass",
     "RelativePath": "api/DepartmentManager/assign-student-to-class",
@@ -327,6 +343,22 @@
       {
         "Name": "dto",
         "Type": "BLL.EntitiesDTOS.DepartmentManager.TeacherToClassDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "SaveClassRoomSchedule",
+    "RelativePath": "api/DepartmentManager/classroom-schedule",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.SaveClassRoomScheduleDto",
         "IsRequired": true
       }
     ],
@@ -604,6 +636,22 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.DepartmentManagerController",
+    "Method": "SaveTeacherSchedule",
+    "RelativePath": "api/DepartmentManager/teacher-schedule",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BLL.EntitiesDTOS.DepartmentManager.SaveTeacherScheduleDto",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -1034,9 +1082,29 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "dto",
-        "Type": "BLL.EntitiesDTOS.SchoolAdmin.SaveExamScheduleDto",
-        "IsRequired": true
+        "Name": "GradeID",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "Semester",
+        "Type": "System.Byte",
+        "IsRequired": false
+      },
+      {
+        "Name": "ImagePath",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "ScheduleImageFile",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "AcademicYear",
+        "Type": "System.Int16",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -1694,6 +1762,16 @@
   },
   {
     "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "GetExamSchedules",
+    "RelativePath": "api/Teacher/exam-schedules",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
     "Method": "SaveGrades",
     "RelativePath": "api/Teacher/grades/save",
     "HttpMethod": "POST",
@@ -1738,6 +1816,16 @@
     "ContainingType": "SMS.Controllers.TeacherController",
     "Method": "GetDetailedProfile",
     "RelativePath": "api/Teacher/profile",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SMS.Controllers.TeacherController",
+    "Method": "GetWeeklySchedule",
+    "RelativePath": "api/Teacher/weekly-schedule",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,

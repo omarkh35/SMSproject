@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace SMS.Controllers
 {
@@ -27,15 +28,56 @@ namespace SMS.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
         {
-            var result = await _authService.LoginAsync(request);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            if (result == null)
-                return Unauthorized("Invalid credentials or user is banned.");
+            try
+            {
+                var result = await _authService.LoginAsync(request);
 
-            return Ok(result);
+                if (result == null)
+                    return Unauthorized(new { message = "بيانات الدخول غير صحيحة أو أن الحساب غير نشط." });
+
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"حدث خطأ أثناء معالجة الطلب: {ex.Message}" });
+            }
         }
 
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] AccountActivationVerifyDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
+            try
+            {
+                var result = await _authService.VerifyLoginOtpAsync(request);
+
+                if (result == null)
+                    return NotFound(new { message = "تعذر العثور على الحساب أو إتمام التفعيل." });
+
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"حدث خطأ أثناء التحقق: {ex.Message}" });
+            }
+        }
 
 
 
@@ -70,6 +112,10 @@ namespace SMS.Controllers
 
             return Ok(new { message = "Logged out successfuly. Token has been revoked." });
         }
+
+
+        
+
 
 
     }

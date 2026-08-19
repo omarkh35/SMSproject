@@ -15,5 +15,8 @@ namespace BLL.Interfaces
         Task<bool> LogoutAsync(LogoutRequestDto logoutDto);
 
         //Task<UserDto> RegisterAsync(CreateUserDto dto);
+
+        Task<TokenResponseDto?> VerifyLoginOtpAsync(AccountActivationVerifyDto verifyDto);
+
     }
 }

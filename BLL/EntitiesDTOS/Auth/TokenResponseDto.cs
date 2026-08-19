@@ -10,8 +10,11 @@ namespace BLL.EntitiesDTOS.Auth
 {
     public class TokenResponseDto
     {
-        public UserDto User { get; set; }
-        public string AccessToken { get; set; }
-        public string RefreshToken { get; set; }
+        public bool RequiresOtp { get; set; } = false;
+        public string? MaskedEmail { get; set; }
+        public string? Message { get; set; }
+        public UserDto? User { get; set; }
+        public string? AccessToken { get; set; }
+        public string? RefreshToken { get; set; }
     }
 }

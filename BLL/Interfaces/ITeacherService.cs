@@ -29,6 +29,8 @@ namespace BLL.Interfaces
         Task<bool> SaveDailyLessonAsync(int teacherPersonId, SaveDailyLessonDto dto);
 
         Task<bool> CreateHomeworkAssignmentAsync(int teacherPersonId, SaveHomeworkDto dto);
+        Task<TeacherWeeklyScheduleDto?> GetTeacherWeeklyScheduleAsync(int teacherPersonId, string schemeAndHost);
 
+        Task<IEnumerable<TeacherGradeExamScheduleDto>> GetTeacherExamSchedulesAsync(int teacherPersonId, string schemeAndHost);
     }
 }

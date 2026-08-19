@@ -284,4 +284,27 @@ namespace BLL.EntitiesDTOS.DepartmentManager
     }
 
 
+    public class SaveClassRoomScheduleDto
+    {
+        [Required(ErrorMessage = "معرّف الشعبة (ClassRoomID) مطلوب")]
+        public int ClassRoomID { get; set; }
+
+        [Required(ErrorMessage = "مسار صورة الجدول مطلوب")]
+        public string ImagePath { get; set; } = string.Empty;
+
+        public string? Title { get; set; } // عنوان اختياري مثل "جدول الفصل الأول"
+    }
+
+    // 2. كائن حفظ جدول دوام الأستاذ
+    public class SaveTeacherScheduleDto
+    {
+        [Required(ErrorMessage = "معرّف الأستاذ (TeacherID) مطلوب")]
+        public int TeacherID { get; set; }
+
+        [Required(ErrorMessage = "مسار صورة الجدول مطلوب")]
+        public string ImagePath { get; set; } = string.Empty;
+
+        public string? Title { get; set; }
+    }
+
 }

@@ -34,6 +34,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
 builder.Services.AddSignalR();
 
 
@@ -90,7 +91,8 @@ builder.Services.AddScoped<IAccountantService, AccountantService>();
 builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 builder.Services.AddScoped<ISchoolSettingService, SchoolSettingService>();
 builder.Services.AddScoped<IFileService, FileService>();
-
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IOtpService, OtpService>();
 
 builder.Services.AddBusinessLayer();
 

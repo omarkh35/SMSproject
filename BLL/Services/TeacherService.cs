@@ -27,6 +27,8 @@ namespace BLL.Services
         private readonly IBaseRepositories<StudentNote> _studentNoteRepo;
         private readonly IBaseRepositories<DailyLesson> _dailyLessonRepo;
         private readonly IBaseRepositories<Homework> _homeworkRepo;
+        private readonly IBaseRepositories<Schedule> _scheduleRepo;
+        private readonly IBaseRepositories<ExamSchedule> _examScheduleRepo;
         private readonly INotificationPublisher _notificationPublisher;
 
 
@@ -40,7 +42,9 @@ namespace BLL.Services
             IBaseRepositories<ClassroomStudent> classroomStudentRepo, IBaseRepositories<Mark> markRepo,
             IBaseRepositories<StudentRecord> studentRecordRepo, IBaseRepositories<StudentAttendance> studentAttendanceRepo,
             IBaseRepositories<StudentNote> studentNoteRepo, IBaseRepositories<DailyLesson> dailyLessonRepo,
-            IBaseRepositories<Homework> homeworkRepo, INotificationPublisher notificationPublisher)
+            IBaseRepositories<Homework> homeworkRepo, INotificationPublisher notificationPublisher,
+            IBaseRepositories<Schedule> scheduleRepo,
+            IBaseRepositories<ExamSchedule> examScheduleRepo)
         {                                                            
             _personRepo = personRepo;
             _teacherRepo = teacherRepo;
@@ -56,6 +60,8 @@ namespace BLL.Services
             _dailyLessonRepo = dailyLessonRepo;
             _homeworkRepo = homeworkRepo;
             _notificationPublisher = notificationPublisher;
+            _scheduleRepo = scheduleRepo;
+            _examScheduleRepo = examScheduleRepo;
         }
 
         public async Task<TeacherDashboardDto?> GetTeacherDashboardAsync(int teacherPersonId)
@@ -502,6 +508,131 @@ namespace BLL.Services
 
             return true;
         }
+
+        public async Task<TeacherWeeklyScheduleDto?> GetTeacherWeeklyScheduleAsync(int teacherPersonId, string schemeAndHost)
+        {
+            var teachers = await _teacherRepo.GetAllWithIncludeAndFilterAsync(
+                t => t.PersonId == teacherPersonId,
+                t => t.Person
+            );
+            var teacher = teachers.FirstOrDefault();
+            if (teacher == null) return null;
+
+            // ScheduleType = 2 => Teacher Schedule, ReferenceId = teacher.TeacherId
+            var schedules = await _scheduleRepo.GetAllWithIncludeAndFilterAsync(
+                s => s.ScheduleType == 2 && s.ReferenceId == teacher.TeacherId
+            );
+            var activeSchedule = schedules.FirstOrDefault();
+
+            string imagePath = activeSchedule?.ImagePath ?? "uploads/schedules/default_timetable.png";
+            string fullImageUrl = string.IsNullOrEmpty(imagePath)
+                ? string.Empty
+                : $"{schemeAndHost}/{imagePath.Replace("\\", "/").TrimStart('/')}";
+
+            string teacherFullName = teacher.Person != null
+                ? $"{teacher.Person.FirstName} {teacher.Person.LastName}".Trim().ToUpper()
+                : "TEACHER";
+
+            return new TeacherWeeklyScheduleDto
+            {
+                TeacherID = teacher.TeacherId,
+                TeacherName = teacherFullName,
+                ScheduleID = activeSchedule?.ScheduleId ?? 0,
+                Title = activeSchedule?.Title ?? "Teacher Weekly Timetable",
+                ScheduleType = 2,
+                ImageUrl = fullImageUrl,
+                UpdatedAt = activeSchedule?.UpdatedAt
+            };
+        }
+
+
+        public async Task<IEnumerable<TeacherGradeExamScheduleDto>> GetTeacherExamSchedulesAsync(int teacherPersonId, string schemeAndHost)
+        {
+            var teachers = await _teacherRepo.GetAllWithIncludeAndFilterAsync(
+                t => t.PersonId == teacherPersonId
+            );
+            var teacher = teachers.FirstOrDefault();
+            if (teacher == null) return Enumerable.Empty<TeacherGradeExamScheduleDto>();
+
+            // 1. جلب كل الشعب والمواد والصفوف التي يدرّسها هذا المعلم
+            var assignments = await _classroomTeacherRepo.GetAllWithIncludeAndFilterAsync(
+                ct => ct.TeacherId == teacher.TeacherId,
+                ct => ct.ClassRoom,
+                ct => ct.ClassRoom.Grade,
+                ct => ct.Subject
+            );
+
+            if (!assignments.Any())
+                return Enumerable.Empty<TeacherGradeExamScheduleDto>();
+
+            // 2. استخراج الصفوف الفريدة التي يدرّس فيها المعلم (Distinct Grades)
+            var distinctGrades = assignments
+                .Where(ct => ct.ClassRoom != null && ct.ClassRoom.Grade != null)
+                .Select(ct => ct.ClassRoom.Grade)
+                .GroupBy(g => g.GradeId)
+                .Select(group => group.First())
+                .OrderBy(g => g.GradeNumber)
+                .ToList();
+
+            if (!distinctGrades.Any())
+                return Enumerable.Empty<TeacherGradeExamScheduleDto>();
+
+            var distinctGradeIds = distinctGrades.Select(g => g.GradeId).ToList();
+
+            // 3. جلب جميع برامج الامتحانات الخاصة بهذه الصفوف المحددة
+            var allExamSchedules = await _examScheduleRepo.GetAllWithIncludeAndFilterAsync(
+                es => distinctGradeIds.Contains(es.GradeId),
+                es => es.Grade
+            );
+
+            var resultList = new List<TeacherGradeExamScheduleDto>();
+
+            foreach (var grade in distinctGrades)
+            {
+                // المواد التي يدرّسها هذا المعلم ضمن هذا الصف تحديداً
+                var subjectsInGrade = assignments
+                    .Where(ct => ct.ClassRoom?.GradeId == grade.GradeId && ct.Subject != null)
+                    .Select(ct => ct.Subject.SubjectName)
+                    .Distinct()
+                    .ToList();
+
+                // برامج الامتحانات لهذا الصف
+                var gradeExams = allExamSchedules
+                    .Where(es => es.GradeId == grade.GradeId)
+                    .OrderByDescending(es => es.AcademicYear)
+                    .ThenByDescending(es => es.Semester)
+                    .Select(es =>
+                    {
+                        string imgPath = es.ImagePath ?? string.Empty;
+                        string fullImgUrl = string.IsNullOrEmpty(imgPath)
+                            ? string.Empty
+                            : $"{schemeAndHost}/{imgPath.Replace("\\", "/").TrimStart('/')}";
+
+                        return new TeacherExamScheduleItemDto
+                        {
+                            ExamScheduleID = es.ExamScheduleId,
+                            GradeID = es.GradeId,
+                            Semester = es.Semester,
+                            AcademicYear = es.AcademicYear,
+                            ImageUrl = fullImgUrl,
+                            UpdatedAt = es.UpdatedAt
+                        };
+                    })
+                    .ToList();
+
+                resultList.Add(new TeacherGradeExamScheduleDto
+                {
+                    GradeID = grade.GradeId,
+                    GradeNumber = grade.GradeNumber,
+                    GradeName = $"Grade {grade.GradeNumber}",
+                    SubjectsTaughtInGrade = subjectsInGrade,
+                    ExamSchedules = gradeExams
+                });
+            }
+
+            return resultList;
+        }
+
 
 
     }

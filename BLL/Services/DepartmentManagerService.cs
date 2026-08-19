@@ -28,6 +28,7 @@ namespace BLL.Services
         IBaseRepositories<DepartmentManager> _managerRepo;
         private readonly IBaseRepositories<ChatRoom> _chatRoomRepo;
         private readonly IBaseRepositories<Parent> _parentRepo;
+        private readonly IBaseRepositories<Schedule> _scheduleRepo;
 
         public DepartmentManagerService(
             IBaseRepositories<ClassRoom> classRoomRepo,
@@ -43,7 +44,8 @@ namespace BLL.Services
             IBaseRepositories<StudentParent> studentParentRepo,
         IBaseRepositories<DepartmentManager> managerRepo,
         IBaseRepositories<ChatRoom> chatRoomRepo,
-            IBaseRepositories<Parent> parentRepo
+            IBaseRepositories<Parent> parentRepo,
+            IBaseRepositories<Schedule> scheduleRepo
 
         )
         {
@@ -61,7 +63,7 @@ namespace BLL.Services
             _managerRepo = managerRepo;
             _chatRoomRepo = chatRoomRepo;
             _parentRepo = parentRepo;
-
+            _scheduleRepo = scheduleRepo;
         }
 
         public async Task<IEnumerable<ClassRoomDto>> GetAllClassRoomsAsync()
@@ -1203,5 +1205,76 @@ namespace BLL.Services
                 Message = $"تم إلغاء إسناد الموجه '{removedName}' من الصف {gradeNumber} - الشعبة {classRoom.Section} بنجاح."
             };
         }
+
+
+        public async Task<bool> SaveClassRoomScheduleAsync(SaveClassRoomScheduleDto dto)
+        {
+            // الفحص الآمن: البحث عن جدول مضاف مسبقاً لنفس الشعبة (ReferenceID == ClassRoomID) والنوع 1
+            var existingSchedules = await _scheduleRepo.GetAllWithIncludeAndFilterAsync(
+                s => s.ScheduleType == 1 && s.ReferenceId == dto.ClassRoomID
+            );
+            var schedule = existingSchedules.FirstOrDefault();
+
+            if (schedule != null)
+            {
+                // عملية التحديث (UPDATE)
+                schedule.Title = dto.Title?.Trim();
+                schedule.ImagePath = dto.ImagePath.Trim();
+                schedule.UpdatedAt = DateTime.UtcNow;
+                _scheduleRepo.UpdateAsync(schedule);
+            }
+            else
+            {
+                // عملية الإدخال الجديد (INSERT)
+                var newSchedule = new Schedule
+                {
+                    Title = dto.Title?.Trim(),
+                    ImagePath = dto.ImagePath.Trim(),
+                    ScheduleType = 1, // 1 = ClassRoom بناءً على توثيق قاعدة بياناتك
+                    ReferenceId = dto.ClassRoomID,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                await _scheduleRepo.AddAsync(newSchedule);
+            }
+
+            await _scheduleRepo.SaveChangesAsync();
+            return true;
+        }
+
+        // === 2. الـ API الثاني: حفظ أو تحديث جدول دوام الأستاذ (ScheduleType = 2) ===
+        public async Task<bool> SaveTeacherScheduleAsync(SaveTeacherScheduleDto dto)
+        {
+            // الفحص الآمن: البحث عن جدول مضاف مسبقاً لنفس الأستاذ (ReferenceID == TeacherID) والنوع 2
+            var existingSchedules = await _scheduleRepo.GetAllWithIncludeAndFilterAsync(
+                s => s.ScheduleType == 2 && s.ReferenceId == dto.TeacherID
+            );
+            var schedule = existingSchedules.FirstOrDefault();
+
+            if (schedule != null)
+            {
+                // عملية التحديث (UPDATE)
+                schedule.Title = dto.Title?.Trim();
+                schedule.ImagePath = dto.ImagePath.Trim();
+                schedule.UpdatedAt = DateTime.UtcNow;
+                _scheduleRepo.UpdateAsync(schedule);
+            }
+            else
+            {
+                // عملية الإدخال الجديد (INSERT)
+                var newSchedule = new Schedule
+                {
+                    Title = dto.Title?.Trim(),
+                    ImagePath = dto.ImagePath.Trim(),
+                    ScheduleType = 2, // 2 = Teacher بناءً على توثيق قاعدة بياناتك
+                    ReferenceId = dto.TeacherID,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                await _scheduleRepo.AddAsync(newSchedule);
+            }
+
+            await _scheduleRepo.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

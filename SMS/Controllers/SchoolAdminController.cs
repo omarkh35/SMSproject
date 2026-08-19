@@ -223,7 +223,7 @@ namespace SMS.Controllers
 
         [HttpPost("save-exam-schedule")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> SaveExamSchedule([FromBody] SaveExamScheduleDto dto)
+        public async Task<IActionResult> SaveExamSchedule([FromForm] SaveExamScheduleDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 

@@ -385,6 +385,37 @@
         }
       }
     },
+    "/api/Auth/verify-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountActivationVerifyDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountActivationVerifyDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountActivationVerifyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Auth/refresh": {
       "post": {
         "tags": [
@@ -1035,6 +1066,68 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DepartmentManager/classroom-schedule": {
+      "post": {
+        "tags": [
+          "DepartmentManager"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveClassRoomScheduleDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveClassRoomScheduleDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveClassRoomScheduleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DepartmentManager/teacher-schedule": {
+      "post": {
+        "tags": [
+          "DepartmentManager"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTeacherScheduleDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTeacherScheduleDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTeacherScheduleDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -1925,7 +2018,53 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/SaveExamScheduleDto"
+                "required": [
+                  "AcademicYear",
+                  "GradeID",
+                  "ImagePath",
+                  "Semester"
+                ],
+                "type": "object",
+                "properties": {
+                  "GradeID": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "Semester": {
+                    "maximum": 2,
+                    "minimum": 1,
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "ImagePath": {
+                    "type": "string"
+                  },
+                  "ScheduleImageFile": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "AcademicYear": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              },
+              "encoding": {
+                "GradeID": {
+                  "style": "form"
+                },
+                "Semester": {
+                  "style": "form"
+                },
+                "ImagePath": {
+                  "style": "form"
+                },
+                "ScheduleImageFile": {
+                  "style": "form"
+                },
+                "AcademicYear": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -2764,10 +2903,52 @@
           }
         }
       }
+    },
+    "/api/Teacher/weekly-schedule": {
+      "get": {
+        "tags": [
+          "Teacher"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Teacher/exam-schedules": {
+      "get": {
+        "tags": [
+          "Teacher"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AccountActivationVerifyDto": {
+        "required": [
+          "accountNumber",
+          "otp"
+        ],
+        "type": "object",
+        "properties": {
+          "accountNumber": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "otp": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "AdminLoginRequestDto": {
         "required": [
           "password",
@@ -3196,6 +3377,28 @@
         },
         "additionalProperties": false
       },
+      "SaveClassRoomScheduleDto": {
+        "required": [
+          "classRoomID",
+          "imagePath"
+        ],
+        "type": "object",
+        "properties": {
+          "classRoomID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imagePath": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SaveDailyLessonDto": {
         "type": "object",
         "properties": {
@@ -3214,41 +3417,6 @@
           "explanation": {
             "type": "string",
             "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "SaveExamScheduleDto": {
-        "required": [
-          "academicYear",
-          "gradeID",
-          "imagePath",
-          "semester"
-        ],
-        "type": "object",
-        "properties": {
-          "gradeID": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "semester": {
-            "maximum": 2,
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "imagePath": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "scheduleImageFile": {
-            "type": "string",
-            "format": "binary",
-            "nullable": true
-          },
-          "academicYear": {
-            "type": "integer",
-            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -3378,6 +3546,28 @@
             "items": {
               "$ref": "#/components/schemas/TeacherAttendanceItemDto"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaveTeacherScheduleDto": {
+        "required": [
+          "imagePath",
+          "teacherID"
+        ],
+        "type": "object",
+        "properties": {
+          "teacherID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imagePath": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
             "nullable": true
           }
         },

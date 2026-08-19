@@ -373,5 +373,27 @@ namespace SMS.Controllers
             }
         }
 
+        [HttpPost("classroom-schedule")]
+        public async Task<IActionResult> SaveClassRoomSchedule([FromBody] SaveClassRoomScheduleDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var success = await _deptService.SaveClassRoomScheduleAsync(dto);
+            return success
+                ? Ok(new { message = "تم حفظ وتحديث جدول دوام الشعبة بنجاح في النظام." })
+                : BadRequest("عذراً، فشلت عملية حفظ جدول دوام الشعبة.");
+        }
+
+        [HttpPost("teacher-schedule")]
+        public async Task<IActionResult> SaveTeacherSchedule([FromBody] SaveTeacherScheduleDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var success = await _deptService.SaveTeacherScheduleAsync(dto);
+            return success
+                ? Ok(new { message = "تم حفظ وتحديث جدول دوام الأستاذ بنجاح في النظام." })
+                : BadRequest("عذراً، فشلت عملية حفظ جدول دوام الأستاذ.");
+        }
+
     }
 }

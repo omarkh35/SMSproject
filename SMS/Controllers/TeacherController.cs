@@ -220,6 +220,41 @@ namespace SMS.Controllers
         }
 
 
+        [HttpGet("weekly-schedule")]
+        public async Task<IActionResult> GetWeeklySchedule()
+        {
+            var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+            {
+                return Unauthorized(new { message = "User identity claim context missing." });
+            }
+
+            string hostUrl = $"{Request.Scheme}://{Request.Host}";
+            var schedule = await _teacherService.GetTeacherWeeklyScheduleAsync(teacherPersonId, hostUrl);
+
+            if (schedule == null)
+            {
+                return NotFound(new { message = "No weekly schedule found for this teacher." });
+            }
+
+            return Ok(schedule);
+        }
+
+        [HttpGet("exam-schedules")]
+        public async Task<IActionResult> GetExamSchedules()
+        {
+            var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+            {
+                return Unauthorized(new { message = "User identity claim context missing." });
+            }
+
+            string hostUrl = $"{Request.Scheme}://{Request.Host}";
+            var examSchedules = await _teacherService.GetTeacherExamSchedulesAsync(teacherPersonId, hostUrl);
+
+            return Ok(examSchedules);
+        }
+
 
     }
 
