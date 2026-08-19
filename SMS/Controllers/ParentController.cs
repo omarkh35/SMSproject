@@ -1,5 +1,6 @@
 ﻿using BLL.EntitiesDTOS.Parent;
 using BLL.Interfaces;
+using DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -7,9 +8,9 @@ using System.Security.Claims;
 
 namespace SMS.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize (Roles = "Parents")]
     public class ParentController : ControllerBase
     {
         private readonly IParentService _parentService;

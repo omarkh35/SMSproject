@@ -23,7 +23,7 @@ namespace BLL.EntitiesDTOS.General
         [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "اسم المدرسة مطلوب")]
         [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 2, ErrorMessage = "اسم المدرسة يجب أن يكون بين 2 و 200 حرف")]
         public string SchoolName { get; set; } = string.Empty;
-        public string? SchoolLogo { get; set; }
+        //public string? SchoolLogo { get; set; }
 
         // ملف الصورة الفعلي عند الرفع المباشر
         public IFormFile? LogoFile { get; set; }

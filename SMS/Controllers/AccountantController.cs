@@ -29,18 +29,22 @@ namespace SMS.Controllers
 
         [HttpPost("register-student")]
         [Consumes("multipart/form-data")]
-
-        public async Task<IActionResult> RegisterStudent([FromBody] StudentRegistrationDto dto)
+        [Authorize(Roles = "Accountant")] // حماية برمجية مخصصة للمحاسب
+        public async Task<IActionResult> RegisterStudent([FromForm] StudentRegistrationDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
                 var success = await _accountantService.RegisterNewStudentAsync(dto);
-                return success ? Ok(new { message = "تم تسجيل الطالب بنجاح وربطه بحساب العائلة." })
+                return success ? Ok(new { message = "تم تسجيل الطالب بنجاح وربطه بحساب العائلة المستهدف وضمان مسار الصورة." })
                                : BadRequest("فشلت عملية حفظ بيانات الطالب في النظام.");
             }
             catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (ArgumentException ex)
             {
                 return BadRequest(new { error = ex.Message });
             }
@@ -56,13 +60,15 @@ namespace SMS.Controllers
         }
 
         [HttpPut("student-details/{studentId}")]
-        public async Task<IActionResult> UpdateStudentDetails(int studentId, [FromBody] StudentRegistrationDto dto)
+        [Consumes("multipart/form-data")] 
+        [Authorize(Roles = "Accountant")] 
+        public async Task<IActionResult> UpdateStudentDetails(int studentId, [FromForm] StudentRegistrationDto dto) 
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var success = await _accountantService.UpdateStudentRegistrationAsync(studentId, dto);
-            return success ? Ok(new { message = "Student profile updated successfully." })
-                           : BadRequest("Failed to process student updates transaction parameters.");
+            return success ? Ok(new { message = "تم تحديث ملف وبيانات الطالب بنجاح وتطهير الصورة القديمة ماديّاً." })
+                           : BadRequest("عذراً، فشلت عملية تحديث معاملات الطالب القياسية.");
         }
 
         [HttpDelete("student-record/{studentId}")]

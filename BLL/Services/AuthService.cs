@@ -23,12 +23,16 @@ namespace BLL.Services
         public AuthService(
             IBaseRepositories<User> userRepo,
             IBaseRepositories<UserRefreshToken> refreshTokenRepo,
-            IJwtService jwtService)
+            IJwtService jwtService, IOtpService otpService,
+        IEmailService emailService)
         {
             _userRepo = userRepo;
             _refreshTokenRepo = refreshTokenRepo;
             
             _jwtService = jwtService;
+            _emailService = emailService;
+            _otpService = otpService;
+
 
         }
 

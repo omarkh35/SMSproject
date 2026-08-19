@@ -804,16 +804,27 @@ namespace BLL.Services
         public async Task<bool> SaveExamScheduleAsync(SaveExamScheduleDto dto)
         {
 
-            string imagePath = dto.ImagePath ?? string.Empty;
+            if (dto.ScheduleImageFile == null || dto.ScheduleImageFile.Length == 0)
+                throw new ArgumentException("ملف صورة جدول الامتحانات المرفوع فارغ أو تالف.");
 
-            if (dto.ScheduleImageFile != null)
+            string fileExtension = Path.GetExtension(dto.ScheduleImageFile.FileName);
+            string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+           
+            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "exams");
+            if (!Directory.Exists(uploadsFolder))
             {
-                imagePath = await _fileService.SaveFileAsync(dto.ScheduleImageFile, "exams");
+                Directory.CreateDirectory(uploadsFolder);
             }
 
-            if (string.IsNullOrWhiteSpace(imagePath))
-                throw new ArgumentException("يجب رفع صورة لجدول الامتحانات أو تمرير مسارها.");
+            string physicalFilePath = Path.Combine(uploadsFolder, uniqueFileName);
 
+            using (var fileStream = new FileStream(physicalFilePath, FileMode.Create))
+            {
+                await dto.ScheduleImageFile.CopyToAsync(fileStream);
+            }
+
+            string relativeDatabasePath = $"uploads/exams/{uniqueFileName}";
 
             var allSchedules = await _examScheduleRepo.GetAllWithIncludeAndFilterAsync(
                 es => es.GradeId == dto.GradeID && es.Semester == dto.Semester && es.AcademicYear == dto.AcademicYear
@@ -823,13 +834,16 @@ namespace BLL.Services
 
             if (existingSchedule != null)
             {
-
-                if (dto.ScheduleImageFile != null && !string.IsNullOrEmpty(existingSchedule.ImagePath))
+                if (!string.IsNullOrEmpty(existingSchedule.ImagePath))
                 {
-                    _fileService.DeleteFile(existingSchedule.ImagePath);
+                    string oldPhysicalPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", existingSchedule.ImagePath);
+                    if (File.Exists(oldPhysicalPath))
+                    {
+                        File.Delete(oldPhysicalPath);
+                    }
                 }
 
-                existingSchedule.ImagePath = dto.ImagePath.Trim();
+                existingSchedule.ImagePath = relativeDatabasePath;
                 existingSchedule.UpdatedAt = DateTime.UtcNow;
                 _examScheduleRepo.UpdateAsync(existingSchedule);
             }
@@ -839,7 +853,7 @@ namespace BLL.Services
                 {
                     GradeId = dto.GradeID,
                     Semester = dto.Semester,
-                    ImagePath = dto.ImagePath.Trim(),
+                    ImagePath = relativeDatabasePath,
                     AcademicYear = dto.AcademicYear,
                     UpdatedAt = DateTime.UtcNow
                 };

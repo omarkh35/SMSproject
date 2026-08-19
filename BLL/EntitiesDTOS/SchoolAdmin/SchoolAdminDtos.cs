@@ -230,7 +230,7 @@ namespace BLL.EntitiesDTOS.SchoolAdmin
         public byte Semester { get; set; }
 
         [Required(ErrorMessage = "مسار صورة الجدول مطلوب")]
-        public string? ImagePath { get; set; }
+        //public string? ImagePath { get; set; }
 
         // ملف صورة جدول الامتحانات الفعلي
         public IFormFile? ScheduleImageFile { get; set; }

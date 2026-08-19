@@ -154,8 +154,96 @@ namespace BLL.Services
 
 
 
+        //public async Task<bool> RegisterNewStudentAsync(StudentRegistrationDto dto)
+        //{
+        //    var allParents = await _parentRepo.GetAllWithIncludeAsync();
+        //    var matchedParent = allParents.FirstOrDefault(p =>
+        //        p.FamilyCardNumber != null &&
+        //        p.FamilyCardNumber.Trim() == dto.FamilyNumber.Trim()
+        //    );
+
+        //    if (matchedParent == null)
+        //    {
+        //        throw new InvalidOperationException("عذراً، رقم العائلة هذا غير مسجل في النظام. يجب إنشاء حساب لولي الأمر أولاً قبل تسجيل الأبناء.");
+        //    }
+
+
+        //    var targetGrade = await _gradeRepo.GetByIdAsync(dto.GradeID);
+        //    if (targetGrade == null)
+        //    {
+        //        throw new ArgumentException($"الصف الدراسي المحدد برقم ({dto.GradeID}) غير موجود في النظام. يرجى اختيار صف دراسي صحيح.");
+        //    }
+
+        //    string? savedPhotoPath = dto.StudentPhotoPath;
+        //    if (dto.StudentPhotoFile != null)
+        //    {
+        //        savedPhotoPath = await _fileService.SaveFileAsync(dto.StudentPhotoFile, "students");
+        //    }
+
+        //    var transaction = await _studentRecordRepo.BeginTransactionAsync();
+        //    try
+        //    {
+        //        var newPerson = new Person
+        //        {
+        //            FirstName = dto.FirstName.Trim(),
+        //            SecondName = dto.FatherName.Trim(),
+        //            LastName = dto.FamilyName.Trim(),
+        //            DateOfBirth = dto.DateOfBirth,
+        //            Gender = dto.Gender,
+        //            IsActive = true,
+        //            CreatedAt = DateTime.UtcNow
+        //        };
+        //        await _personRepo.AddAsync(newPerson);
+        //        await _personRepo.SaveChangesAsync(); 
+
+        //        var newStudent = new Student
+        //        {
+        //            PersonId = newPerson.PersonId,
+        //            MotherName = dto.MotherName.Trim(),
+        //            Address = dto.HomeAddress.Trim(),
+        //            Picture = dto.StudentPhotoPath,
+        //            CreatedAt = DateTime.UtcNow
+        //        };
+        //        await _studentRepo.AddAsync(newStudent);
+        //        await _studentRepo.SaveChangesAsync();
+
+        //        var newAcademicRecord = new StudentRecord
+        //        {
+        //            StudentId = newStudent.StudentId,
+        //            GradeId = dto.GradeID,
+        //            StudyYear = dto.AcademicYear,
+        //            YearlyPayment = dto.YearlyPayment,
+        //        };
+        //        await _studentRecordRepo.AddAsync(newAcademicRecord);
+
+        //        var newLink = new StudentParent
+        //        {
+        //            StudentId = newStudent.StudentId,
+        //            ParentID = matchedParent.Id, 
+        //            RelationshipType = "Father"  
+        //        };
+        //        await _studentParentRepo.AddAsync(newLink);
+
+        //        await _studentRecordRepo.SaveChangesAsync();
+        //        await _studentParentRepo.SaveChangesAsync();
+
+        //        await _studentRecordRepo.CommitTransactionAsync();
+        //        return true;
+        //    }
+        //    catch
+        //    {
+        //        await _studentRecordRepo.RollbackTransactionAsync();
+        //        if (dto.StudentPhotoFile != null && !string.IsNullOrEmpty(savedPhotoPath))
+        //        {
+        //            _fileService.DeleteFile(savedPhotoPath);
+        //        }
+        //        return false;
+        //    }
+        //}
+
         public async Task<bool> RegisterNewStudentAsync(StudentRegistrationDto dto)
         {
+            // 1. التحقق من وجود رقم العائلة في جدول الأهل مسبقاً
             var allParents = await _parentRepo.GetAllWithIncludeAsync();
             var matchedParent = allParents.FirstOrDefault(p =>
                 p.FamilyCardNumber != null &&
@@ -167,22 +255,45 @@ namespace BLL.Services
                 throw new InvalidOperationException("عذراً، رقم العائلة هذا غير مسجل في النظام. يجب إنشاء حساب لولي الأمر أولاً قبل تسجيل الأبناء.");
             }
 
-
+            // 2. التحقق من صحة الصف الأكاديمي (مطابقة الحروف الكبيرة GradeID)
             var targetGrade = await _gradeRepo.GetByIdAsync(dto.GradeID);
             if (targetGrade == null)
             {
                 throw new ArgumentException($"الصف الدراسي المحدد برقم ({dto.GradeID}) غير موجود في النظام. يرجى اختيار صف دراسي صحيح.");
             }
 
-            string? savedPhotoPath = dto.StudentPhotoPath;
-            if (dto.StudentPhotoFile != null)
+            string? savedPhotoPath = null;
+
+            // 3. معالجة رفع صورة الطالب محلياً بالـ GUID والمسار المادي للمشروع
+            if (dto.StudentPhotoFile != null && dto.StudentPhotoFile.Length > 0)
             {
-                savedPhotoPath = await _fileService.SaveFileAsync(dto.StudentPhotoFile, "students");
+                string fileExtension = Path.GetExtension(dto.StudentPhotoFile.FileName);
+                string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+                // تثبيت مجلد الحفظ المادي بداخل wwwroot/uploads/students
+                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "students");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                string physicalFilePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                // كتابة وحفظ الملف على الهارد ديسك
+                using (var fileStream = new FileStream(physicalFilePath, FileMode.Create))
+                {
+                    await dto.StudentPhotoFile.CopyToAsync(fileStream);
+                }
+
+                // المسار النسبي الآمن للتخزين بجدول قاعدة البيانات
+                savedPhotoPath = $"uploads/students/{uniqueFileName}";
             }
 
+            // 4. فتح الترانزكشن وحفظ الكيانات بالتتابع الهيكلي الملتزم بحروف السكافولدينج الكبيرة
             var transaction = await _studentRecordRepo.BeginTransactionAsync();
             try
             {
+                // أ. إدخال الشخص الأساسي (People)
                 var newPerson = new Person
                 {
                     FirstName = dto.FirstName.Trim(),
@@ -194,36 +305,40 @@ namespace BLL.Services
                     CreatedAt = DateTime.UtcNow
                 };
                 await _personRepo.AddAsync(newPerson);
-                await _personRepo.SaveChangesAsync(); 
+                await _personRepo.SaveChangesAsync(); // توليد الـ PersonID الكبير
 
+                // ب. إدخال ملف الطالب (Students) - مصحح ليأخذ مسار الصورة المولد وليس الـ Dto الفارغ
                 var newStudent = new Student
                 {
-                    PersonId = newPerson.PersonId,
+                    PersonId = newPerson.PersonId, // مطابقة اسم حقل السكافولدينج
                     MotherName = dto.MotherName.Trim(),
                     Address = dto.HomeAddress.Trim(),
-                    Picture = dto.StudentPhotoPath,
+                    Picture = savedPhotoPath, // تم الإصلاح: يأخذ المسار الفعلي المولد بالـ GUID
                     CreatedAt = DateTime.UtcNow
                 };
                 await _studentRepo.AddAsync(newStudent);
-                await _studentRepo.SaveChangesAsync();
+                await _studentRepo.SaveChangesAsync(); // توليد الـ StudentID الكبير
 
+                // ج. إدخال السجل الأكاديمي (StudentRecords)
                 var newAcademicRecord = new StudentRecord
                 {
-                    StudentId = newStudent.StudentId,
-                    GradeId = dto.GradeID,
+                    StudentId = newStudent.StudentId, // مطابقة اسم حقل السكافولدينج
+                    GradeId = dto.GradeID,          // مطابقة اسم حقل السكافولدينج
                     StudyYear = dto.AcademicYear,
-                    YearlyPayment = dto.YearlyPayment,
+                    YearlyPayment = dto.YearlyPayment
                 };
                 await _studentRecordRepo.AddAsync(newAcademicRecord);
 
+                // د. إدخال قيد الربط مع الأهل (StudentParents)
                 var newLink = new StudentParent
                 {
-                    StudentId = newStudent.StudentId,
-                    ParentID = matchedParent.Id, 
-                    RelationshipType = "Father"  
+                    StudentId = newStudent.StudentId, // مطابقة اسم حقل السكافولدينج
+                    ParentID = matchedParent.Id,       // مطابقة اسم حقل السكافولدينج
+                    RelationshipType = "Father"
                 };
                 await _studentParentRepo.AddAsync(newLink);
 
+                // حفظ جميع التغييرات النهائية وتأكيد المعاملة المشتركة
                 await _studentRecordRepo.SaveChangesAsync();
                 await _studentParentRepo.SaveChangesAsync();
 
@@ -232,10 +347,16 @@ namespace BLL.Services
             }
             catch
             {
+                // في حال حدوث أي فشل، نتراجع عن الداتابيز ونحذف الصورة المادية فوراً لحماية الهارد ديسك من التلوث
                 await _studentRecordRepo.RollbackTransactionAsync();
-                if (dto.StudentPhotoFile != null && !string.IsNullOrEmpty(savedPhotoPath))
+
+                if (!string.IsNullOrEmpty(savedPhotoPath))
                 {
-                    _fileService.DeleteFile(savedPhotoPath);
+                    string physicalPathToDelete = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", savedPhotoPath);
+                    if (File.Exists(physicalPathToDelete))
+                    {
+                        File.Delete(physicalPathToDelete);
+                    }
                 }
                 return false;
             }
@@ -270,26 +391,70 @@ namespace BLL.Services
 
         public async Task<bool> UpdateStudentRegistrationAsync(int studentId, StudentRegistrationDto dto)
         {
+            // فتح الترانزكشن لحماية دورة تعديل الجداول المتتابعة بأمان
             var transaction = await _studentRecordRepo.BeginTransactionAsync();
             try
             {
+                // 1. جلب السجلات الأكاديمية مع تضمين الطالب وبياناته الشخصية (التزام كامل بمسميات السكافولدينج الكبيرة)
                 var records = await _studentRecordRepo.GetAllWithIncludeAsync(sr => sr.Student, sr => sr.Student.Person);
-                var activeRecord = records.FirstOrDefault(sr => sr.StudentId == studentId);
+                var activeRecord = records.FirstOrDefault(sr => sr.StudentId == studentId); // FIX: StudentID حروف كبيرة
                 if (activeRecord == null) return false;
 
+                string? savedPhotoPath = activeRecord.Student.Picture; // الاحتفاظ بالمسار القديم كقيمة افتراضية
+
+                // 2. معالجة رفع الصورة الجديدة بالـ GUID وحذف الصورة المادية القديمة من جهازك محلياً
+                if (dto.StudentPhotoFile != null && dto.StudentPhotoFile.Length > 0)
+                {
+                    // أ. حذف ملف الصورة القديمة المادية من مجلدات جهازك لتوفير المساحة
+                    if (!string.IsNullOrEmpty(activeRecord.Student.Picture))
+                    {
+                        string oldPhysicalPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", activeRecord.Student.Picture);
+                        if (File.Exists(oldPhysicalPath))
+                        {
+                            File.Delete(oldPhysicalPath);
+                        }
+                    }
+
+                    // ب. توليد اسم فريد مئة بالمئة للصورة الجديدة باستخدام الـ GUID
+                    string fileExtension = Path.GetExtension(dto.StudentPhotoFile.FileName);
+                    string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+                    // ج. تثبيت مجلد الحفظ المادي بداخل wwwroot/uploads/students
+                    string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "students");
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    string physicalFilePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    // د. حفظ وتخزين الملف الجديد على القرص الصلب
+                    using (var fileStream = new FileStream(physicalFilePath, FileMode.Create))
+                    {
+                        await dto.StudentPhotoFile.CopyToAsync(fileStream);
+                    }
+
+                    // هـ. إسناد المسار النسبي الجديد ليعتمد بالتحديث
+                    savedPhotoPath = $"uploads/students/{uniqueFileName}";
+                }
+
+                // 3. تعديل بيانات جدول الأشخاص (People)
                 activeRecord.Student.Person.FirstName = dto.FirstName.Trim();
                 activeRecord.Student.Person.SecondName = dto.FatherName.Trim();
                 activeRecord.Student.Person.LastName = dto.FamilyName.Trim();
                 activeRecord.Student.Person.DateOfBirth = dto.DateOfBirth;
                 activeRecord.Student.Person.Gender = dto.Gender;
 
+                // 4. تعديل بيانات جدول الطلاب (Students)
                 activeRecord.Student.MotherName = dto.MotherName.Trim();
                 activeRecord.Student.Address = dto.HomeAddress.Trim();
-                if (dto.StudentPhotoPath != null) activeRecord.Student.Picture = dto.StudentPhotoPath;
+                activeRecord.Student.Picture = savedPhotoPath; // تحديث المسار الفعلي للصورة المحدثة
 
-                activeRecord.GradeId = dto.GradeID;
+                // 5. تعديل السجل الأكاديمي الحالي (StudentRecords) مع الالتزام التام بـ GradeID الكبيرة للسكافولدينج
+                activeRecord.GradeId = dto.GradeID; // FIX: GradeID حروف كبيرة
                 activeRecord.StudyYear = dto.AcademicYear;
 
+                // تنفيذ التعديل الإجرائي وحفظ البيانات بشكل دائم وتأكيد المعاملة
                 _studentRecordRepo.UpdateAsync(activeRecord);
                 await _studentRecordRepo.SaveChangesAsync();
                 await _studentRecordRepo.CommitTransactionAsync();

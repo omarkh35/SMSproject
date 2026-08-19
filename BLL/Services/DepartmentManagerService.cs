@@ -1209,29 +1209,59 @@ namespace BLL.Services
 
         public async Task<bool> SaveClassRoomScheduleAsync(SaveClassRoomScheduleDto dto)
         {
-            // الفحص الآمن: البحث عن جدول مضاف مسبقاً لنفس الشعبة (ReferenceID == ClassRoomID) والنوع 1
+            if (dto.ScheduleFile == null || dto.ScheduleFile.Length == 0)
+                throw new ArgumentException("ملف الجدول المرفوع فارغ أو تالف.");
+
+            // 1. الفحص الآمن والالتزام الكامل بمسميات حقول السكافولدينج الكبيرة ReferenceID و ScheduleType
             var existingSchedules = await _scheduleRepo.GetAllWithIncludeAndFilterAsync(
                 s => s.ScheduleType == 1 && s.ReferenceId == dto.ClassRoomID
             );
             var schedule = existingSchedules.FirstOrDefault();
 
+            string? savedPath = schedule?.ImagePath;
+
+            // 2. معالجة رفع الملف محلياً بالـ GUID والمسار المادي للمشروع
+            if (dto.ScheduleFile != null)
+            {
+                // مسح ملف الصورة القديمة المادية من جهازك محلياً لتوفير المساحة
+                if (schedule != null && !string.IsNullOrEmpty(schedule.ImagePath))
+                {
+                    string oldPhysicalPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", schedule.ImagePath);
+                    if (File.Exists(oldPhysicalPath)) File.Delete(oldPhysicalPath);
+                }
+
+                string fileExtension = Path.GetExtension(dto.ScheduleFile.FileName);
+                string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "schedules");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                string physicalFilePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(physicalFilePath, FileMode.Create))
+                {
+                    await dto.ScheduleFile.CopyToAsync(fileStream);
+                }
+
+                savedPath = $"uploads/schedules/{uniqueFileName}";
+            }
+
+            // 3. المزامنة البرمجية والحفظ
             if (schedule != null)
             {
-                // عملية التحديث (UPDATE)
                 schedule.Title = dto.Title?.Trim();
-                schedule.ImagePath = dto.ImagePath.Trim();
+                schedule.ImagePath = savedPath!;
                 schedule.UpdatedAt = DateTime.UtcNow;
                 _scheduleRepo.UpdateAsync(schedule);
             }
             else
             {
-                // عملية الإدخال الجديد (INSERT)
                 var newSchedule = new Schedule
                 {
                     Title = dto.Title?.Trim(),
-                    ImagePath = dto.ImagePath.Trim(),
-                    ScheduleType = 1, // 1 = ClassRoom بناءً على توثيق قاعدة بياناتك
-                    ReferenceId = dto.ClassRoomID,
+                    ImagePath = savedPath!,
+                    ScheduleType = 1, // 1 = ClassRoom
+                    ReferenceId = dto.ClassRoomID, // مطابقة اسم الحقل الكبير للسكافولدينج
                     UpdatedAt = DateTime.UtcNow
                 };
                 await _scheduleRepo.AddAsync(newSchedule);
@@ -1241,32 +1271,61 @@ namespace BLL.Services
             return true;
         }
 
-        // === 2. الـ API الثاني: حفظ أو تحديث جدول دوام الأستاذ (ScheduleType = 2) ===
         public async Task<bool> SaveTeacherScheduleAsync(SaveTeacherScheduleDto dto)
         {
-            // الفحص الآمن: البحث عن جدول مضاف مسبقاً لنفس الأستاذ (ReferenceID == TeacherID) والنوع 2
+            if (dto.ScheduleFile == null || dto.ScheduleFile.Length == 0)
+                throw new ArgumentException("ملف الجدول المرفوع فارغ أو تالف.");
+
+            // 1. الفحص الآمن والالتزام الكامل بمسميات حقول السكافولدينج الكبيرة ReferenceID و ScheduleType
             var existingSchedules = await _scheduleRepo.GetAllWithIncludeAndFilterAsync(
                 s => s.ScheduleType == 2 && s.ReferenceId == dto.TeacherID
             );
             var schedule = existingSchedules.FirstOrDefault();
 
+            string? savedPath = schedule?.ImagePath;
+
+            // 2. معالجة رفع الملف محلياً بالـ GUID والمسار المادي للمشروع
+            if (dto.ScheduleFile != null)
+            {
+                // مسح ملف الصورة القديمة المادية من جهازك محلياً لتوفير المساحة
+                if (schedule != null && !string.IsNullOrEmpty(schedule.ImagePath))
+                {
+                    string oldPhysicalPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", schedule.ImagePath);
+                    if (File.Exists(oldPhysicalPath)) File.Delete(oldPhysicalPath);
+                }
+
+                string fileExtension = Path.GetExtension(dto.ScheduleFile.FileName);
+                string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "schedules");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                string physicalFilePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(physicalFilePath, FileMode.Create))
+                {
+                    await dto.ScheduleFile.CopyToAsync(fileStream);
+                }
+
+                savedPath = $"uploads/schedules/{uniqueFileName}";
+            }
+
+            // 3. المزامنة البرمجية والحفظ
             if (schedule != null)
             {
-                // عملية التحديث (UPDATE)
                 schedule.Title = dto.Title?.Trim();
-                schedule.ImagePath = dto.ImagePath.Trim();
+                schedule.ImagePath = savedPath!;
                 schedule.UpdatedAt = DateTime.UtcNow;
                 _scheduleRepo.UpdateAsync(schedule);
             }
             else
             {
-                // عملية الإدخال الجديد (INSERT)
                 var newSchedule = new Schedule
                 {
                     Title = dto.Title?.Trim(),
-                    ImagePath = dto.ImagePath.Trim(),
-                    ScheduleType = 2, // 2 = Teacher بناءً على توثيق قاعدة بياناتك
-                    ReferenceId = dto.TeacherID,
+                    ImagePath = savedPath!,
+                    ScheduleType = 2, // 2 = Teacher
+                    ReferenceId = dto.TeacherID, // مطابقة اسم الحقل الكبير للسكافولدينج
                     UpdatedAt = DateTime.UtcNow
                 };
                 await _scheduleRepo.AddAsync(newSchedule);

@@ -52,7 +52,100 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/StudentRegistrationDto"
+                "required": [
+                  "AcademicYear",
+                  "DateOfBirth",
+                  "FamilyName",
+                  "FamilyNumber",
+                  "FatherName",
+                  "FirstName",
+                  "Gender",
+                  "GradeID",
+                  "MotherName",
+                  "YearlyPayment"
+                ],
+                "type": "object",
+                "properties": {
+                  "FirstName": {
+                    "type": "string"
+                  },
+                  "FatherName": {
+                    "type": "string"
+                  },
+                  "FamilyName": {
+                    "type": "string"
+                  },
+                  "MotherName": {
+                    "type": "string"
+                  },
+                  "DateOfBirth": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "Gender": {
+                    "type": "boolean"
+                  },
+                  "StudentPhotoFile": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "HomeAddress": {
+                    "type": "string"
+                  },
+                  "FamilyNumber": {
+                    "type": "string"
+                  },
+                  "GradeID": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "AcademicYear": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "YearlyPayment": {
+                    "type": "number",
+                    "format": "double"
+                  }
+                }
+              },
+              "encoding": {
+                "FirstName": {
+                  "style": "form"
+                },
+                "FatherName": {
+                  "style": "form"
+                },
+                "FamilyName": {
+                  "style": "form"
+                },
+                "MotherName": {
+                  "style": "form"
+                },
+                "DateOfBirth": {
+                  "style": "form"
+                },
+                "Gender": {
+                  "style": "form"
+                },
+                "StudentPhotoFile": {
+                  "style": "form"
+                },
+                "HomeAddress": {
+                  "style": "form"
+                },
+                "FamilyNumber": {
+                  "style": "form"
+                },
+                "GradeID": {
+                  "style": "form"
+                },
+                "AcademicYear": {
+                  "style": "form"
+                },
+                "YearlyPayment": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -103,19 +196,102 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/StudentRegistrationDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StudentRegistrationDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/StudentRegistrationDto"
+                "required": [
+                  "AcademicYear",
+                  "DateOfBirth",
+                  "FamilyName",
+                  "FamilyNumber",
+                  "FatherName",
+                  "FirstName",
+                  "Gender",
+                  "GradeID",
+                  "MotherName",
+                  "YearlyPayment"
+                ],
+                "type": "object",
+                "properties": {
+                  "FirstName": {
+                    "type": "string"
+                  },
+                  "FatherName": {
+                    "type": "string"
+                  },
+                  "FamilyName": {
+                    "type": "string"
+                  },
+                  "MotherName": {
+                    "type": "string"
+                  },
+                  "DateOfBirth": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "Gender": {
+                    "type": "boolean"
+                  },
+                  "StudentPhotoFile": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "HomeAddress": {
+                    "type": "string"
+                  },
+                  "FamilyNumber": {
+                    "type": "string"
+                  },
+                  "GradeID": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "AcademicYear": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "YearlyPayment": {
+                    "type": "number",
+                    "format": "double"
+                  }
+                }
+              },
+              "encoding": {
+                "FirstName": {
+                  "style": "form"
+                },
+                "FatherName": {
+                  "style": "form"
+                },
+                "FamilyName": {
+                  "style": "form"
+                },
+                "MotherName": {
+                  "style": "form"
+                },
+                "DateOfBirth": {
+                  "style": "form"
+                },
+                "Gender": {
+                  "style": "form"
+                },
+                "StudentPhotoFile": {
+                  "style": "form"
+                },
+                "HomeAddress": {
+                  "style": "form"
+                },
+                "FamilyNumber": {
+                  "style": "form"
+                },
+                "GradeID": {
+                  "style": "form"
+                },
+                "AcademicYear": {
+                  "style": "form"
+                },
+                "YearlyPayment": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -1080,19 +1256,36 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/SaveClassRoomScheduleDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveClassRoomScheduleDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveClassRoomScheduleDto"
+                "required": [
+                  "ClassRoomID"
+                ],
+                "type": "object",
+                "properties": {
+                  "ClassRoomID": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "ScheduleFile": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "Title": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "ClassRoomID": {
+                  "style": "form"
+                },
+                "ScheduleFile": {
+                  "style": "form"
+                },
+                "Title": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -1111,19 +1304,36 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/SaveTeacherScheduleDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveTeacherScheduleDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveTeacherScheduleDto"
+                "required": [
+                  "TeacherID"
+                ],
+                "type": "object",
+                "properties": {
+                  "TeacherID": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "ScheduleFile": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "Title": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "TeacherID": {
+                  "style": "form"
+                },
+                "ScheduleFile": {
+                  "style": "form"
+                },
+                "Title": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -2021,7 +2231,7 @@
                 "required": [
                   "AcademicYear",
                   "GradeID",
-                  "ImagePath",
+                  "ScheduleImageFile",
                   "Semester"
                 ],
                 "type": "object",
@@ -2035,9 +2245,6 @@
                     "minimum": 1,
                     "type": "integer",
                     "format": "int32"
-                  },
-                  "ImagePath": {
-                    "type": "string"
                   },
                   "ScheduleImageFile": {
                     "type": "string",
@@ -2054,9 +2261,6 @@
                   "style": "form"
                 },
                 "Semester": {
-                  "style": "form"
-                },
-                "ImagePath": {
                   "style": "form"
                 },
                 "ScheduleImageFile": {
@@ -2169,7 +2373,29 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateSchoolInfoDTO"
+                "required": [
+                  "SchoolName"
+                ],
+                "type": "object",
+                "properties": {
+                  "SchoolName": {
+                    "maxLength": 200,
+                    "minLength": 2,
+                    "type": "string"
+                  },
+                  "LogoFile": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "SchoolName": {
+                  "style": "form"
+                },
+                "LogoFile": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -2880,19 +3106,46 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/SaveHomeworkDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveHomeworkDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveHomeworkDto"
+                "type": "object",
+                "properties": {
+                  "ClassRoomID": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "SubjectID": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "AttachmentFile": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "ClassRoomID": {
+                  "style": "form"
+                },
+                "SubjectID": {
+                  "style": "form"
+                },
+                "Title": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "AttachmentFile": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -3377,28 +3630,6 @@
         },
         "additionalProperties": false
       },
-      "SaveClassRoomScheduleDto": {
-        "required": [
-          "classRoomID",
-          "imagePath"
-        ],
-        "type": "object",
-        "properties": {
-          "classRoomID": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "imagePath": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "SaveDailyLessonDto": {
         "type": "object",
         "properties": {
@@ -3471,37 +3702,6 @@
         },
         "additionalProperties": false
       },
-      "SaveHomeworkDto": {
-        "type": "object",
-        "properties": {
-          "classRoomID": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "subjectID": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "attachmentPath": {
-            "type": "string",
-            "nullable": true
-          },
-          "attachmentFile": {
-            "type": "string",
-            "format": "binary",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "SaveStudentAttendanceDto": {
         "type": "object",
         "properties": {
@@ -3546,28 +3746,6 @@
             "items": {
               "$ref": "#/components/schemas/TeacherAttendanceItemDto"
             },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "SaveTeacherScheduleDto": {
-        "required": [
-          "imagePath",
-          "teacherID"
-        ],
-        "type": "object",
-        "properties": {
-          "teacherID": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "imagePath": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "title": {
-            "type": "string",
             "nullable": true
           }
         },
@@ -3670,76 +3848,6 @@
           "notes": {
             "type": "string",
             "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "StudentRegistrationDto": {
-        "required": [
-          "academicYear",
-          "dateOfBirth",
-          "familyName",
-          "familyNumber",
-          "fatherName",
-          "firstName",
-          "gender",
-          "gradeID",
-          "motherName",
-          "yearlyPayment"
-        ],
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "fatherName": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "familyName": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "motherName": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "dateOfBirth": {
-            "type": "string",
-            "format": "date"
-          },
-          "gender": {
-            "type": "boolean"
-          },
-          "studentPhotoPath": {
-            "type": "string",
-            "nullable": true
-          },
-          "studentPhotoFile": {
-            "type": "string",
-            "format": "binary",
-            "nullable": true
-          },
-          "homeAddress": {
-            "type": "string",
-            "nullable": true
-          },
-          "familyNumber": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "gradeID": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "academicYear": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "yearlyPayment": {
-            "type": "number",
-            "format": "double"
           }
         },
         "additionalProperties": false
@@ -3890,29 +3998,6 @@
             "minimum": 0,
             "type": "number",
             "format": "double"
-          }
-        },
-        "additionalProperties": false
-      },
-      "UpdateSchoolInfoDTO": {
-        "required": [
-          "schoolName"
-        ],
-        "type": "object",
-        "properties": {
-          "schoolName": {
-            "maxLength": 200,
-            "minLength": 2,
-            "type": "string"
-          },
-          "schoolLogo": {
-            "type": "string",
-            "nullable": true
-          },
-          "logoFile": {
-            "type": "string",
-            "format": "binary",
-            "nullable": true
           }
         },
         "additionalProperties": false

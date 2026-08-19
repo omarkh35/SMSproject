@@ -9,9 +9,11 @@ using System.Security.Claims;
 namespace SMS.Controllers
 {
 
-    [Authorize]
+    
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Teacher")]
+
     public class TeacherController : ControllerBase
     {
         private readonly ITeacherService _teacherService;
@@ -191,9 +193,11 @@ namespace SMS.Controllers
             }
         }
 
-        
+
         [HttpPost("assign/homework")]
-        public async Task<IActionResult> AssignHomework([FromBody] SaveHomeworkDto request)
+        [Consumes("multipart/form-data")]
+        [Authorize(Roles = "Teacher")] 
+        public async Task<IActionResult> AssignHomework([FromForm] SaveHomeworkDto request) 
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

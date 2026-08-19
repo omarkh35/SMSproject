@@ -8,6 +8,7 @@ namespace SMS.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "DepManager")]
     public class DepartmentManagerController : ControllerBase
     {
         private readonly IDepartmentManagerService _deptService;
@@ -226,6 +227,7 @@ namespace SMS.Controllers
             }
         }
 
+      
         [HttpPut("supervisor/{id}")]
         public async Task<IActionResult> UpdateSupervisor(int id, [FromBody] UpdateSupervisorDto dto)
         {
@@ -374,26 +376,30 @@ namespace SMS.Controllers
         }
 
         [HttpPost("classroom-schedule")]
-        public async Task<IActionResult> SaveClassRoomSchedule([FromBody] SaveClassRoomScheduleDto dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> SaveClassRoomSchedule([FromForm] SaveClassRoomScheduleDto dto) 
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var success = await _deptService.SaveClassRoomScheduleAsync(dto);
             return success
-                ? Ok(new { message = "تم حفظ وتحديث جدول دوام الشعبة بنجاح في النظام." })
+                ? Ok(new { message = "تم حفظ وتحديث جدول دوام الشعبة بنجاح في النظام محلياً." })
                 : BadRequest("عذراً، فشلت عملية حفظ جدول دوام الشعبة.");
         }
 
+
         [HttpPost("teacher-schedule")]
-        public async Task<IActionResult> SaveTeacherSchedule([FromBody] SaveTeacherScheduleDto dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> SaveTeacherSchedule([FromForm] SaveTeacherScheduleDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var success = await _deptService.SaveTeacherScheduleAsync(dto);
             return success
-                ? Ok(new { message = "تم حفظ وتحديث جدول دوام الأستاذ بنجاح في النظام." })
+                ? Ok(new { message = "تم حفظ وتحديث جدول دوام الأستاذ بنجاح في النظام محلياً." })
                 : BadRequest("عذراً، فشلت عملية حفظ جدول دوام الأستاذ.");
         }
+
 
     }
 }

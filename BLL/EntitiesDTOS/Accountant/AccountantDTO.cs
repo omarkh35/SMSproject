@@ -51,7 +51,7 @@ namespace BLL.EntitiesDTOS.Accountant
         [Required]
         public bool Gender { get; set; }
 
-        public string? StudentPhotoPath { get; set; }
+        //public string? StudentPhotoPath { get; set; }
 
         // ملف صورة الطالب الفعلي عند الرفع
         public IFormFile? StudentPhotoFile { get; set; }

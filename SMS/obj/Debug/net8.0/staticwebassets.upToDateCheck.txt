@@ -1,2 +1,9 @@
+wwwroot\uploads\exams\06d73c99-8ea2-40d6-b9f9-0be85496d187.png
+wwwroot\uploads\exams\0cabb6c8-eaf2-445c-9004-536109b5fbd4.jfif
+wwwroot\uploads\exams\16735c4f-3af6-425c-949b-1ad573e4ac8c.png
+wwwroot\uploads\exams\7e9843db-e361-453f-8e2f-93230e67e238.jpg
+wwwroot\uploads\exams\b9be7abc-724d-400f-8f49-d5b96385655e.jpg
+wwwroot\uploads\exams\f0325766-8a20-4328-9ed4-e2cb4999641e.pdf
+wwwroot\uploads\exams\fed91ab8-7aea-499e-9060-e03134eacc66.jpg
 wwwroot\uploads\profiles\zaid_profile.png
 wwwroot\uploads\schedules\grade3_section1.png

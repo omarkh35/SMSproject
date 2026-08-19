@@ -479,6 +479,34 @@ namespace BLL.Services
             if (dto == null || string.IsNullOrWhiteSpace(dto.Title))
                 return false;
 
+            string? savedAttachmentPath = null;
+
+            // 💡 معالجة رفع الملف المرفق محلياً بالـ GUID والمسار المادي للمشروع في حال وجوده
+            if (dto.AttachmentFile != null && dto.AttachmentFile.Length > 0)
+            {
+                string fileExtension = Path.GetExtension(dto.AttachmentFile.FileName);
+                string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+                // تثبيت ممر المجلد المحلي بداخل wwwroot/uploads/homeworks
+                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "homeworks");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                string physicalFilePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                // حفظ ملف الواجب الفعلي على القرص الصلب محلياً
+                using (var fileStream = new FileStream(physicalFilePath, FileMode.Create))
+                {
+                    await dto.AttachmentFile.CopyToAsync(fileStream);
+                }
+
+                // استخلاص المسار النسبي الآمن للتخزين بجدول قاعدة البيانات
+                savedAttachmentPath = $"uploads/homeworks/{uniqueFileName}";
+            }
+
+            // بناء كائن الواجب المنزلي الجديد مع الالتزام التام بمسميات حقول السكافولدينج الكبيرة لديك
             var newHomework = new Homework
             {
                 ClassRoomId = dto.ClassRoomID,
@@ -486,14 +514,14 @@ namespace BLL.Services
                 TeacherPersonId = teacherPersonId,
                 Title = dto.Title.Trim(),
                 Description = dto.Description,
-                AttachmentPath = dto.AttachmentPath,
+                AttachmentPath = savedAttachmentPath, // قد يكون مساراً نصياً أو NULL بسلام
                 CreatedAt = DateTime.UtcNow
             };
 
             await _homeworkRepo.AddAsync(newHomework);
-            await _homeworkRepo.SaveChangesAsync();
+            await _homeworkRepo.SaveChangesAsync(); // توليد الـ HomeworkID تلقائياً
 
-
+            // نشر الإشعار للأبناء والطلاب المسجلين
             await _notificationPublisher.PublishAsync(new HomeworkAssignedEvent
             {
                 ClassRoomId = newHomework.ClassRoomId,
@@ -501,10 +529,9 @@ namespace BLL.Services
                 TeacherPersonId = teacherPersonId,
                 Title = newHomework.Title,
                 Description = newHomework.Description,
-                HomeworkId = newHomework.HomeworkId,
+                HomeworkId = newHomework.HomeworkId, // مطابقة اسم الحقل المولد الكبيرة
                 OccurredAt = newHomework.CreatedAt ?? DateTime.UtcNow
             });
-
 
             return true;
         }

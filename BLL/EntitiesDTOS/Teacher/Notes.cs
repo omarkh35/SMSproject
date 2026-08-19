@@ -28,7 +28,7 @@ namespace BLL.EntitiesDTOS.Teacher
         public int SubjectID { get; set; }
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public string? AttachmentPath { get; set; }
+       // public string? AttachmentPath { get; set; }
         public IFormFile? AttachmentFile { get; set; }
     }
 

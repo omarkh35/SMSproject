@@ -283,7 +283,7 @@ namespace SMS.Controllers
 
         [HttpPut("school-info")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UpdateSchoolInfo([FromBody] UpdateSchoolInfoDTO dto)
+        public async Task<IActionResult> UpdateSchoolInfo([FromForm] UpdateSchoolInfoDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -291,9 +291,29 @@ namespace SMS.Controllers
             try
             {
                 var result = await _schoolSettingService.UpdateSchoolInfoAsync(dto);
+
+                // التقاط الـ Host والـ Scheme الحركي لجهازك المحلي تلقائياً دون كتابته يدوياً
+                string schemeAndHost = $"{Request.Scheme}://{Request.Host}";
+                string fullLogoUrl = string.Empty;
+
+                // فحص أمان قاطع: إذا كان اللوغو موجوداً نبني الرابط الكامل، وإذا كان NULL نضع رابطاً افتراضياً أو نتركه فارغاً بسلام
+                if (!string.IsNullOrEmpty(result.SchoolLogo))
+                {
+                    string cleanLogoPath = result.SchoolLogo.Replace("\\", "/").TrimStart('/');
+                    fullLogoUrl = $"{schemeAndHost}/{cleanLogoPath}";
+                }
+                else
+                {
+                    // يمكنك وضع مسار لصورة افتراضية في الـ wwwroot أو تركها فارغة تماماً بناءً على رغبتك
+                    fullLogoUrl = $"{schemeAndHost}/uploads/logos/default_logo.png";
+                }
+
+                // إسناد الرابط الآمن النهائي للنتيجة المرجوعة للواجهة
+                result.SchoolLogo = fullLogoUrl;
+
                 return Ok(new
                 {
-                    message = "تم حفظ وتحديث بيانات وشعار المدرسة بنجاح.",
+                    message = "تم حفظ وتحديث بيانات وشعار المدرسة بنجاح واستهداف ممرات التخزين المحلية.",
                     data = result
                 });
             }

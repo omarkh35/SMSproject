@@ -86,9 +86,64 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "dto",
-        "Type": "BLL.EntitiesDTOS.Accountant.StudentRegistrationDto",
-        "IsRequired": true
+        "Name": "FirstName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "FatherName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "FamilyName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "MotherName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "DateOfBirth",
+        "Type": "System.DateOnly",
+        "IsRequired": false
+      },
+      {
+        "Name": "Gender",
+        "Type": "System.Boolean",
+        "IsRequired": false
+      },
+      {
+        "Name": "StudentPhotoFile",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "HomeAddress",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "FamilyNumber",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "GradeID",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "AcademicYear",
+        "Type": "System.Int16",
+        "IsRequired": false
+      },
+      {
+        "Name": "YearlyPayment",
+        "Type": "System.Decimal",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -123,9 +178,64 @@
         "IsRequired": true
       },
       {
-        "Name": "dto",
-        "Type": "BLL.EntitiesDTOS.Accountant.StudentRegistrationDto",
-        "IsRequired": true
+        "Name": "FirstName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "FatherName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "FamilyName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "MotherName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "DateOfBirth",
+        "Type": "System.DateOnly",
+        "IsRequired": false
+      },
+      {
+        "Name": "Gender",
+        "Type": "System.Boolean",
+        "IsRequired": false
+      },
+      {
+        "Name": "StudentPhotoFile",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "HomeAddress",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "FamilyNumber",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "GradeID",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "AcademicYear",
+        "Type": "System.Int16",
+        "IsRequired": false
+      },
+      {
+        "Name": "YearlyPayment",
+        "Type": "System.Decimal",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -357,9 +467,19 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "dto",
-        "Type": "BLL.EntitiesDTOS.DepartmentManager.SaveClassRoomScheduleDto",
-        "IsRequired": true
+        "Name": "ClassRoomID",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "ScheduleFile",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "Title",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -647,9 +767,19 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "dto",
-        "Type": "BLL.EntitiesDTOS.DepartmentManager.SaveTeacherScheduleDto",
-        "IsRequired": true
+        "Name": "TeacherID",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "ScheduleFile",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "Title",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -1092,11 +1222,6 @@
         "IsRequired": false
       },
       {
-        "Name": "ImagePath",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
         "Name": "ScheduleImageFile",
         "Type": "Microsoft.AspNetCore.Http.IFormFile",
         "IsRequired": false
@@ -1144,9 +1269,14 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "dto",
-        "Type": "BLL.EntitiesDTOS.General.UpdateSchoolInfoDTO",
-        "IsRequired": true
+        "Name": "SchoolName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "LogoFile",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -1674,9 +1804,29 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "request",
-        "Type": "BLL.EntitiesDTOS.Teacher.SaveHomeworkDto",
-        "IsRequired": true
+        "Name": "ClassRoomID",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "SubjectID",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "Title",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Description",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "AttachmentFile",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
