@@ -144,6 +144,96 @@ namespace BLL.Services
             _cache.Remove($"ACTIVATION_HASH_{accountNumber}");
             _cache.Remove($"ACTIVATION_USERID_{accountNumber}");
         }
+
+
+
+
+
+
+
+
+        // =========================================================================
+        // إعادة تعيين كلمة المرور: إدارة الـ OTP والتحقق وصلاحية الجلسة
+        // =========================================================================
+        public string StoreResetPasswordOtp(string email)
+        {
+            string cleanEmail = email.Trim().ToLower();
+            ClearResetPassword(cleanEmail);
+
+            var otp = _random.Next(100000, 999999).ToString();
+            var expiry = TimeSpan.FromMinutes(10); // صالح لمدة 10 دقائق
+
+            _cache.Set($"RESET_OTP_{cleanEmail}", otp, expiry);
+            _cache.Set($"RESET_EXPIRY_{cleanEmail}", DateTime.UtcNow.Add(expiry), expiry);
+            ResetFailedAttempts($"RESET_{cleanEmail}");
+
+            return otp;
+        }
+
+        public bool ValidateResetPasswordOtp(string email, string otp, out string? errorMessage)
+        {
+            errorMessage = null;
+            string cleanEmail = email.Trim().ToLower();
+            string attemptKey = $"RESET_{cleanEmail}";
+
+            if (IsBlocked(attemptKey))
+            {
+                errorMessage = "تم تجاوز الحد الأقصى للمحاولات الخاطئة. يُرجى طلب رمز جديد بعد 5 دقائق.";
+                return false;
+            }
+
+            if (!_cache.TryGetValue($"RESET_OTP_{cleanEmail}", out string? storedOtp))
+            {
+                errorMessage = "انتهت صلاحية رمز التحقق أو لم يتم طلبه مسبقاً. يُرجى طلب رمز جديد.";
+                return false;
+            }
+
+            if (storedOtp != otp.Trim())
+            {
+                IncrementFailedAttempts(attemptKey);
+                int attempts = GetFailedAttempts(attemptKey);
+                int remaining = Math.Max(0, MaxFailedAttempts - attempts);
+
+                errorMessage = remaining > 0
+                    ? $"رمز التحقق غير صحيح. (متبقي {remaining} محاولات)."
+                    : "تم تجاوز الحد الأقصى للمحاولات الخاطئة. تم إلغاء الرمز، يُرجى طلب رمز جديد.";
+
+                if (remaining == 0)
+                {
+                    ClearResetPassword(cleanEmail);
+                }
+
+                return false;
+            }
+
+            // تم التحقق بنجاح -> وضع علامة Verified لمدة 10 دقائق لإتاحة خطوة تغيير كلمة المرور
+            _cache.Set($"RESET_VERIFIED_{cleanEmail}", true, TimeSpan.FromMinutes(10));
+            ResetFailedAttempts(attemptKey);
+            return true;
+        }
+
+        public bool IsResetOtpVerified(string email)
+        {
+            string cleanEmail = email.Trim().ToLower();
+            return _cache.TryGetValue($"RESET_VERIFIED_{cleanEmail}", out bool isVerified) && isVerified;
+        }
+
+        public void ClearResetPassword(string email)
+        {
+            string cleanEmail = email.Trim().ToLower();
+            _cache.Remove($"RESET_OTP_{cleanEmail}");
+            _cache.Remove($"RESET_EXPIRY_{cleanEmail}");
+            _cache.Remove($"RESET_VERIFIED_{cleanEmail}");
+            _cache.Remove($"OTP_Attempts_RESET_{cleanEmail}");
+        }
+
+
+
+
+
+
+
+
     }
 
 }

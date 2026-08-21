@@ -2,10 +2,11 @@
 using BLL.Interfaces;
 using DAL.Entities;
 using DAL.Interfaces;
-using System.IO;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,7 +23,7 @@ namespace BLL.Services
             _fileService = fileService;
         }
 
-        public async Task<SchoolInfoDTO?> GetSchoolInfoAsync()
+        public async Task<SchoolInfoDTO?> GetSchoolInfoAsync(string hostUrl)
         {
             var settings = await _schoolSettingRepo.GetAllAsync();
             var setting = settings.FirstOrDefault();
@@ -37,12 +38,15 @@ namespace BLL.Services
                     LastUpdated = null
                 };
             }
-
+            
+            string fullImgUrl = string.IsNullOrEmpty(setting.SchoolLogo)
+                ? string.Empty
+                : $"{hostUrl}/{setting.SchoolLogo.Replace("\\", "/").TrimStart('/')}";
             return new SchoolInfoDTO
             {
                 SettingId = setting.SettingId,
                 SchoolName = setting.SchoolName ?? string.Empty,
-                SchoolLogo = setting.SchoolLogo,
+                SchoolLogo = fullImgUrl,
                 LastUpdated = setting.LastUpdated
             };
         }

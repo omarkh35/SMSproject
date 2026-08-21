@@ -1,4 +1,5 @@
 ﻿using BLL.EntitiesDTOS.Auth;
+using BLL.EntitiesDTOS.General;
 using BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,10 +19,12 @@ namespace SMS.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IResetPassService _resetPassService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IResetPassService esetPassService)
         {
             _authService = authService;
+            _resetPassService = esetPassService;
         }
 
 
@@ -102,8 +105,9 @@ namespace SMS.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            var result = await _authService.LogoutAsync(request);
+            try
+            {
+                var result = await _authService.LogoutAsync(request);
 
             if (!result)
             {
@@ -111,13 +115,154 @@ namespace SMS.Controllers
             }
 
             return Ok(new { message = "Logged out successfuly. Token has been revoked." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء تسجيل الخروج.",
+                    details = ex.Message
+                });
+            }
         }
 
 
-        
 
+        // =========================================================================
+        // 1. طلب استعادة كلمة المرور وإرسال الـ OTP (بدون توكن - AllowAnonymous)
+        // =========================================================================
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "البريد الإلكتروني المدخل غير صالح.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
 
+            try
+            {
+                var (success, message, maskedEmail) = await _authService.SendForgotPasswordOtpAsync(request.Email);
+                if (!success)
+                {
+                    return BadRequest(new { success = false, message });
+                }
 
+                return Ok(new
+                {
+                    success = true,
+                    message,
+                    maskedEmail
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = $"حدث خطأ أثناء إرسال رمز التحقق: {ex.Message}"
+                });
+            }
+        }
+
+        // =========================================================================
+        // 2. التحقق من صحة رمز الـ OTP لإعادة تعيين كلمة المرور
+        // =========================================================================
+        [HttpPost("verify-reset-otp")]
+        [HttpPost("verify-otp-fro-reset-pass")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerifyResetOtp([FromBody] VerifyResetOtpDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "البيانات المدخلة غير مكتملة أو غير صالحة.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+
+            try
+            {
+                var (success, message) = await _authService.VerifyResetOtpAsync(dto);
+                if (!success)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    message,
+                    email = dto.Email
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = $"حدث خطأ أثناء التحقق من الرمز: {ex.Message}"
+                });
+            }
+        }
+
+        // =========================================================================
+        // 3. تعيين وحفظ كلمة المرور الجديدة في قاعدة البيانات
+        // =========================================================================
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "البيانات المدخلة غير مكتملة أو غير متطابقة.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+
+            try
+            {
+                var (success, message) = await _authService.ResetPasswordAsync(request);
+                if (!success)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = $"حدث خطأ أثناء إعادة تعيين كلمة المرور: {ex.Message}"
+                });
+            }
+        }
     }
 }
 
+
+   

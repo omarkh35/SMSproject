@@ -9,7 +9,7 @@ namespace BLL.Interfaces
 {
     public interface ISchoolSettingService
     {
-        Task<SchoolInfoDTO?> GetSchoolInfoAsync();
+        Task<SchoolInfoDTO?> GetSchoolInfoAsync(String hostUrl);
         Task<SchoolInfoDTO> UpdateSchoolInfoAsync(UpdateSchoolInfoDTO dto);
 
     }

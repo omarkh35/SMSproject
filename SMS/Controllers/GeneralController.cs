@@ -21,8 +21,20 @@ namespace SMS.Controllers
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public async Task<IActionResult> GetSchoolInfo()
         {
-            var result = await _schoolSettingService.GetSchoolInfoAsync();
-            return Ok(result);
+            string hostUrl = $"{Request.Scheme}://{Request.Host}";
+            try
+            {
+                var result = await _schoolSettingService.GetSchoolInfoAsync(hostUrl);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب بيانات المدرسة الأساسية.",
+                    details = ex.Message
+                });
+            }
         }
     }
 }

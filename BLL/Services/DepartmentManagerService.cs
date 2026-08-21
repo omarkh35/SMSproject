@@ -29,6 +29,7 @@ namespace BLL.Services
         private readonly IBaseRepositories<ChatRoom> _chatRoomRepo;
         private readonly IBaseRepositories<Parent> _parentRepo;
         private readonly IBaseRepositories<Schedule> _scheduleRepo;
+        private readonly IEmailService _emailService;
 
         public DepartmentManagerService(
             IBaseRepositories<ClassRoom> classRoomRepo,
@@ -45,7 +46,8 @@ namespace BLL.Services
         IBaseRepositories<DepartmentManager> managerRepo,
         IBaseRepositories<ChatRoom> chatRoomRepo,
             IBaseRepositories<Parent> parentRepo,
-            IBaseRepositories<Schedule> scheduleRepo
+            IBaseRepositories<Schedule> scheduleRepo,
+            IEmailService emailService
 
         )
         {
@@ -64,6 +66,7 @@ namespace BLL.Services
             _chatRoomRepo = chatRoomRepo;
             _parentRepo = parentRepo;
             _scheduleRepo = scheduleRepo;
+            _emailService = emailService;
         }
 
         public async Task<IEnumerable<ClassRoomDto>> GetAllClassRoomsAsync()
@@ -744,6 +747,18 @@ namespace BLL.Services
                 await _supervisorRepo.SaveChangesAsync();
 
                 await _classRoomRepo.CommitTransactionAsync();
+
+                try
+                {
+                    if (!string.IsNullOrEmpty(dto.Email))
+                    {
+                        await _emailService.SendUserNumberAsync(dto.Email.Trim(), generatedAccountNumber);
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    Console.WriteLine($"[Email Service Warning] Failed to deliver SMTP numbers: {emailEx.Message}");
+                }
                 return generatedAccountNumber;
             }
             catch
@@ -798,6 +813,19 @@ namespace BLL.Services
                 await _teacherRepo.SaveChangesAsync();
 
                 await _classRoomRepo.CommitTransactionAsync();
+
+
+                try
+                {
+                    if (!string.IsNullOrEmpty(dto.Email))
+                    {
+                        await _emailService.SendUserNumberAsync(dto.Email.Trim(), generatedAccountNumber);
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    Console.WriteLine($"[Email Service Warning] Failed to deliver SMTP numbers: {emailEx.Message}");
+                }
 
                 return generatedAccountNumber;
             }

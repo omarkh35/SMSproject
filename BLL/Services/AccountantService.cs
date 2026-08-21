@@ -30,6 +30,7 @@ namespace BLL.Services
         private readonly IBaseRepositories<Role> _roleRepo;
         private readonly IBaseRepositories<Grade> _gradeRepo;
         private readonly IFileService _fileService;
+        private readonly IEmailService _emailService;
 
         public AccountantService(
             IBaseRepositories<StudentRecord> studentRecordRepo,
@@ -48,7 +49,8 @@ namespace BLL.Services
             IBaseRepositories<Supervisor> supervisorRepo,
             IBaseRepositories<Role> roleRepo,
             IBaseRepositories<Grade> gradeRepo,
-            IFileService fileService
+            IFileService fileService,
+            IEmailService emailService
             )
         {
             _studentRecordRepo = studentRecordRepo;
@@ -68,6 +70,7 @@ namespace BLL.Services
             _roleRepo = roleRepo;
             _gradeRepo = gradeRepo;
             _fileService = fileService;
+            _emailService = emailService;
         }
 
         public async Task<AccountantDashboardDto> GetMainDashboardGridAsync(string? searchName, int? classRoomId, int page)
@@ -860,6 +863,18 @@ namespace BLL.Services
                 await _parentRepo.SaveChangesAsync();
 
                 await _personRepo.CommitTransactionAsync();
+
+                try
+                {
+                    if (!string.IsNullOrEmpty(dto.Email))
+                    {
+                        await _emailService.SendUserNumberAsync(dto.Email.Trim(), generatedAccountNumber);
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    Console.WriteLine($"[Email Service Warning] Failed to deliver SMTP numbers: {emailEx.Message}");
+                }
 
                 string combinedFullName = $"{newPerson.FirstName} {newPerson.SecondName} {newPerson.LastName}".Replace("  ", " ").Trim();
 

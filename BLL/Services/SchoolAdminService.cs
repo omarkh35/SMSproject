@@ -30,6 +30,7 @@ namespace BLL.Services
         private readonly IBaseRepositories<ClassPayment> _classPaymentRepo;
         private readonly IBaseRepositories<Accountant> _accountantRepo;
         private readonly IFileService _fileService;
+        private readonly IEmailService _emailService;
 
         public SchoolAdminService(
             IBaseRepositories<Subject> subjectRepo,
@@ -47,7 +48,8 @@ namespace BLL.Services
         IBaseRepositories<ClassroomStudent> classStudentRepo,
         IBaseRepositories<ExamSchedule> examScheduleRepo,
         IBaseRepositories<ClassPayment> classPaymentRepo,
-        IBaseRepositories<Accountant> accountantRepo, IFileService fileService)
+        IBaseRepositories<Accountant> accountantRepo, IFileService fileService,
+        IEmailService emailService)
         {
             _subjectRepo = subjectRepo;
             _gradeSubjectRepo = gradeSubjectRepo;
@@ -67,6 +69,7 @@ namespace BLL.Services
             _accountantRepo = accountantRepo;
             _classPaymentRepo = classPaymentRepo;
             _fileService = fileService;
+            _emailService = emailService;
         }
 
        
@@ -207,6 +210,18 @@ namespace BLL.Services
 
                 await _classRoomRepo.CommitTransactionAsync();
 
+                try
+                {
+                    if (!string.IsNullOrEmpty(dto.Email))
+                    {
+                        await _emailService.SendUserNumberAsync(dto.Email.Trim(), generatedAccountNumber);
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    Console.WriteLine($"[Email Service Warning] Failed to deliver SMTP numbers: {emailEx.Message}");
+                }
+
                 return new StaffDto
                 {
                     Id = manager.DepartmentManagerId,
@@ -303,6 +318,18 @@ namespace BLL.Services
                 await _supervisorRepo.SaveChangesAsync();
 
                 await _classRoomRepo.CommitTransactionAsync();
+
+                try
+                {
+                    if (!string.IsNullOrEmpty(dto.Email))
+                    {
+                        await _emailService.SendUserNumberAsync(dto.Email.Trim(), generatedAccountNumber);
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    Console.WriteLine($"[Email Service Warning] Failed to deliver SMTP numbers: {emailEx.Message}");
+                }
 
                 return new StaffDto
                 {
@@ -1019,6 +1046,181 @@ namespace BLL.Services
             }
 
             return true;
+        }
+
+
+        public async Task<string?> RegisterAccountantWorkflowAsync(CreateAccountantDto dto)
+        {
+            var allUsers = await _userRepo.GetAllAsync();
+
+            bool isPhoneDuplicated = allUsers.Any(u => u.PhoneNumber.Trim() == dto.PhoneNumber.Trim());
+            if (isPhoneDuplicated)
+                throw new InvalidOperationException("رقم الهاتف هذا مسجل بالفعل لمستخدم آخر في النظام.");
+
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                bool isEmailDuplicated = allUsers.Any(u => u.Email != null && u.Email.Trim().ToLower() == dto.Email.Trim().ToLower());
+                if (isEmailDuplicated)
+                    throw new InvalidOperationException("البريد الإلكتروني هذا مستخدم بالفعل في حساب آخر.");
+            }
+
+            var transaction = await _classRoomRepo.BeginTransactionAsync();
+            string generatedAccountNumber = string.Empty;
+
+            try
+            {
+                string sqlCommand = "SELECT CAST(NEXT VALUE FOR [dbo].[Seq_UserAccountNumber] AS NVARCHAR(8))";
+                generatedAccountNumber = await _classRoomRepo.ExecuteRawSqlScalarAsync<string>(sqlCommand);
+
+                var newPerson = new Person
+                {
+                    FirstName = dto.FirstName.Trim(),
+                    SecondName = dto.SecondName.Trim(),
+                    LastName = dto.LastName.Trim(),
+                    DateOfBirth = dto.DateOfBirth,
+                    Gender = dto.Gender,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _personRepo.AddAsync(newPerson);
+                await _personRepo.SaveChangesAsync(); 
+                var newUser = new User
+                {
+                    PersonId = newPerson.PersonId, 
+                    UserRoleId = 6, 
+                    PhoneNumber = dto.PhoneNumber.Trim(),
+                    Email = dto.Email?.Trim().ToLower(),
+                    HashPassword = null,
+                    AccountNumber = generatedAccountNumber
+                };
+                await _userRepo.AddAsync(newUser);
+                await _userRepo.SaveChangesAsync();
+
+                var newAccountant = new Accountant
+                {
+                    PersonId = newPerson.PersonId, 
+                    Salary = dto.Salary 
+                };
+                await _accountantRepo.AddAsync(newAccountant);
+                await _accountantRepo.SaveChangesAsync();
+
+                await _classRoomRepo.CommitTransactionAsync();
+            }
+            catch (Exception ex)
+            {
+                await _classRoomRepo.RollbackTransactionAsync();
+                throw new Exception($"فشلت عملية إدخال المحاسب في قاعدة البيانات: {ex.Message}");
+            }
+
+            try
+            {
+                if (!string.IsNullOrEmpty(dto.Email))
+                {
+                    await _emailService.SendUserNumberAsync(dto.Email.Trim(), generatedAccountNumber);
+                }
+            }
+            catch (Exception emailEx)
+            {
+                Console.WriteLine($"[Email Service Warning] Failed to deliver SMTP numbers: {emailEx.Message}");
+            }
+
+            return generatedAccountNumber;
+        }
+
+
+
+        public async Task<AdminAccountantsDashboardDto> GetAccountantsGridAsync(int page)
+        {
+            var dashboard = new AdminAccountantsDashboardDto();
+            const int pageSize = 8; 
+            var allAccountants = await _accountantRepo.GetAllWithIncludeAsync(a => a.Person);
+
+            var allUsers = await _userRepo.GetAllAsync();
+
+            var activeAccountants = allAccountants.Where(a => a.Person.IsActive).ToList();
+
+            dashboard.TotalAccountantsCount = activeAccountants.Count;
+            dashboard.TotalPages = (int)Math.Ceiling((double)dashboard.TotalAccountantsCount / pageSize);
+
+            var paginatedAccountants = activeAccountants
+                .OrderBy(a => a.Person.FirstName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            foreach (var accountant in paginatedAccountants)
+            {
+                var matchedUser = allUsers.FirstOrDefault(u => u.PersonId == accountant.PersonId);
+
+                string cleanFullName = $"{accountant.Person.FirstName} {accountant.Person.LastName}".Replace("  ", " ").Trim();
+
+                dashboard.Accountants.Add(new AdminAccountantGridItemDto
+                {
+                    AccountantID = accountant.AccountantId, 
+                    FullName = cleanFullName,
+                    Phone = matchedUser?.PhoneNumber ?? "No Phone Number",
+                    Salary = accountant.Salary ?? 0, 
+                    AccountNumber = matchedUser?.AccountNumber ?? "N/A"
+                });
+            }
+
+            return dashboard;
+        }
+
+        public async Task<bool> UpdateTeacherWorkflowAsync(int teacherId, UpdateTeacherDto dto)
+        {
+            var allTeachers = await _teacherRepo.GetAllWithIncludeAsync(t => t.Person);
+            var targetTeacher = allTeachers.FirstOrDefault(t => t.TeacherId == teacherId);
+            if (targetTeacher == null || targetTeacher.Person == null)
+                return false; 
+            var allUsers = await _userRepo.GetAllAsync();
+
+            bool isPhoneDuplicated = allUsers.Any(u => u.PhoneNumber.Trim() == dto.PhoneNumber.Trim() && u.PersonId != targetTeacher.PersonId);
+            if (isPhoneDuplicated)
+                throw new InvalidOperationException("رقم الهاتف هذا مسجل بالفعل لمستخدم آخر في النظام.");
+
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                bool isEmailDuplicated = allUsers.Any(u => u.Email != null && u.Email.Trim().ToLower() == dto.Email.Trim().ToLower() && u.PersonId != targetTeacher.PersonId);
+                if (isEmailDuplicated)
+                    throw new InvalidOperationException("البريد الإلكتروني هذا مستخدم بالفعل في حساب آخر.");
+            }
+
+            var userLog = allUsers.FirstOrDefault(u => u.PersonId == targetTeacher.PersonId);
+            if (userLog == null)
+                throw new InvalidOperationException("لم يتم العثور على حساب مستخدم (User) مرتبط بهذا الأستاذ.");
+
+            var transaction = await _classRoomRepo.BeginTransactionAsync();
+
+            try
+            {
+                targetTeacher.Person.FirstName = dto.FirstName.Trim();
+                targetTeacher.Person.SecondName = dto.SecondName.Trim();
+                targetTeacher.Person.LastName = dto.LastName.Trim();
+                targetTeacher.Person.DateOfBirth = dto.DateOfBirth;
+                targetTeacher.Person.Gender = dto.Gender;
+                _personRepo.UpdateAsync(targetTeacher.Person);
+
+                userLog.PhoneNumber = dto.PhoneNumber.Trim();
+                userLog.Email = dto.Email?.Trim().ToLower();
+                _userRepo.UpdateAsync(userLog);
+
+                targetTeacher.WeeklyClasses = dto.WeeklyClasses;
+                targetTeacher.SalaryPerClass = dto.SalaryPerClass;
+                _teacherRepo.UpdateAsync(targetTeacher);
+
+                await _teacherRepo.SaveChangesAsync();
+                await _userRepo.SaveChangesAsync();
+                await _personRepo.SaveChangesAsync();
+
+                await _classRoomRepo.CommitTransactionAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await _classRoomRepo.RollbackTransactionAsync();
+                throw new Exception($"فشلت عملية تحديث بيانات المعلم في قاعدة البيانات: {ex.Message}");
+            }
         }
 
     }

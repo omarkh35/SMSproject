@@ -132,5 +132,16 @@ namespace DAL.Repositries
             return (TResult)Convert.ChangeType(result, typeof(TResult));
         }
 
+        public IQueryable<T> GetTableNoTracking()
+        {
+            return _dbSet.AsNoTracking();
+        }
+
+        public IQueryable<T> GetTable()
+        {
+            return _dbSet;
+        }
+
+
     }
 }

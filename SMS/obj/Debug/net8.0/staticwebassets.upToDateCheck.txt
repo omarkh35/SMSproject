@@ -5,5 +5,10 @@ wwwroot\uploads\exams\7e9843db-e361-453f-8e2f-93230e67e238.jpg
 wwwroot\uploads\exams\b9be7abc-724d-400f-8f49-d5b96385655e.jpg
 wwwroot\uploads\exams\f0325766-8a20-4328-9ed4-e2cb4999641e.pdf
 wwwroot\uploads\exams\fed91ab8-7aea-499e-9060-e03134eacc66.jpg
+wwwroot\uploads\homeworks\3e5bf931-79a3-4538-a7a6-e93fcb9062ff.jpg
+wwwroot\uploads\logos\0262e24b-7605-4e72-88c2-9a42f1b4edd2.jfif
 wwwroot\uploads\profiles\zaid_profile.png
+wwwroot\uploads\schedules\83186c80-f8e2-4510-9032-9daa0ede5f5e.png
+wwwroot\uploads\schedules\e1ca684a-5ade-48b1-ac86-7d0e737d3fdc.jfif
 wwwroot\uploads\schedules\grade3_section1.png
+wwwroot\uploads\students\178df056-8c4e-4873-b38b-dd60f0d11cca.png

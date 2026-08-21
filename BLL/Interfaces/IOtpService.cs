@@ -20,5 +20,10 @@ namespace BLL.Interfaces
         string StorePendingActivation(string accountNumber, string hashedPassword, int userId);
         bool ValidateActivationOtp(string accountNumber, string otp, out string? hashedPassword, out int userId);
         void ClearPendingActivation(string accountNumber);
+
+        string StoreResetPasswordOtp(string email);
+        bool ValidateResetPasswordOtp(string email, string otp, out string? errorMessage);
+        bool IsResetOtpVerified(string email);
+        void ClearResetPassword(string email);
     }
 }

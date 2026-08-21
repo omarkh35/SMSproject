@@ -8,7 +8,7 @@ namespace SMS.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = "SuperAdmin,admin")]
     public class SchoolAdminController : ControllerBase
     {
         private readonly ISchoolAdminService _adminService;
@@ -25,29 +25,68 @@ namespace SMS.Controllers
         [HttpGet("subjects")]
         public async Task<IActionResult> GetAllSubjects()
         {
-            var subjects = await _adminService.GetAllSubjectsAsync();
-            return Ok(subjects);
+            try
+            {
+                var subjects = await _adminService.GetAllSubjectsAsync();
+                return Ok(subjects);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب قائمة المواد الدراسية.",
+                    details = ex.Message
+                });
+            }
         }
         [HttpPost("subject")]
         public async Task<IActionResult> CreateSubject([FromBody] SubjectCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                var result = await _adminService.CreateSubjectAsync(dto);
+                if (result == null) return BadRequest(new { message = "فشلت عملية إنشاء المادة التعليمية." });
 
-            var result = await _adminService.CreateSubjectAsync(dto);
-            if (result == null) return BadRequest(new { message = "فشلت عملية إنشاء المادة التعليمية." });
-
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء إنشاء المادة الدراسية.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPut("subject/{id}")]
         public async Task<IActionResult> UpdateSubject(int id, [FromBody] SubjectUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                var result = await _adminService.UpdateSubjectAsync(id, dto);
+                if (!result) return NotFound("المادة غير موجودة");
 
-            var result = await _adminService.UpdateSubjectAsync(id, dto);
-            if (!result) return NotFound("المادة غير موجودة");
-
-            return Ok(new { message = "تم التعديل بنجاح" });
+                return Ok(new { message = "تم التعديل بنجاح" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء تعديل المادة الدراسية.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpDelete("subject/{id}")]
@@ -78,85 +117,205 @@ namespace SMS.Controllers
         [HttpGet("department-managers-detail")]
         public async Task<IActionResult> GetAllDepartmentManagers()
         {
-            var managers = await _adminService.GetAllDepartmentManagersAsync();
-            return Ok(managers);
+            try
+            {
+                var managers = await _adminService.GetAllDepartmentManagersAsync();
+                return Ok(managers);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب مدراء الأقسام.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPost("department-manager")]
         public async Task<IActionResult> AddDepartmentManager([FromBody] DepartmentManagerCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                var result = await _adminService.AddDepartmentManagerAsync(dto);
+                if (result == null) return BadRequest(new { message = "فشلت عملية إضافة مدير القسم، يرجى مراجعة البيانات." });
 
-            var result = await _adminService.AddDepartmentManagerAsync(dto);
-            if (result == null) return BadRequest(new { message = "فشلت عملية إضافة مدير القسم، يرجى مراجعة البيانات." });
-
-            return Ok(result); // يعيد كائن المدير كاملاً مع الـ AccountNumber المتولد
+                return Ok(result); // يعيد كائن المدير كاملاً مع الـ AccountNumber المتولد
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء إضافة مدير القسم.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPut("department-manager/{id}")]
         public async Task<IActionResult> UpdateDepartmentManager(int id, [FromBody] StaffUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                var success = await _adminService.UpdateDepartmentManagerAsync(id, dto);
+                if (!success) return NotFound("مدير القسم غير موجود");
 
-            var success = await _adminService.UpdateDepartmentManagerAsync(id, dto);
-            if (!success) return NotFound("مدير القسم غير موجود");
-
-            return Ok(new { message = "تم تحديث بيانات مدير القسم بنجاح" });
+                return Ok(new { message = "تم تحديث بيانات مدير القسم بنجاح" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء تعديل بيانات مدير القسم.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpDelete("department-manager/{id}")]
         public async Task<IActionResult> DeleteDepartmentManager(int id)
         {
-            var success = await _adminService.DeleteDepartmentManagerAsync(id);
-            if (!success) return NotFound("مدير القسم غير موجود");
+            try
+            {
+                var success = await _adminService.DeleteDepartmentManagerAsync(id);
+                if (!success) return NotFound("مدير القسم غير موجود");
 
-            return Ok(new { message = "تم حذف مدير القسم بنجاح" });
+                return Ok(new { message = "تم حذف مدير القسم بنجاح" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء حذف مدير القسم.",
+                    details = ex.Message
+                });
+            }
         }
 
        
         [HttpGet("supervisors-detail")]
         public async Task<IActionResult> GetAllSupervisors()
         {
-            var supervisors = await _adminService.GetAllSupervisorsAsync();
-            return Ok(supervisors);
+            try
+            {
+                var supervisors = await _adminService.GetAllSupervisorsAsync();
+                return Ok(supervisors);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب الموجهين.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPost("supervisor")]
         public async Task<IActionResult> AddSupervisor([FromBody] SupervisorCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                var result = await _adminService.AddSupervisorAsync(dto);
+                if (result == null) return BadRequest(new { message = "فشلت عملية إضافة الموجه، يرجى مراجعة البيانات." });
 
-            var result = await _adminService.AddSupervisorAsync(dto);
-            if (result == null) return BadRequest(new { message = "فشلت عملية إضافة الموجه، يرجى مراجعة البيانات." });
-
-            return Ok(result); 
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء إضافة الموجه.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPut("supervisor/{id}")]
         public async Task<IActionResult> UpdateSupervisor(int id, [FromBody] StaffUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                var success = await _adminService.UpdateSupervisorAsync(id, dto);
+                if (!success) return NotFound("الموجه غير موجود");
 
-            var success = await _adminService.UpdateSupervisorAsync(id, dto);
-            if (!success) return NotFound("الموجه غير موجود");
-
-            return Ok(new { message = "تم تحديث بيانات الموجه بنجاح" });
+                return Ok(new { message = "تم تحديث بيانات الموجه بنجاح" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء تعديل بيانات الموجه.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpDelete("supervisor/{id}")]
         public async Task<IActionResult> DeleteSupervisor(int id)
         {
-            var success = await _adminService.DeleteSupervisorAsync(id);
-            if (!success) return NotFound("الموجه غير موجود");
+            try
+            {
+                var success = await _adminService.DeleteSupervisorAsync(id);
+                if (!success) return NotFound("الموجه غير موجود");
 
-            return Ok(new { message = "تم حذف الموجه بنجاح" });
+                return Ok(new { message = "تم حذف الموجه بنجاح" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء حذف الموجه.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpGet("main-dashboard")]
         public async Task<IActionResult> GetAdminDashboardMetrics()
         {
-            var result = await _adminService.GetMainDashboardMetricsAsync();
-            return Ok(result);
+            try
+            {
+                var result = await _adminService.GetMainDashboardMetricsAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب إحصائيات لوحة التحكم.",
+                    details = ex.Message
+                });
+            }
         }
 
 
@@ -164,27 +323,57 @@ namespace SMS.Controllers
         public async Task<IActionResult> GetTeachersDirectoryGrid([FromQuery] string? searchName, [FromQuery] int page = 1)
         {
             if (page < 1) page = 1;
-
-            var result = await _adminService.GetTeachersManagementGridAsync(searchName, page);
-            return Ok(result);
+            try
+            {
+                var result = await _adminService.GetTeachersManagementGridAsync(searchName, page);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب قائمة المعلمين.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpGet("supervisors-general")]
         public async Task<IActionResult> GetSupervisorsDirectoryGrid([FromQuery] string? searchName, [FromQuery] int page = 1)
         {
             if (page < 1) page = 1;
-
-            var result = await _adminService.GetSupervisorsManagementGridAsync(searchName, page);
-            return Ok(result);
+            try
+            {
+                var result = await _adminService.GetSupervisorsManagementGridAsync(searchName, page);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب قائمة الموجهين.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpGet("departmentmanagers-general")]
         public async Task<IActionResult> GetDepartmentManagersDirectoryGrid([FromQuery] string? searchName, [FromQuery] int page = 1)
         {
             if (page < 1) page = 1;
-
-            var result = await _adminService.GetDepartmentManagersGridAsync(searchName, page);
-            return Ok(result);
+            try
+            {
+                var result = await _adminService.GetDepartmentManagersGridAsync(searchName, page);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب قائمة مدراء الأقسام.",
+                    details = ex.Message
+                });
+            }
         }
 
 
@@ -196,17 +385,38 @@ namespace SMS.Controllers
     [FromQuery] int page = 1)
         {
             if (page < 1) page = 1;
-
-            var result = await _adminService.GetStudentsManagementGridAsync(searchName, gradeId, sectionNumber, page);
-            return Ok(result);
+            try
+            {
+                var result = await _adminService.GetStudentsManagementGridAsync(searchName, gradeId, sectionNumber, page);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب قائمة الطلاب.",
+                    details = ex.Message
+                });
+            }
         }
 
 
         [HttpGet("grade-configuration/{gradeId}")]
         public async Task<IActionResult> GetGradeConfiguration(int gradeId)
         {
-            var result = await _adminService.GetGradeConfigurationAsync(gradeId);
-            return Ok(result);
+            try
+            {
+                var result = await _adminService.GetGradeConfigurationAsync(gradeId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب إعدادات الصف والمواد.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPost("save-grade-subjects")]
@@ -214,11 +424,25 @@ namespace SMS.Controllers
         {
             if (!ModelState.IsValid) 
                 return BadRequest(ModelState);
-
-            var success = await _adminService.SaveGradeSubjectsConfigurationAsync(dto);
-            return success
-                ? Ok(new { message = "تم تحديث  المواد المسندة لهذا الصف الدراسي بنجاح." })
-                : BadRequest("عذراً، فشلت العملية.");
+            try
+            {
+                var success = await _adminService.SaveGradeSubjectsConfigurationAsync(dto);
+                return success
+                    ? Ok(new { message = "تم تحديث  المواد المسندة لهذا الصف الدراسي بنجاح." })
+                    : BadRequest("عذراً، فشلت العملية.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء حفظ مواد الصف الدراسي.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPost("save-exam-schedule")]
@@ -226,39 +450,78 @@ namespace SMS.Controllers
         public async Task<IActionResult> SaveExamSchedule([FromForm] SaveExamScheduleDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var success = await _adminService.SaveExamScheduleAsync(dto);
-            return success
-                ? Ok(new { message = "تم حفظ برنامج الامتحان لهذا الصف بنجاح." })
-                : BadRequest("عذراً، فشلت عملية حفظ برنامج الامتحان.");
+            try
+            {
+                var success = await _adminService.SaveExamScheduleAsync(dto);
+                return success
+                    ? Ok(new { message = "تم حفظ برنامج الامتحان لهذا الصف بنجاح." })
+                    : BadRequest("عذراً، فشلت عملية حفظ برنامج الامتحان.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء حفظ جدول الامتحانات.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPost("announcement")]
         public async Task<IActionResult> CreateSchoolAnnouncement([FromBody] SchoolAnnouncementCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            int personId = 0;
-            var personIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(personIdClaim, out int parsedId))
+            try
             {
-                personId = parsedId;
+                int personId = 0;
+                var personIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(personIdClaim, out int parsedId))
+                {
+                    personId = parsedId;
+                }
+
+                var result = await _adminService.CreateSchoolAnnouncementAsync(dto, personId);
+                return Ok(new
+                {
+                    message = "تم نشر الإعلان المدرسي بنجاح.",
+                    data = result
+                });
             }
-
-            var result = await _adminService.CreateSchoolAnnouncementAsync(dto, personId);
-            return Ok(new
+            catch (ArgumentException ex)
             {
-                message = "تم نشر الإعلان المدرسي بنجاح.",
-                data = result
-            });
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء نشر الإعلان المدرسي.",
+                    details = ex.Message
+                });
+            }
         }
 
       
         [HttpGet("finance")]
         public async Task<IActionResult> GetFinanceDashboard()
         {
-            var result = await _adminService.GetFinanceDashboardAsync();
-            return Ok(result);
+            try
+            {
+                var result = await _adminService.GetFinanceDashboardAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب لوحة المالية.",
+                    details = ex.Message
+                });
+            }
         }
 
         
@@ -266,19 +529,49 @@ namespace SMS.Controllers
         public async Task<IActionResult> UpdateTuitionFee([FromBody] UpdateGradeTuitionFeeDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+                try
+                {
+                    var success = await _adminService.UpdateGradeTuitionFeeAsync(dto);
+                    return success
+                        ? Ok(new { message = "تم تعديل القسط الدراسي للصف وتحديث سجلات الطلاب بنجاح." })
+                        : BadRequest(new { message = "فشلت عملية تعديل القسط الدراسي، يرجى التحقق من معرف الصف." });
+                }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء تعديل القسط الدراسي.",
+                    details = ex.Message
+                });
+            }
 
-            var success = await _adminService.UpdateGradeTuitionFeeAsync(dto);
-            return success
-                ? Ok(new { message = "تم تعديل القسط الدراسي للصف وتحديث سجلات الطلاب بنجاح." })
-                : BadRequest(new { message = "فشلت عملية تعديل القسط الدراسي، يرجى التحقق من معرف الصف." });
         }
 
         
         [HttpGet("school-info")]
         public async Task<IActionResult> GetSchoolInfo()
-        {
-            var info = await _schoolSettingService.GetSchoolInfoAsync();
-            return Ok(info);
+
+
+       
+                                                                                                {
+            try
+            {
+                string hostUrl = $"{Request.Scheme}://{Request.Host}";
+                var info = await _schoolSettingService.GetSchoolInfoAsync(hostUrl);
+                return Ok(info);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب معلومات المدرسة.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPut("school-info")]
@@ -331,6 +624,87 @@ namespace SMS.Controllers
             }
         }
 
+
+        [HttpPost("accountant")]
+        public async Task<IActionResult> RegisterNewAccountant([FromBody] CreateAccountantDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                // استدعاء دالة منطق العمل الموثقة
+                var generatedAccount = await _adminService.RegisterAccountantWorkflowAsync(dto);
+
+                if (generatedAccount != null)
+                {
+                    return Ok(new
+                    {
+                        message = "تم تسجيل المحاسب الجديد في المنظومة بنجاح، وإرسال حسابه للبريد المرفق.",
+                        accountNumber = generatedAccount
+                    });
+                }
+
+                return BadRequest(new { message = "عذراً، فشلت عملية معالجة معاملات المحاسب الجديد في الخادم." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // القبض على أخطاء تكرار الهاتف أو الإيميل المسجل مسبقاً (400 BadRequest) بدقة
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // حماية السيستم من خطأ الـ 500 وعزل الاستثناءات العشوائية
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    error = "حدث خطأ داخلي غير متوقع في السيرفر أثناء تسجيل المحاسب.",
+                    details = ex.Message
+                });
+            }
+        }
+
+
+
+        [HttpGet("accountants-directory")]
+        public async Task<IActionResult> GetAccountantsDirectoryGrid([FromQuery] int page = 1)
+        {
+            if (page < 1) page = 1;
+
+            var result = await _adminService.GetAccountantsGridAsync(page);
+            return Ok(result);
+        }
+
+
+        [HttpPut("teacher/{id}")]
+        public async Task<IActionResult> UpdateTeacherDetails(int id, [FromBody] UpdateTeacherDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var success = await _adminService.UpdateTeacherWorkflowAsync(id, dto);
+
+                if (success)
+                    return Ok(new { message = "تم تحديث بيانات المعلم الشخصية والمالية بنجاح وتأمين القيود." });
+
+                return NotFound(new { message = "عذراً، المعلم المستهدف غير موجود في النظام." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // القبض على أخطاء تكرار الهاتف أو الإيميل المسجل مسبقاً (400 BadRequest) بدقة
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // حماية السيستم وعزل الاستثناءات العشوائية
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    error = "حدث خطأ داخلي غير متوقع في السيرفر أثناء تعديل بيانات المعلم.",
+                    details = ex.Message
+                });
+            }
+        }
 
 
     }

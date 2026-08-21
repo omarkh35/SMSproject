@@ -15,6 +15,7 @@ namespace BLL.Interfaces
         Task<StaffDto> AddDepartmentManagerAsync(DepartmentManagerCreateDto dto); 
         Task<bool> UpdateDepartmentManagerAsync(int id, StaffUpdateDto dto);
         Task<bool> DeleteDepartmentManagerAsync(int id);
+        Task<string?> RegisterAccountantWorkflowAsync(CreateAccountantDto dto);
 
         Task<IEnumerable<StaffDto>> GetAllSupervisorsAsync();
         Task<StaffDto> AddSupervisorAsync(SupervisorCreateDto dto); 
@@ -48,6 +49,11 @@ namespace BLL.Interfaces
         Task<AdminFinanceDashboardDto> GetFinanceDashboardAsync();
 
         Task<bool> UpdateGradeTuitionFeeAsync(UpdateGradeTuitionFeeDto dto);
+
+        Task<AdminAccountantsDashboardDto> GetAccountantsGridAsync(int page);
+
+
+        Task<bool> UpdateTeacherWorkflowAsync(int teacherId, UpdateTeacherDto dto);
 
 
 

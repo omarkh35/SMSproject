@@ -28,19 +28,29 @@ namespace SMS.Controllers
         public async Task<IActionResult> GetDashboard()
         {
 
-            //هون منجيب اي دي مشان نجيب معلوماتو
-            var claimUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+            try
             {
-                return Unauthorized(new { message = "User identity claim context missing." });
+                var claimUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+                {
+                    return Unauthorized(new { message = "User identity claim context missing." });
+                }
+
+                var dashboard = await _teacherService.GetTeacherDashboardAsync(teacherPersonId);
+                if (dashboard == null)
+                    return NotFound(new { message = "Teacher personal record context not found." });
+
+                return Ok(dashboard);
             }
-
-            var dashboard = await _teacherService.GetTeacherDashboardAsync(teacherPersonId);
-            if (dashboard == null) 
-                return NotFound(new { message = "Teacher personal record context not found." });
-
-            return Ok(dashboard);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب لوحة معلومات المعلم.",
+                    details = ex.Message
+                });
+            }
         }
 
 
@@ -49,23 +59,33 @@ namespace SMS.Controllers
         public async Task<IActionResult> GetDetailedProfile()
         {
 
-
-            var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            
-            
-            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+            try
             {
-                return Unauthorized(new { message = "User identity claim context missing." });
+                var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+
+                if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+                {
+                    return Unauthorized(new { message = "User identity claim context missing." });
+                }
+
+                var profile = await _teacherService.GetTeacherDetailedProfileAsync(teacherPersonId);
+
+                if (profile == null)
+                {
+                    return NotFound(new { message = "Detailed teacher profile not found." });
+                }
+
+                return Ok(profile);
             }
-
-            var profile = await _teacherService.GetTeacherDetailedProfileAsync(teacherPersonId);
-
-            if (profile == null)
+            catch (Exception ex)
             {
-                return NotFound(new { message = "Detailed teacher profile not found." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب الملف الشخصي للمعلم.",
+                    details = ex.Message
+                });
             }
-
-            return Ok(profile);
         }
 
 
@@ -73,27 +93,49 @@ namespace SMS.Controllers
         [HttpGet("classes")]
         public async Task<IActionResult> GetMyClasses()
         {
-            var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+            try
             {
-                return Unauthorized(new { message = "User identity context missing." });
-            }
+                var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+                {
+                    return Unauthorized(new { message = "User identity context missing." });
+                }
 
-            var chips = await _teacherService.GetTeacherClassesChipsAsync(teacherPersonId);
-            return Ok(chips);
+                var chips = await _teacherService.GetTeacherClassesChipsAsync(teacherPersonId);
+                return Ok(chips);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب الشعب الصفية للمعلم.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpGet("classes/{classRoomId}/students")]
         public async Task<IActionResult> GetClassStudents(int classRoomId)
         {
-            var students = await _teacherService.GetStudentsInClassAsync(classRoomId);
-
-            if (students == null || !students.Any())
+            try
             {
-                return NotFound(new { message = "No students are currently enrolled in this classroom." });
-            }
+                var students = await _teacherService.GetStudentsInClassAsync(classRoomId);
 
-            return Ok(students);
+                if (students == null || !students.Any())
+                {
+                    return NotFound(new { message = "No students are currently enrolled in this classroom." });
+                }
+
+                return Ok(students);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب قائمة طلاب الشعبة.",
+                    details = ex.Message
+                });
+            }
         }
 
 
@@ -102,15 +144,33 @@ namespace SMS.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            var isSaved = await _teacherService.SaveStudentGradesAsync(request);
-
-            if (!isSaved)
+            try
             {
-                return BadRequest(new { message = "Failed to save grades. Please verify the request input parameters data." });
-            }
+                var isSaved = await _teacherService.SaveStudentGradesAsync(request);
 
-            return Ok(new { message = "Student grades have been uploaded successfully and are pending administrative review." });
+                if (!isSaved)
+                {
+                    return BadRequest(new { message = "Failed to save grades. Please verify the request input parameters data." });
+                }
+
+                return Ok(new { message = "Student grades have been uploaded successfully." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء حفظ درجات الطلاب.",
+                    details = ex.Message
+                });
+            }
         }
 
 
@@ -120,15 +180,33 @@ namespace SMS.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            var statusResult = await _teacherService.SaveBulkAttendanceAsync(request);
-
-            if (!statusResult)
+            try
             {
-                return BadRequest(new { message = "Failed to store attendance log data matrix payload." });
-            }
+                var statusResult = await _teacherService.SaveBulkAttendanceAsync(request);
 
-            return Ok(new { message = "Classroom student attendance updated successfully." });
+                if (!statusResult)
+                {
+                    return BadRequest(new { message = "Failed to store attendance log data matrix payload." });
+                }
+
+                return Ok(new { message = "Classroom student attendance updated successfully." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء حفظ حضور وغياب الطلاب.",
+                    details = ex.Message
+                });
+            }
         }
 
 
@@ -137,8 +215,19 @@ namespace SMS.Controllers
         [HttpGet("classes/{classRoomId}/students-search")]
         public async Task<IActionResult> GetClassStudentsWithFilter(int classRoomId, [FromQuery] string? search)
         {
-            var students = await _teacherService.GetStudentsInClassWithSearchAsync(classRoomId, search);
-            return Ok(students);
+            try
+            {
+                var students = await _teacherService.GetStudentsInClassWithSearchAsync(classRoomId, search);
+                return Ok(students);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء البحث في طلاب الشعبة.",
+                    details = ex.Message
+                });
+            }
         }
 
 
@@ -147,21 +236,40 @@ namespace SMS.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+            try
             {
-                return Unauthorized(new { message = "User identity context missing." });
+                var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+                {
+                    return Unauthorized(new { message = "User identity context missing." });
+                }
+
+                var result = await _teacherService.SaveStudentNoteAsync(teacherPersonId, request);
+
+                if (!result)
+                {
+                    return BadRequest(new { message = "Failed to submit note. Verify parameter requirements." });
+                }
+
+                return Ok(new { message = "Note successfully saved and delivered to the parent application feed." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء إرسال الملاحظة لولي الأمر.",
+                    details = ex.Message
+                });
             }
 
-            var result = await _teacherService.SaveStudentNoteAsync(teacherPersonId, request);
-
-            if (!result)
-            {
-                return BadRequest(new { message = "Failed to submit note. Verify parameter requirements." });
-            }
-
-            return Ok(new { message = "Note successfully saved and delivered to the parent application feed." });
         }
 
 
@@ -227,36 +335,59 @@ namespace SMS.Controllers
         [HttpGet("weekly-schedule")]
         public async Task<IActionResult> GetWeeklySchedule()
         {
-            var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+
+            try
             {
-                return Unauthorized(new { message = "User identity claim context missing." });
+                var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+                {
+                    return Unauthorized(new { message = "User identity claim context missing." });
+                }
+
+                string hostUrl = $"{Request.Scheme}://{Request.Host}";
+                var schedule = await _teacherService.GetTeacherWeeklyScheduleAsync(teacherPersonId, hostUrl);
+
+                if (schedule == null)
+                {
+                    return NotFound(new { message = "No weekly schedule found for this teacher." });
+                }
+
+                return Ok(schedule);
             }
-
-            string hostUrl = $"{Request.Scheme}://{Request.Host}";
-            var schedule = await _teacherService.GetTeacherWeeklyScheduleAsync(teacherPersonId, hostUrl);
-
-            if (schedule == null)
+            catch (Exception ex)
             {
-                return NotFound(new { message = "No weekly schedule found for this teacher." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب جدول الدوام الأسبوعي للمعلم.",
+                    details = ex.Message
+                });
             }
-
-            return Ok(schedule);
         }
 
         [HttpGet("exam-schedules")]
         public async Task<IActionResult> GetExamSchedules()
         {
-            var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+            try
             {
-                return Unauthorized(new { message = "User identity claim context missing." });
+                var claimUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(claimUserId) || !int.TryParse(claimUserId, out int teacherPersonId))
+                {
+                    return Unauthorized(new { message = "User identity claim context missing." });
+                }
+
+                string hostUrl = $"{Request.Scheme}://{Request.Host}";
+                var examSchedules = await _teacherService.GetTeacherExamSchedulesAsync(teacherPersonId, hostUrl);
+
+                return Ok(examSchedules);
             }
-
-            string hostUrl = $"{Request.Scheme}://{Request.Host}";
-            var examSchedules = await _teacherService.GetTeacherExamSchedulesAsync(teacherPersonId, hostUrl);
-
-            return Ok(examSchedules);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب جدول الامتحانات للمعلم.",
+                    details = ex.Message
+                });
+            }
         }
 
 

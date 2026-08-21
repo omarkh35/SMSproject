@@ -31,5 +31,10 @@ namespace DAL.Interfaces
         Task RollbackTransactionAsync();
         Task<TResult> ExecuteRawSqlScalarAsync<TResult>(string sql, params object[] parameters);
 
+        IQueryable<T> GetTableNoTracking();
+        IQueryable<T> GetTable();
+
+
+
     }
 }

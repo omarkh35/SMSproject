@@ -301,4 +301,92 @@ namespace BLL.EntitiesDTOS.SchoolAdmin
     }
 
 
+    public class CreateAccountantDto
+    {
+        [Required(ErrorMessage = "الاسم الأول للمحاسب مطلوب")]
+        [StringLength(50, ErrorMessage = "الاسم الأول لا يجب أن يتجاوز 50 حرف")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "اسم الأب مطلوب")]
+        [StringLength(50, ErrorMessage = "اسم الأب لا يجب أن يتجاوز 50 حرف")]
+        public string SecondName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "اسم العائلة مطلوب")]
+        [StringLength(50, ErrorMessage = "اسم العائلة لا يجب أن يتجاوز 50 حرف")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "تاريخ الميلاد مطلوب")]
+        public DateOnly DateOfBirth { get; set; }
+
+        [Required]
+        public bool Gender { get; set; } // true = ذكر، false = أنثى
+
+        [Required(ErrorMessage = "رقم الهاتف مطلوب للاتصال")]
+        [Phone(ErrorMessage = "رقم الهاتف المدخل غير صالح")]
+        [StringLength(50)]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [EmailAddress(ErrorMessage = "صيغة البريد الإلكتروني غير صالحة")]
+        [StringLength(100)]
+        public string? Email { get; set; }
+
+        [Required(ErrorMessage = "قيمة الراتب الشهري مطلوبة")]
+        [Range(0, 9999999, ErrorMessage = "الراتب يجب أن يكون قيمة موجبة منطقية")]
+        public decimal Salary { get; set; }
+    }
+
+    public class AdminAccountantsDashboardDto
+    {
+        public int TotalAccountantsCount { get; set; }
+        public int TotalPages { get; set; }
+        public List<AdminAccountantGridItemDto> Accountants { get; set; } = new();
+    }
+
+    public class AdminAccountantGridItemDto
+    {
+        public int AccountantID { get; set; }
+        public string FullName { get; set; } = string.Empty;     // اسم المحاسب الأول والأخير مدمجين
+        public string Phone { get; set; } = string.Empty;        // رقم الهاتف
+        public decimal Salary { get; set; }                      // الراتب
+        public string AccountNumber { get; set; } = string.Empty; // الـ Account number
+    }
+
+
+    public class UpdateTeacherDto
+    {
+        [Required(ErrorMessage = "الاسم الأول للأستاذ مطلوب")]
+        [StringLength(50, ErrorMessage = "الاسم الأول لا يجب أن يتجاوز 50 حرف")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "اسم الأب مطلوب")]
+        [StringLength(50, ErrorMessage = "اسم الأب لا يجب أن يتجاوز 50 حرف")]
+        public string SecondName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "اسم العائلة مطلوب")]
+        [StringLength(50, ErrorMessage = "اسم العائلة لا يجب أن يتجاوز 50 حرف")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "تاريخ الميلاد مطلوب")]
+        public DateOnly DateOfBirth { get; set; }
+
+        [Required]
+        public bool Gender { get; set; } // true = ذكر، false = أنثى
+
+        [Required(ErrorMessage = "رقم الهاتف مطلوب")]
+        [Phone(ErrorMessage = "رقم الهاتف المدخل غير صالح")]
+        [StringLength(50)]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [EmailAddress(ErrorMessage = "صيغة البريد الإلكتروني غير صالحة")]
+        [StringLength(100)]
+        public string? Email { get; set; }
+
+        [Range(0, 100, ErrorMessage = "عدد الحصص الأسبوعية يجب أن يكون بين 0 و 100")]
+        public byte? WeeklyClasses { get; set; }
+
+        [Range(0, 999999, ErrorMessage = "أجرة الحصة يجب أن تكون قيمة منطقية موجبة")]
+        public decimal? SalaryPerClass { get; set; }
+    }
+
+
 }

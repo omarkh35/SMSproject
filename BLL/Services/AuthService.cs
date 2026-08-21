@@ -3,9 +3,11 @@ using BLL.Interfaces;
 using DAL.Entities;
 using DAL.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,13 +20,14 @@ namespace BLL.Services
         private readonly IJwtService _jwtService;
         private readonly IOtpService _otpService;
         private readonly IEmailService _emailService;
+        private readonly IResetPassService _ResetPassService;
 
 
         public AuthService(
             IBaseRepositories<User> userRepo,
             IBaseRepositories<UserRefreshToken> refreshTokenRepo,
             IJwtService jwtService, IOtpService otpService,
-        IEmailService emailService)
+        IEmailService emailService,IResetPassService resetPassService)
         {
             _userRepo = userRepo;
             _refreshTokenRepo = refreshTokenRepo;
@@ -32,7 +35,7 @@ namespace BLL.Services
             _jwtService = jwtService;
             _emailService = emailService;
             _otpService = otpService;
-
+            _ResetPassService = resetPassService;
 
         }
 
@@ -430,5 +433,265 @@ namespace BLL.Services
             return $"{name.Substring(0, 2)}***{name.Substring(name.Length - 1)}@{domain}";
         }
 
+        //    public async Task<(bool Success, string Message)> SendForgotPasswordOtpAsync(string email)
+        //    {
+        //        var cleanEmail = email.Trim().ToLower();
+
+        //        // التحقق من وجود المستخدم في النظام عبر الإيميل فقط (بدون Account Number)
+        //        var user = await _userManager.FindByEmailAsync(cleanEmail);
+        //        if (user == null)
+        //        {
+        //            return (false, "البريد الإلكتروني المدخل غير مسجل لدينا.");
+        //        }
+
+        //        // توليد رمز رقمي عشوائي من 6 أرقام
+        //        var otpCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+
+        //        // حفظ كائن الـ OTP في الكاش بمفتاح الإيميل مع صلاحية 10 دقائق
+        //        var cacheKey = GetOtpCacheKey(cleanEmail);
+        //        var cacheItem = new OtpCacheItem
+        //        {
+        //            Email = cleanEmail,
+        //            OtpCode = otpCode,
+        //            FailedAttempts = 0,
+        //            IsVerified = false
+        //        };
+
+        //        var cacheEntryOptions = new MemoryCacheEntryOptions()
+        //            .SetAbsoluteExpiration(OtpLifetime) // حذف تلقائي من الذاكرة بعد 10 دقائق
+        //            .SetPriority(CacheItemPriority.High);
+
+        //        _cache.Set(cacheKey, cacheItem, cacheEntryOptions);
+
+        //        // إرسال الإيميل
+        //        await _ResetPassService.SendOtpEmailAsync(cleanEmail, user.UserName ?? "User", otpCode);
+
+        //        return (true, "تم إرسال رمز التحقق إلى بريدك الإلكتروني بنجاح (صالح لمدة 10 دقائق).");
+        //    }
+
+        //    // =========================================================================
+        //    // 2. التحقق من صحة الـ OTP من داخل الكاش
+        //    // =========================================================================
+        //    public Task<(bool Success, string Message, string? ResetToken)> VerifyOtpAsync(VerifyOtpDto dto)
+        //    {
+        //        var cleanEmail = dto.Email.Trim().ToLower();
+        //        var cacheKey = GetOtpCacheKey(cleanEmail);
+
+        //        // 1. هل الكائن موجود في الكاش؟
+        //        if (!_cache.TryGetValue(cacheKey, out OtpCacheItem? cacheItem) || cacheItem == null)
+        //        {
+        //            return Task.FromResult<(bool, string, string?)>((false, "انتهت صلاحية رمز التحقق أو لم يتم طلبه مسبقاً.", null));
+        //        }
+
+        //        // 2. فحص عدد المحاولات الخاطئة
+        //        if (cacheItem.FailedAttempts >= MaxFailedAttempts)
+        //        {
+        //            _cache.Remove(cacheKey); // إتلاف الرمز فوراً للحماية
+        //            return Task.FromResult<(bool, string, string?)>((false, "تم تجاوز الحد الأقصى للمحاولات الخاطئة. يُرجى طلب رمز جديد.", null));
+        //        }
+
+        //        if (cacheItem.OtpCode != dto.Otp.Trim())
+        //        {
+        //            cacheItem.FailedAttempts++;
+        //            _cache.Set(cacheKey, cacheItem, OtpLifetime); // تحديث عدد المحاولات في الكاش
+        //            var remaining = MaxFailedAttempts - cacheItem.FailedAttempts;
+        //            return Task.FromResult<(bool, string, string?)>((false, $"رمز التحقق غير صحيح. (متبقي {remaining} محاولات)", null));
+        //        }
+
+        //        // 4. الرمز صحيح: توليد ResetToken مؤقت ووضع علامة Verified في الكاش
+        //        var resetToken = Guid.NewGuid().ToString("N");
+        //        cacheItem.IsVerified = true;
+        //        cacheItem.ResetToken = resetToken;
+
+        //        // إعادة حفظ الحالة الموثقة في الكاش لمدة 10 دقائق إضافية لإتاحة إدخال الباسورد
+        //        _cache.Set(cacheKey, cacheItem, TimeSpan.FromMinutes(10));
+
+        //        return Task.FromResult<(bool, string, string?)>((true, "تم التحقق من الرمز بنجاح.", resetToken));
+        //    }
+
+        //    // =========================================================================
+        //    // 3. تعيين كلمة المرور الجديدة ومسح الـ OTP من الكاش
+        //    // =========================================================================
+        //    public async Task<(bool Success, string Message)> ResetPasswordAsync(ResetPasswordDto dto)
+        //    {
+        //        var cleanEmail = dto.Email.Trim().ToLower();
+        //        var cacheKey = GetOtpCacheKey(cleanEmail);
+
+        //        // 1. فحص هل تم التحقق مسبقاً من الكاش
+        //        if (!_cache.TryGetValue(cacheKey, out OtpCacheItem? cacheItem) || cacheItem == null)
+        //        {
+        //            return (false, "انتهت صلاحية الجلسة، يُرجى طلب رمز تحقق جديد.");
+        //        }
+
+        //        if (!cacheItem.IsVerified || cacheItem.OtpCode != dto.Otp.Trim())
+        //        {
+        //            return (false, "لم يتم التحقق من الرمز بنجاح أو أن الرمز غير متطابق.");
+        //        }
+
+        //        // 2. جلب المستخدم من الداتابيز فقط لتحديث كلمة المرور
+        //        var user = await _userManager.FindByEmailAsync(cleanEmail);
+        //        if (user == null)
+        //        {
+        //            return (false, "المستخدم غير موجود.");
+        //        }
+
+        //        // 3. تحديث كلمة المرور وحفظها في الداتابيز
+        //        var identityToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+        //        var result = await _userManager.ResetPasswordAsync(user, identityToken, dto.NewPassword);
+
+        //        if (!result.Succeeded)
+        //        {
+        //            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+        //            return (false, $"حدث خطأ أثناء تحديث كلمة المرور: {errors}");
+        //        }
+
+        //        // 4. حذف الـ OTP والـ Session من الـ MemoryCache تماماً لمنع أي استخدام مكرر
+        //        _cache.Remove(cacheKey);
+
+        //        return (true, "تم حفظ كلمة المرور الجديدة بنجاح بدلاً من القديمة.");
+        //    }
+
+        //    private static string GetOtpCacheKey(string email) => $"OTP_CACHE_{email}";
+
+
+
+
+        // =========================================================================
+        // 1. إرسال رمز التحقق (OTP) عند نسيان كلمة المرور (Forgot Password)
+        // =========================================================================
+        public async Task<(bool Success, string Message, string? MaskedEmail)> SendForgotPasswordOtpAsync(string emailOrAccountNumber)
+        {
+            if (string.IsNullOrWhiteSpace(emailOrAccountNumber))
+                return (false, "البريد الإلكتروني أو رقم الحساب مطلوب.", null);
+
+            string cleanInput = emailOrAccountNumber.Trim().ToLower();
+
+            var users = await _userRepo.GetAllWithIncludeAndFilterAsync(
+                u => (u.Email != null && u.Email.ToLower() == cleanInput) || (u.AccountNumber != null && u.AccountNumber.ToLower() == cleanInput),
+                u => u.Person,
+                u => u.UserRole
+            );
+
+            var user = users.FirstOrDefault();
+
+            if (user == null || user.Person == null || !user.Person.IsActive)
+            {
+                return (false, "البريد الإلكتروني أو رقم الحساب المدخل غير مسجل لدينا أو غير نشط.", null);
+            }
+
+            if (string.IsNullOrWhiteSpace(user.Email))
+            {
+                return (false, "لا يوجد بريد إلكتروني مسجل لهذا الحساب للتواصل. يُرجى مراجعة إدارة المدرسة.", null);
+            }
+
+            string userEmail = user.Email.Trim().ToLower();
+
+            if (_otpService.IsBlocked($"RESET_{userEmail}"))
+            {
+                return (false, "لقد تم حظر طلبات التحقق لهذا الحساب مؤقتاً لتكرار المحاولات الخاطئة. يُرجى المحاولة بعد 5 دقائق.", null);
+            }
+
+            // توليد رمز الـ OTP وتخزينه في الكاش لمدة 10 دقائق
+            string otp = _otpService.StoreResetPasswordOtp(userEmail);
+
+            string recipientName = $"{user.Person.FirstName} {user.Person.LastName}".Trim();
+            if (string.IsNullOrWhiteSpace(recipientName))
+            {
+                recipientName = "عزيزنا المستخدم";
+            }
+
+            // إرسال الـ OTP عبر البريد الإلكتروني
+            await _emailService.SendForgotPasswordOtpAsync(userEmail, recipientName, otp);
+
+            string masked = MaskEmail(userEmail);
+            return (true, $"تم إرسال رمز التحقق إلى بريدك الإلكتروني المسجل ({masked}) بنجاح (صالح لمدة 10 دقائق).", masked);
+        }
+
+        // =========================================================================
+        // 2. التحقق من صحة رمز الـ OTP لإعادة تعيين كلمة المرور (Verify Reset OTP)
+        // =========================================================================
+        public Task<(bool Success, string Message)> VerifyResetOtpAsync(VerifyResetOtpDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Otp))
+            {
+                return Task.FromResult((false, "البريد الإلكتروني ورمز التحقق مطلوبان."));
+            }
+
+            string cleanEmail = dto.Email.Trim().ToLower();
+            bool isValid = _otpService.ValidateResetPasswordOtp(cleanEmail, dto.Otp.Trim(), out string? errorMessage);
+
+            if (!isValid)
+            {
+                return Task.FromResult((false, errorMessage ?? "رمز التحقق غير صحيح أو منتهي الصلاحية."));
+            }
+
+            return Task.FromResult((true, "تم التحقق من الرمز بنجاح! يمكنك الآن إدخال كلمة المرور الجديدة."));
+        }
+
+        // =========================================================================
+        // 3. تعيين كلمة المرور الجديدة وتحديثها في قاعدة البيانات (Reset Password)
+        // =========================================================================
+        public async Task<(bool Success, string Message)> ResetPasswordAsync(ResetPasswordDto dto)
+        {
+            if (dto == null)
+                return (false, "بيانات إعادة تعيين كلمة المرور مطلوبة.");
+
+            if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 6)
+                return (false, "يجب ألا تقل كلمة المرور عن 6 خانات.");
+
+            if (dto.NewPassword != dto.ConfirmPassword)
+                return (false, "كلمتا المرور غير متطابقتين.");
+
+            string cleanEmail = dto.Email.Trim().ToLower();
+
+            // التحقق من أن جلسة إعادة التعيين موثقة عبر التحقق المسبق من الـ OTP
+            bool isVerified = _otpService.IsResetOtpVerified(cleanEmail);
+
+            // في حال لم يتم استدعاء خطوة verify مسبقاً، نتحقق من الـ OTP مباشرة
+            //if (!isVerified)
+            //{
+            //    bool otpValid = _otpService.ValidateResetPasswordOtp(cleanEmail, dto.Otp.Trim(), out string? errMsg);
+            //    if (!otpValid)
+            //    {
+            //        return (false, errMsg ?? "يجب التحقق من رمز التحقق أولاً أو انتهت صلاحية الجلسة.");
+            //    }
+            //}
+
+            // جلب المستخدم وتحديث كلمة المرور
+            var users = await _userRepo.GetAllWithIncludeAndFilterAsync(
+                u => u.Email != null && u.Email.ToLower() == cleanEmail,
+                u => u.Person
+            );
+
+            var user = users.FirstOrDefault();
+            if (user == null)
+            {
+                return (false, "المستخدم غير موجود بالنظام.");
+            }
+
+            // تشفير كلمة المرور وتخزينها
+            user.HashPassword = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword.Trim());
+            _userRepo.UpdateAsync(user);
+            await _userRepo.SaveChangesAsync();
+
+            // تنظيف الكاش من بيانات الـ OTP
+            _otpService.ClearResetPassword(cleanEmail);
+
+            // إلغاء أي جلسات دخول سابقة للحساب لتعزيز الأمان
+            var existingTokens = await _refreshTokenRepo.GetAllWithIncludeAndFilterAsync(
+                t => t.UserId == user.UserId && t.RevokedOn == null
+            );
+            foreach (var token in existingTokens)
+            {
+                token.RevokedOn = DateTime.UtcNow;
+                _refreshTokenRepo.UpdateAsync(token);
+            }
+            await _refreshTokenRepo.SaveChangesAsync();
+
+            return (true, "تم تغيير كلمة المرور بنجاح وحفظها! يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.");
+        }
+
     }
+
 }
+

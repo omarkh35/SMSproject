@@ -305,7 +305,7 @@ namespace BLL.Services
                     FullMark = inputDto.FullMark,
                     ExamDate = inputDto.ExamDate,
                     Notes = studentMark.Notes,
-                    IsApproved = false,
+                    IsApproved = true,
                     CreatedAt = DateTime.UtcNow
                 };
 

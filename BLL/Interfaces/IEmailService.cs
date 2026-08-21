@@ -11,5 +11,7 @@ namespace BLL.Interfaces
         Task SendEmailAsync(string toEmail, string subject, string plainTextBody);
         Task SendUserNumberAsync(string email, string number);
         Task SendOtpAsync(string email, string otp);
+        Task SendForgotPasswordOtpAsync(string toEmail, string recipientName, string otpCode);
+
     }
 }

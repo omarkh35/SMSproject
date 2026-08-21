@@ -18,5 +18,13 @@ namespace BLL.Interfaces
 
         Task<TokenResponseDto?> VerifyLoginOtpAsync(AccountActivationVerifyDto verifyDto);
 
+
+        //    Task<(bool Success, string Message)> SendForgotPasswordOtpAsync(string email);
+        //    Task<(bool Success, string Message, string? ResetToken)> VerifyOtpAsync(VerifyOtpDto dto);
+        //    Task<(bool Success, string Message)> ResetPasswordAsync(ResetPasswordDto dto);
+
+        Task<(bool Success, string Message, string? MaskedEmail)> SendForgotPasswordOtpAsync(string emailOrAccountNumber);
+        Task<(bool Success, string Message)> VerifyResetOtpAsync(VerifyResetOtpDto dto);
+        Task<(bool Success, string Message)> ResetPasswordAsync(ResetPasswordDto dto);
     }
 }

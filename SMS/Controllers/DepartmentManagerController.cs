@@ -21,16 +21,38 @@ namespace SMS.Controllers
         [HttpGet("classrooms")]
         public async Task<IActionResult> GetAllClassRooms()
         {
-            var result = await _deptService.GetAllClassRoomsAsync();
+            try
+            {
+                var result = await _deptService.GetAllClassRoomsAsync();
             return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب قائمة الصفوف والشعب.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpGet("classroom/{id}")]
         public async Task<IActionResult> GetClassRoomById(int id)
         {
-            var result = await _deptService.GetClassRoomByIdAsync(id);
+            try
+            {
+                var result = await _deptService.GetClassRoomByIdAsync(id);
             if (result == null) return NotFound("الصف غير موجود");
             return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب بيانات الصف.",
+                    details = ex.Message
+                });
+            }
         }
 
         //[HttpPost("classroom")]
@@ -44,33 +66,90 @@ namespace SMS.Controllers
         [HttpPut("classroom/{id}")]
         public async Task<IActionResult> UpdateClassRoom(int id, [FromBody] ClassRoomUpdateDto dto)
         {
-            var success = await _deptService.UpdateClassRoomAsync(id, dto);
-            if (!success) return NotFound("فشل التحديث، الصف غير موجود");
-            return Ok(new { message = "تم تحديث الصف بنجاح" });
+            try
+            {
+                var success = await _deptService.UpdateClassRoomAsync(id, dto);
+                if (!success) return NotFound("فشل التحديث، الصف غير موجود");
+                return Ok(new { message = "تم تحديث الصف بنجاح" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء تحديث الصف.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpDelete("classroom/{id}")]
         public async Task<IActionResult> DeleteClassRoom(int id)
         {
-            var success = await _deptService.DeleteClassRoomAsync(id);
-            if (success == false) return NotFound("الصف غير موجود");
-            return Ok(new { message = "تم الحذف بنجاح " });
+            try
+            {
+                var success = await _deptService.DeleteClassRoomAsync(id);
+                if (success == false) return NotFound("الصف غير موجود");
+                return Ok(new { message = "تم الحذف بنجاح " });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء حذف الصف.",
+                    details = ex.Message
+                });
+            }
+
         }
 
         [HttpPost("assign-student-to-class")]
         public async Task<IActionResult> AssignStudentToClass([FromBody] StudentToClassDto dto)
         {
-            var success = await _deptService.AssignStudentToClassAsync(dto);
-            if (!success) return BadRequest("فشل الربط، يرجى التأكد من البيانات");
-            return Ok(new { message = "تم ربط الطالب بالصف بنجاح" });
+            try
+            {
+                var success = await _deptService.AssignStudentToClassAsync(dto);
+                if (!success) return BadRequest("فشل الربط، يرجى التأكد من البيانات");
+                return Ok(new { message = "تم ربط الطالب بالصف بنجاح" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء ربط الطالب بالصف.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpDelete("remove-student-from-class")]
         public async Task<IActionResult> RemoveStudentFromClass(int studentId, int classRoomId)
         {
-            var success = await _deptService.RemoveStudentFromClassAsync(studentId, classRoomId);
-            if (!success) return NotFound("الطالب غير موجود في الصف المحدد");
-            return Ok(new { message = "تمت إزالة الطالب من الصف بنجاح" });
+            try
+            {
+                var success = await _deptService.RemoveStudentFromClassAsync(studentId, classRoomId);
+                if (!success) return NotFound("الطالب غير موجود في الصف المحدد");
+                return Ok(new { message = "تمت إزالة الطالب من الصف بنجاح" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء إزالة الطالب من الصف.",
+                    details = ex.Message
+                });
+            }
         }
 
 
@@ -78,127 +157,268 @@ namespace SMS.Controllers
         [HttpPost("assign-teacher-to-class")]
         public async Task<IActionResult> AssignTeacherToClass([FromBody] TeacherToClassDto dto)
         {
-            var success = await _deptService.AssignTeacherToClassAsync(dto);
-            if (!success) return BadRequest("فشل ربط المدرس");
-            return Ok(new { message = "تم ربط المدرس بالصف والمادة بنجاح" });
+            try
+            {
+                var success = await _deptService.AssignTeacherToClassAsync(dto);
+                if (!success) return BadRequest("فشل ربط المدرس");
+                return Ok(new { message = "تم ربط المدرس بالصف والمادة بنجاح" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء ربط المعلم بالصف.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPut("update-teacher-assignment")]
         public async Task<IActionResult> UpdateTeacherAssignment([FromBody] TeacherToClassDto dto)
         {
-            var success = await _deptService.UpdateTeacherAssignmentAsync(dto);
-            if (!success) return NotFound("خطأ في البيانات");
-            return Ok(new { message = "تم تحديث تعيين المدرس بنجاح " });
+            try
+            {
+                var success = await _deptService.UpdateTeacherAssignmentAsync(dto);
+                if (!success) return NotFound("خطأ في البيانات");
+                return Ok(new { message = "تم تحديث تعيين المدرس بنجاح " });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء تحديث تعيين المعلم.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpDelete("remove-teacher-from-class")]
         public async Task<IActionResult> RemoveTeacherFromClass(int teacherId, int classRoomId)
         {
-            var success = await _deptService.RemoveTeacherFromClassAsync(teacherId, classRoomId);
-            if (!success) return NotFound("التعيين غير موجود");
-            return Ok(new { message = "تمت إزالة المدرس من الصف بنجاح" });
+            try
+            {
+                var success = await _deptService.RemoveTeacherFromClassAsync(teacherId, classRoomId);
+                if (!success) return NotFound("التعيين غير موجود");
+                return Ok(new { message = "تمت إزالة المدرس من الصف بنجاح" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء إزالة المعلم من الصف.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPost("assign-supervisor-to-teacher")]
         public async Task<IActionResult> AssignSupervisorToTeacher([FromBody] TeacherSupervisorDto dto)
         {
-            var success = await _deptService.AssignSupervisorToTeacherAsync(dto);
-            if (!success) return BadRequest("فشل الربط");
-            return Ok(new { message = "تم ربط الموجه بالمدرس بنجاح" });
+            try
+            {
+                var success = await _deptService.AssignSupervisorToTeacherAsync(dto);
+                if (!success) return BadRequest("فشل الربط");
+                return Ok(new { message = "تم ربط الموجه بالمدرس بنجاح" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء ربط الموجه بالمعلم.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpDelete("remove-supervisor-from-teacher")]
         public async Task<IActionResult> RemoveSupervisorFromTeacher(int supervisorId, int teacherId)
         {
-            var success = await _deptService.RemoveSupervisorFromTeacherAsync(supervisorId, teacherId);
-            if (!success) return NotFound("العلاقة غير موجودة");
-            return Ok(new { message = "تمت إزالة الموجه من إشراف المدرس" });
+            try
+            {
+                var success = await _deptService.RemoveSupervisorFromTeacherAsync(supervisorId, teacherId);
+                if (!success) return NotFound("العلاقة غير موجودة");
+                return Ok(new { message = "تمت إزالة الموجه من إشراف المدرس" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء إزالة الموجه من إشراف المعلم.",
+                    details = ex.Message
+                });
+            }
         }
 
 
         ////////////////////////////////////////////////////////
-       
+
 
         [HttpGet("students")]
         public async Task<IActionResult> GetStudentDirectoryGrid([FromQuery] string? searchName, [FromQuery] int page = 1)
         {
             if (page < 1) page = 1;
+            try
+            {
 
-           
-            var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+                var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
 
-            var result = await _deptService.GetStudentDirectoryDashboardAsync(managerPersonId, searchName, page);
-            return Ok(result);
+                var result = await _deptService.GetStudentDirectoryDashboardAsync(managerPersonId, searchName, page);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب دليل الطلاب.",
+                    details = ex.Message
+                });
+            }
         }
 
 
         [HttpGet("supervisors")]
         public async Task<IActionResult> GetSupervisorsDashboardSummary()
         {
-            var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+            try
+            {
+                var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
 
-            var result = await _deptService.GetSupervisorsManagementDashboardAsync(managerPersonId);
-            return Ok(result);
+                var result = await _deptService.GetSupervisorsManagementDashboardAsync(managerPersonId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب لوحة الموجهين.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpGet("teachers")]
         public async Task<IActionResult> GetTeachersManagementGrid()
         {
-            var result = await _deptService.GetTeachersManagementDashboardAsync();
-            return Ok(result);
+            try
+            {
+                var result = await _deptService.GetTeachersManagementDashboardAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء جلب لوحة المعلمين.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpPost("register-supervisors")]
         public async Task<IActionResult> RegisterNewSupervisor([FromBody] CreateSupervisorDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-
-            var generatedAccount = await _deptService.RegisterSupervisorWorkflowAsync(managerPersonId, dto);
-
-            if (generatedAccount != null)
+            try
             {
-                return Ok(new
+                var managerPersonId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+
+                var generatedAccount = await _deptService.RegisterSupervisorWorkflowAsync(managerPersonId, dto);
+
+                if (generatedAccount != null)
                 {
-                    message = "تم تسجيل الموجه بنجاح.",
-                    accountNumber = generatedAccount
+                    return Ok(new
+                    {
+                        message = "تم تسجيل الموجه بنجاح.",
+                        accountNumber = generatedAccount
+                    });
+                }
+
+                return BadRequest("عذراً، فشلت عملية تسجيل الموجه. يرجى التأكد من صحة البيانات المرسلة.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء تسجيل الموجه الجديد.",
+                    details = ex.Message
                 });
             }
-
-            return BadRequest("عذراً، فشلت عملية تسجيل الموجه. يرجى التأكد من صحة البيانات المرسلة.");
         }
 
         [HttpPost("register-teacher")]
         public async Task<IActionResult> RegisterNewTeacher([FromBody] CreateTeacherDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var generatedAccount = await _deptService.RegisterTeacherWorkflowAsync(dto);
-
-            if (generatedAccount != null)
+            try
             {
-                // نجاح العملية وإرجاع الـ Account Number مباشرة للواجهة
-                return Ok(new
+                var generatedAccount = await _deptService.RegisterTeacherWorkflowAsync(dto);
+
+                if (generatedAccount != null)
                 {
-                    message = "تم تسجيل المعلم الجديد في النظام بنجاح.",
-                    accountNumber = generatedAccount
+                    // نجاح العملية وإرجاع الـ Account Number مباشرة للواجهة
+                    return Ok(new
+                    {
+                        message = "تم تسجيل المعلم الجديد في النظام بنجاح.",
+                        accountNumber = generatedAccount
+                    });
+                }
+
+                return BadRequest("عذراً، فشلت عملية تسجيل المعلم الجديد. يرجى مراجعة البيانات المدخلة.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء تسجيل الاستاذ الجديد.",
+                    details = ex.Message
                 });
             }
-
-            return BadRequest("عذراً، فشلت عملية تسجيل المعلم الجديد. يرجى مراجعة البيانات المدخلة.");
         }
 
         [HttpPost("create-new-section")]
         public async Task<IActionResult> AutoCreateNextSection([FromBody] CreateAutomaticClassRoomDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                var success = await _deptService.CreateNextSectionAutomatedAsync(dto);
 
-            var success = await _deptService.CreateNextSectionAutomatedAsync(dto);
-
-            return success
-                ? Ok(new { message = "تم إنشاء الشعبة التالية المتتابعة لهذا الصف بنجاح في النظام." })
-                : BadRequest("عذراً، فشلت عملية الإنشاء التلقائي للشعبة.");
+                return success
+                    ? Ok(new { message = "تم إنشاء الشعبة التالية المتتابعة لهذا الصف بنجاح في النظام." })
+                    : BadRequest("عذراً، فشلت عملية الإنشاء التلقائي للشعبة.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "حدث خطأ أثناء إنشاء الشعبة الجديدة.",
+                    details = ex.Message
+                });
+            }
         }
 
         [HttpGet("supervisor/{id}")]
@@ -377,14 +597,29 @@ namespace SMS.Controllers
 
         [HttpPost("classroom-schedule")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> SaveClassRoomSchedule([FromForm] SaveClassRoomScheduleDto dto) 
+        public async Task<IActionResult> SaveClassRoomSchedule([FromForm] SaveClassRoomScheduleDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var success = await _deptService.SaveClassRoomScheduleAsync(dto);
-            return success
-                ? Ok(new { message = "تم حفظ وتحديث جدول دوام الشعبة بنجاح في النظام محلياً." })
-                : BadRequest("عذراً، فشلت عملية حفظ جدول دوام الشعبة.");
+            try
+            {
+                var success = await _deptService.SaveClassRoomScheduleAsync(dto);
+                return success
+                    ? Ok(new { message = "تم حفظ وتحديث جدول دوام الشعبة بنجاح في النظام محلياً." })
+                    : BadRequest("عذراً، فشلت عملية حفظ جدول دوام الشعبة.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "حدث خطأ غير متوقع أثناء حفظ برنامج الدوام.", details = ex.Message });
+            }
         }
 
 
@@ -393,11 +628,25 @@ namespace SMS.Controllers
         public async Task<IActionResult> SaveTeacherSchedule([FromForm] SaveTeacherScheduleDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var success = await _deptService.SaveTeacherScheduleAsync(dto);
-            return success
-                ? Ok(new { message = "تم حفظ وتحديث جدول دوام الأستاذ بنجاح في النظام محلياً." })
-                : BadRequest("عذراً، فشلت عملية حفظ جدول دوام الأستاذ.");
+            try
+            {
+                var success = await _deptService.SaveTeacherScheduleAsync(dto);
+                return success
+                    ? Ok(new { message = "تم حفظ وتحديث جدول دوام الأستاذ بنجاح في النظام محلياً." })
+                    : BadRequest("عذراً، فشلت عملية حفظ جدول دوام الأستاذ.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "حدث خطأ غير متوقع أثناء حفظ برنامج الدوام.", details = ex.Message });
+            }
         }
 
 

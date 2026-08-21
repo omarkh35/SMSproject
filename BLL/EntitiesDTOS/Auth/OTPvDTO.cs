@@ -17,6 +17,14 @@ namespace BLL.EntitiesDTOS.Auth
         [Required(ErrorMessage = "رمز التحقق (OTP) مطلوب")]
         public string Otp { get; set; } = string.Empty;
     }
+    public class OtpCacheItem
+    {
+        public string Email { get; set; } = string.Empty;
+        public string OtpCode { get; set; } = string.Empty;
+        public int FailedAttempts { get; set; } = 0;
+        public bool IsVerified { get; set; } = false;
+        public string? ResetToken { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
 
-    
 }
